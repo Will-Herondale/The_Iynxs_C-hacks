@@ -217,6 +217,7 @@ function buildFloodExtent(
         areaId: `cell-${cell.cx}-${cell.cy}`,
         depthCm,
         severity,
+        synthetic: cell.synthetic ?? false,
       },
     });
   }
@@ -260,6 +261,7 @@ function buildRoadStatus(
         status,
         updatedAt: now,
         sourceEventIds: pass ? pass.sourceEventIds : [],
+        synthetic: (road as { synthetic?: boolean }).synthetic ?? false,
       },
     });
   }
@@ -298,6 +300,7 @@ function buildSettlements(
         accessibility: cutOff.has(s.settlementId) ? 'cut_off' : 'accessible',
         households: s.households,
         needs: s.needs,
+        synthetic: (s as { synthetic?: boolean }).synthetic ?? false,
       },
     });
   }
@@ -415,6 +418,7 @@ function buildRoutes(
         status,
         etaMin,
         replacesRouteId: undefined,
+        synthetic: (r as { synthetic?: boolean }).synthetic ?? false,
       },
     });
   }
@@ -449,6 +453,7 @@ function buildShelters(shelters: GeoArtifacts['shelters']): Shelter {
         capacity: s.capacity,
         occupancy: s.occupancy,
         open: s.open,
+        synthetic: (s as { synthetic?: boolean }).synthetic ?? false,
       },
     });
   }
@@ -559,6 +564,7 @@ export function projectSnapshot(
           wet: true,
           depthDm: activeObs.depthDm,
           handDm: 0,
+          synthetic: true,
         },
       ];
     }
