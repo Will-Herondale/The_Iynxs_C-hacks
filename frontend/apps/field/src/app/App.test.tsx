@@ -2,7 +2,7 @@
 import 'fake-indexeddb/auto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
-import { createApiClientWithMock } from '@setu/mock-backend';
+import { stubApi } from '../testing/stubApi';
 import { ApiProvider } from './api.js';
 import { App } from './App.js';
 
@@ -26,7 +26,7 @@ afterEach(() => {
 describe('<App/> v3 shell', () => {
   it('defaults to Home and exposes the five tabs', () => {
     render(
-      <ApiProvider api={createApiClientWithMock()}>
+      <ApiProvider api={stubApi()}>
         <App />
       </ApiProvider>,
     );
@@ -38,7 +38,7 @@ describe('<App/> v3 shell', () => {
   it('keeps old #/queue and #/household hashes working', () => {
     window.location.hash = '#/queue';
     const { unmount } = render(
-      <ApiProvider api={createApiClientWithMock()}>
+      <ApiProvider api={stubApi()}>
         <App />
       </ApiProvider>,
     );
@@ -46,7 +46,7 @@ describe('<App/> v3 shell', () => {
     unmount();
     window.location.hash = '#/household';
     render(
-      <ApiProvider api={createApiClientWithMock()}>
+      <ApiProvider api={stubApi()}>
         <App />
       </ApiProvider>,
     );
@@ -56,7 +56,7 @@ describe('<App/> v3 shell', () => {
   it('has nav-camp that routes to the camp screen', () => {
     window.location.hash = '#/camp';
     render(
-      <ApiProvider api={createApiClientWithMock()}>
+      <ApiProvider api={stubApi()}>
         <App />
       </ApiProvider>,
     );
@@ -67,7 +67,7 @@ describe('<App/> v3 shell', () => {
   it('shows the offline banner only while offline', () => {
     sync.online = false;
     render(
-      <ApiProvider api={createApiClientWithMock()}>
+      <ApiProvider api={stubApi()}>
         <App />
       </ApiProvider>,
     );

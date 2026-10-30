@@ -11,6 +11,8 @@ export interface CachedProjections {
   cachedAt?: number;
   /** true when the snapshot is being served from the cache rather than fresh from the server */
   stale: boolean;
+  /** true when the last fetch from the server failed while the device is online */
+  unavailable: boolean;
 }
 
 /**
@@ -21,7 +23,7 @@ export interface CachedProjections {
 export function useCachedProjections(): CachedProjections {
   const api = useApi();
   const { online } = useSyncState();
-  const [state, setState] = useState<{ snapshot?: ProjectionSnapshot; cachedAt?: number; fresh: boolean }>({ fresh: false });
+  const [state, setState] = useState<{ snapshot?: ProjectionSnapshot; cachedAt?: number; fresh: boolean; failed?: boolean }>({ fresh: false });
 
   useEffect(() => {
     let cancelled = false;
@@ -35,12 +37,12 @@ export function useCachedProjections(): CachedProjections {
         const cachedAt = Date.now();
         reportBackendResult(true);
         await writeCachedSnapshot(snapshot, cachedAt);
-        if (!cancelled) setState({ snapshot, cachedAt, fresh: true });
+        if (!cancelled) setState({ snapshot, cachedAt, fresh: true, failed: false });
       } catch {
         reportBackendResult(false);
         if (!cancelled) {
           await loadCache();
-          setState((s) => ({ ...s, fresh: false }));
+          setState((s) => ({ ...s, fresh: false, failed: true }));
         }
       }
     };
@@ -59,5 +61,5 @@ export function useCachedProjections(): CachedProjections {
     };
   }, [api, online]);
 
-  return { snapshot: state.snapshot, cachedAt: state.cachedAt, stale: !state.fresh };
+  return { snapshot: state.snapshot, cachedAt: state.cachedAt, stale: !state.fresh, unavailable: !!state.failed && online };
 }

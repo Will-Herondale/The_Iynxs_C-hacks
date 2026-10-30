@@ -2,6 +2,8 @@
 
 Offline-capable field app and command centre for SETU disaster response.
 
+**Run against the backend:** see [docs/INTEGRATION.md](docs/INTEGRATION.md) (apps use `VITE_API_MODE=http`, no mock data at runtime).
+
 **Demo:** see [docs/DEMO.md](docs/DEMO.md) for the step-by-step demo script.
 
 ## Layout
@@ -13,15 +15,14 @@ frontend/
   e2e/              end-to-end tests
   packages/
     contract/       @setu/contract    zod schemas, inferred types, ApiClient interface, typed errors
-    api-client/     @setu/api-client  createApiClient({mode:'mock'|'http'}); http adapter is a stub
+    api-client/     @setu/api-client  createApiClient({mode:'mock'|'http'}); http adapter + fake contract server (`@setu/api-client/testing`)
     mock-backend/   @setu/mock-backend in-process test double + dev relay (NOT an event engine)
     ui/             @setu/ui          React 19 components + CSS tokens (react is a peer dep)
   docs/API_CONTRACT.md  DRAFT contract for backend review (endpoints are PROPOSED only)
 ```
 
 Apps talk to the backend **only** through the `ApiClient` interface. Choose the adapter with
-`createApiClient({mode, mockAdapter})` / `createApiClientWithMock()` (mode from `import.meta.env.VITE_API_MODE`) (default `mock`; `http` throws
-`NotImplementedError("pending API contract sign-off")` until the contract is signed off).
+`createApiClient({mode, mockAdapter})` / `createApiClientWithMock()` (mode from `import.meta.env.VITE_API_MODE`) (apps default to `http`; `mock` is for unit tests only).
 The frontend never computes projections, routes or accessibility; it renders what the API returns.
 
 ## Scripts (run in `frontend/`)
@@ -41,7 +42,7 @@ HTTP success is not global sync. `submitEvents` returns per-item acks (`accepted
 `version >= acceptedAtVersion` (use `getEventStatus` / `subscribe`). `@setu/ui`'s `<SyncStatusBadge>`
 shows every state with its own colour, icon and text.
 
-## Mock failures and sync delay
+## Mock failures and sync delay (unit tests only — apps do not use the mock)
 
 The mock acks as `accepted` immediately and applies the event to the feed/projections after
 `applyDelayMs` (default 1500). Flip failure modes at runtime:

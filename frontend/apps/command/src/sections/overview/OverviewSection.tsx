@@ -6,8 +6,7 @@ import { useGoTo } from '../../app/view';
 import { formatDateTime } from '../../app/time';
 import { useEvents, useProjections } from '../../data';
 import { EVENT_META, affectedFeatures, eventSummary, feedStatus } from '../../feed/status';
-import { criticalAlerts, overviewCounts, triggeredScenario } from './model';
-import { SCENARIO_LIST } from './scenarios';
+import { criticalAlerts, overviewCounts } from './model';
 
 const NOT_PROVIDED = 'Not provided by backend';
 const RECENT = 8;
@@ -30,7 +29,6 @@ export function OverviewSection() {
   const goTo = useGoTo();
   const counts = overviewCounts(snapshot, events);
   const alerts = useMemo(() => criticalAlerts(snapshot, batches), [snapshot, batches]);
-  const scenarios = useMemo(() => triggeredScenario(SCENARIO_LIST, events, snapshot), [events, snapshot]);
   const recent = useMemo(
     () => [...events].sort((a, b) => Date.parse(b.receivedAt) - Date.parse(a.receivedAt)).slice(0, RECENT),
     [events],
@@ -48,25 +46,11 @@ export function OverviewSection() {
       <dl className="ov-meta">
         <div>
           <dt>District</dt>
-          <dd data-testid="overview-district">Majuli <span className="ov-tag">demo fixture</span></dd>
+          <dd data-testid="overview-district">Majuli</dd>
         </div>
         <div>
           <dt>Simulation time</dt>
           <dd data-testid="overview-simtime">{NOT_PROVIDED}</dd>
-        </div>
-        <div>
-          <dt>Active scenario</dt>
-          <dd data-testid="overview-scenario">
-            {scenarios.length ? (
-              scenarios.map((sc) => (
-                <span key={sc.id} className="ov-scenario">
-                  {sc.id} · {sc.name} <span className="ov-tag ov-tag--synthetic" title={sc.note}>SYNTHETIC</span>
-                </span>
-              ))
-            ) : (
-              NOT_PROVIDED
-            )}
-          </dd>
         </div>
         <div>
           <dt>Snapshot</dt>

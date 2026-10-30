@@ -8,6 +8,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@setu/contract': src('contract'),
+      '@setu/api-client/testing': fileURLToPath(new URL('./packages/api-client/src/testing/index.ts', import.meta.url)),
       '@setu/api-client': src('api-client'),
       '@setu/mock-backend': src('mock-backend'),
       '@setu/ui': src('ui'),

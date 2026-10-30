@@ -10,6 +10,7 @@ import { HomeScreen } from '../features/home/index.js';
 import { useCachedProjections } from '../offline/index.js';
 import { OfflineBanner } from './OfflineBanner.js';
 import { StorageBanner } from './StorageBanner.js';
+import { ApiStatus } from './ApiStatus.js';
 import { InstallButton, UpdateToast } from '../pwa/index.js';
 import { QueueScreen, SyncNowButton } from '../features/queue/index.js';
 import { ConnectivityStatus, LastSyncedLine } from '../features/status/index.js';
@@ -117,6 +118,7 @@ export function App() {
         <>
           <OfflineBanner />
           <StorageBanner />
+          <ApiStatus />
           {main}
           <UpdateToast />
         </>

@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ProjectionSnapshot } from '@setu/contract';
 import { useApi } from './ApiProvider';
 
-export type ConnectionState = 'live' | 'polling' | 'offline';
+export type ConnectionState = 'live' | 'polling' | 'offline' | 'unavailable';
 
 export const POLL_MS = 5000;
 /** Safety refetch while live (e.g. the mock suppresses notifications while offline). */
@@ -65,7 +65,7 @@ export function useProjections(): ProjectionsResult {
     refetchInterval: (query) => (!subscribed || query.state.status === 'error' ? POLL_MS : LIVE_SAFETY_POLL_MS),
   });
 
-  const connection: ConnectionState = q.isError || !online ? 'offline' : subscribed ? 'live' : 'polling';
+  const connection: ConnectionState = !online ? 'offline' : q.isError ? 'unavailable' : subscribed ? 'live' : 'polling';
   return {
     snapshot: q.data,
     version: q.data?.version,
