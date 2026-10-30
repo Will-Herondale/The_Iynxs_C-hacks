@@ -1,4 +1,4 @@
-import { ackRoute, BATCH, FAKE_API, FIELD_VIEWPORT, expect, goOffline, goOnline, item, openField, openSync, submitReport, test } from './field-support';
+import { ackRoute, BATCH, FAKE_API, FIELD_VIEWPORT, expect, goOffline, item, openField, openSync, submitReport, test } from './field-support';
 
 test.use(FIELD_VIEWPORT);
 
@@ -14,12 +14,18 @@ test.describe('field offline queue and sync', () => {
     await expect(LABEL(page, id)).toHaveText(/Saved locally/);
     await expect(page.getByTestId('connectivity-status')).toHaveAttribute('data-state', 'offline');
 
+    // The dev server is unreachable while offline, so reload with the network back but the sync endpoint blocked.
+    await page.context().setOffline(false);
+    await page.route(BATCH, (route) => route.abort('connectionrefused'));
     await page.reload();
     await expect(item(page, id)).toBeVisible();
     await expect(item(page, id)).not.toHaveAttribute('data-status', 'synced');
+    await page.waitForTimeout(1500);
+    await expect(item(page, id)).not.toHaveAttribute('data-status', 'synced');
 
-    await goOnline(page);
-    await expect(item(page, id)).toHaveAttribute('data-status', 'synced', { timeout: 20_000 });
+    await page.unroute(BATCH);
+    await page.evaluate(() => window.dispatchEvent(new Event('online')));
+    await expect(item(page, id)).toHaveAttribute('data-status', 'synced', { timeout: 30_000 });
     await expect(LABEL(page, id)).toHaveText(/Accepted/);
     await expect(page.getByTestId('last-synced').first()).toHaveAttribute('data-ts', /\d{4}-/);
   });
@@ -109,7 +115,21 @@ test.describe('field offline queue and sync', () => {
     await expect(item(page, id).getByTestId('conflict-accept-server')).toBeVisible();
     await page.unroute(BATCH);
     await item(page, id).getByTestId('conflict-keep-mine').click();
-    await expect(item(page, id)).not.toHaveAttribute('data-status', 'conflict', { timeout: 20_000 });
+    // "Keep mine" resubmits as a NEW report (new clientEventId); the original is archived as superseded.
+    await expect(page.locator('[data-testid="queue-item"][data-status="conflict"]')).toHaveCount(0, { timeout: 20_000 });
+    await expect(page.getByTestId('queue-item')).toHaveCount(1);
+    await expect(page.getByTestId('queue-item')).toHaveAttribute('data-status', 'synced', { timeout: 30_000 });
+    expect(await page.getByTestId('queue-item').getAttribute('data-client-event-id')).not.toBe(id);
+  });
+
+  test('conflict panel does not overflow the 360px viewport horizontally', async ({ page }) => {
+    await page.route(BATCH, ackRoute('conflict'));
+    await openField(page);
+    const id = await submitReport(page, 'road_blockage', { road: 'R2' });
+    await openSync(page);
+    await expect(item(page, id).getByTestId('conflict-panel')).toBeVisible({ timeout: 20_000 });
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
   });
 
   test('conflict → accept server version removes the review state', async ({ page }) => {
@@ -119,8 +139,8 @@ test.describe('field offline queue and sync', () => {
     await openSync(page);
     await expect(item(page, id)).toHaveAttribute('data-status', 'conflict', { timeout: 20_000 });
     await item(page, id).getByTestId('conflict-accept-server').click();
-    await expect(item(page, id).getByTestId('conflict-panel')).toHaveCount(0, { timeout: 15_000 });
-    await expect(item(page, id)).not.toHaveAttribute('data-status', 'conflict');
+    await expect(page.getByTestId('conflict-panel')).toHaveCount(0, { timeout: 15_000 });
+    await expect(page.locator('[data-testid="queue-item"][data-status="conflict"]')).toHaveCount(0);
   });
 
   test('rejected → edit → resubmit creates a linked replacement that syncs', async ({ page, sent }) => {
@@ -136,16 +156,38 @@ test.describe('field offline queue and sync', () => {
     await page.getByTestId('field-levelCm').fill('95');
     await page.getByTestId('report-submit').click();
     await expect(page.getByTestId('report-saved-label')).toHaveText(/Saved locally/);
-    const newId = (await page.getByTestId('report-saved').getAttribute('data-client-event-id')) ?? '';
-    expect(newId).not.toBe(id);
     await openSync(page);
-    await expect(item(page, newId)).toHaveAttribute('data-status', 'synced', { timeout: 20_000 });
-    const replacement = sent.find((e) => e.clientEventId === newId)!;
-    expect(replacement).toMatchObject({ type: 'water_level', levelCm: 95 });
+    // The replacement is the only live queue item; it gets its own clientEventId.
+    await expect(page.getByTestId('queue-item')).toHaveCount(1);
+    const replacement = page.getByTestId('queue-item');
+    await expect(replacement).toHaveAttribute('data-status', 'synced', { timeout: 20_000 });
+    const newId = (await replacement.getAttribute('data-client-event-id')) ?? '';
+    expect(newId).not.toBe(id);
+    expect(sent.find((e) => e.clientEventId === newId)).toMatchObject({ type: 'water_level', levelCm: 95 });
     // The original is kept for the record, linked to its replacement.
     await page.goto(`/#/report/${id}`);
     await expect(page.getByTestId('report-detail')).toHaveAttribute('data-status', 'superseded');
     await expect(page.getByTestId('provenance-superseded')).toBeVisible();
+    await page.getByTestId('provenance-open-replacement').click();
+    await expect(page.getByTestId('report-detail')).toHaveAttribute('data-client-event-id', newId);
+    await expect(page.getByTestId('provenance-supersedes')).toBeVisible();
+  });
+
+  // Known app bug (reported to lead): the "saved" confirmation of an edited report shows the form's id, but the queue stores the
+  // replacement under a freshly minted clientEventId (sync/queue.ts), so "View report" would open a report that does not exist.
+  test('edited report: confirmation id matches the queued replacement', async ({ page }) => {
+    await page.route(BATCH, ackRoute('rejected'));
+    await openField(page);
+    const id = await submitReport(page, 'water_level', { levelCm: '90' });
+    await openSync(page);
+    await expect(item(page, id)).toHaveAttribute('data-status', 'rejected', { timeout: 20_000 });
+    await page.unroute(BATCH);
+    await item(page, id).getByTestId('queue-edit').click();
+    await page.getByTestId('field-levelCm').fill('96');
+    await page.getByTestId('report-submit').click();
+    const savedId = (await page.getByTestId('report-saved').getAttribute('data-client-event-id')) ?? '';
+    await openSync(page);
+    await expect(item(page, savedId)).toHaveCount(1);
   });
 
   test('discard asks for confirmation; Keep report keeps it, Discard removes it', async ({ page }) => {

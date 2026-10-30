@@ -39,7 +39,7 @@ test.describe('field report detail and local/remote origin', () => {
   });
 
   test('unknown report id does not crash the app', async ({ page }) => {
-    await openField(page, '#/report/does-not-exist');
+    await openField(page, 'report/does-not-exist');
     await expect(page.getByTestId('nav-home')).toBeVisible();
     await expect(page.getByTestId('report-detail')).toHaveCount(0);
   });

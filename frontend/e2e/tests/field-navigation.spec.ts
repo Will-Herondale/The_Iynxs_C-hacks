@@ -48,7 +48,7 @@ test.describe('field shell, home and report categories', () => {
   });
 
   test('report offers the four categories; unavailable ones are disabled', async ({ page }) => {
-    await openField(page, '#/report');
+    await openField(page, 'report');
     for (const c of ['water_level', 'flood_report', 'road_blockage', 'submerged_bridge', 'road_cleared']) {
       await expect(page.getByTestId(`report-type-${c}`)).toBeVisible();
     }
@@ -64,7 +64,7 @@ test.describe('field shell, home and report categories', () => {
     ['submerged_bridge', 'road_blockage', 'cause-fixed'],
   ] as const) {
     test(`category ${category} shows its fields and sends a ${event} event`, async ({ page, sent }) => {
-      await openField(page, '#/report');
+      await openField(page, 'report');
       await page.getByTestId(`report-type-${category}`).click();
       await expect(page.getByTestId(field)).toBeVisible();
       const id = await submitReport(page, category);
@@ -76,7 +76,7 @@ test.describe('field shell, home and report categories', () => {
   }
 
   test('invalid report shows form-error and saves nothing', async ({ page }) => {
-    await openField(page, '#/report');
+    await openField(page, 'report');
     await page.getByTestId('report-type-water_level').click();
     await page.getByTestId('report-submit').click();
     await expect(page.getByTestId('form-error')).toBeVisible();
