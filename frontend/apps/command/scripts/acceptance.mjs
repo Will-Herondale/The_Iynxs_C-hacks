@@ -1,4 +1,4 @@
-/* global process, console, setTimeout */
+/* global process, console, setTimeout, URL, document, window */
 // Headless acceptance run for Command v3 (own ports, no shared relay).
 //   cd frontend && SETU_RELAY_PORT=5299 npx vite --port 5274 --strictPort -c apps/command/vite.config.ts apps/command   (separate terminal)
 //   SETU_RELAY_PORT=5299 node apps/command/scripts/acceptance.mjs [baseUrl]

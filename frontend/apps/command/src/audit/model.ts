@@ -4,13 +4,13 @@ import type { Selection } from '../app';
 
 /** Audit status vocabulary (strict mapping from the server record, never from HTTP 2xx). */
 export const AUDIT_STATUS_LABEL: Record<FeedStatus, string> = {
-  synced: 'Confirmed',
-  accepted: 'Accepted',
-  conflict: 'Disputed',
+  synced: 'Accepted',
+  accepted: 'Synchronising',
+  conflict: 'Requires review',
   rejected: 'Rejected',
 };
 
-/** applied + version reached => synced (Confirmed); applied but not yet visible => accepted. */
+/** applied + version reached => synced (Accepted); applied but not yet visible => accepted. */
 export function auditStatus(rec: EventRecord, snapshotVersion: number | undefined): FeedStatus {
   return feedStatus(rec, snapshotVersion);
 }
