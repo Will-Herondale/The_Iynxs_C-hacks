@@ -1,0 +1,15 @@
+{
+"type": "FeatureCollection",
+"name": "amenities",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "osm_id": 1939473135, "name": "Bahona College", "amenity": "school" }, "geometry": { "type": "Point", "coordinates": [ 94.2402863, 26.8103704 ] } },
+{ "type": "Feature", "properties": { "osm_id": 1934226457, "name": "CKB Collage Teok", "amenity": "school" }, "geometry": { "type": "Point", "coordinates": [ 94.4460525, 26.8363939 ] } },
+{ "type": "Feature", "properties": { "osm_id": 1937614039, "name": "Hanhchara High School", "amenity": "school" }, "geometry": { "type": "Point", "coordinates": [ 94.4785672, 26.8379433 ] } },
+{ "type": "Feature", "properties": { "osm_id": 1937610134, "name": "Jhanji HNS College< Jhanji Jamuguri", "amenity": "school" }, "geometry": { "type": "Point", "coordinates": [ 94.5043489, 26.8673729 ] } },
+{ "type": "Feature", "properties": { "osm_id": 13366494501, "name": "Majuli Auniati H. Ch. Higher Secondary School", "amenity": "school" }, "geometry": { "type": "Point", "coordinates": [ 94.1639386, 26.9453382 ] } },
+{ "type": "Feature", "properties": { "osm_id": 1937628026, "name": "Sivasagar College", "amenity": "school" }, "geometry": { "type": "Point", "coordinates": [ 94.6288288, 26.9523665 ] } },
+{ "type": "Feature", "properties": { "osm_id": 9625640262, "name": "TRB Joysagar Campus (Construction in progress)", "amenity": "school" }, "geometry": { "type": "Point", "coordinates": [ 94.6557688, 26.9579775 ] } },
+{ "type": "Feature", "properties": { "osm_id": 1937748557, "name": "Sivsagar Commerce College", "amenity": "school" }, "geometry": { "type": "Point", "coordinates": [ 94.6391492, 26.992273 ] } }
+]
+}

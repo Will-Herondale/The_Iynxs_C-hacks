@@ -1,0 +1,57 @@
+{
+  "scenario_id": "S3",
+  "slug": "rising_water",
+  "name": "Rising water level",
+  "seed": 103,
+  "synthetic": true,
+  "note": "Synthetic demonstration scenario. Not a reconstruction of any real flood event and not validated against observations. The level series is arbitrary, not an observed hydrograph. Show that sentence on screen.",
+  "base_layers": {
+    "roads": "geojson/roads.geojson",
+    "bridges": "geojson/bridges.geojson",
+    "ferries": "geojson/ferries.geojson",
+    "places": "geojson/places.geojson",
+    "shelters": "shelters.csv",
+    "island": "geojson/majuli_boundary.geojson",
+    "dem": "majuli_dem_30m_wgs84.tif",
+    "water_occurrence": "majuli_water_occurrence_30m_demgrid.tif"
+  },
+  "perturbations": [
+    {
+      "type": "water_level_sweep",
+      "levels_m": [
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92
+      ],
+      "step_m": 1,
+      "flooded_rule": "cell is flooded where DEM <= water_level_m",
+      "road_rule": "segment flooded when the mean DEM at its endpoints <= level",
+      "precomputed": "flood_sweep.csv",
+      "vehicle_thresholds_m": {
+        "car": 0.3,
+        "truck": 0.5
+      }
+    }
+  ],
+  "expected_effects": [
+    "monotonic growth of flooded road km, flooded camps and flooded buildings",
+    "loss of the lowest crossings first"
+  ],
+  "assertions": [
+    "flooded length, camps and buildings are non-decreasing across the sweep",
+    "final-step totals equal flood_sweep.csv",
+    "no route through water deeper than the vehicle threshold"
+  ]
+}

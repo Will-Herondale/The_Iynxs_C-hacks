@@ -1,0 +1,47 @@
+{
+  "scenario_id": "S4",
+  "slug": "settlement_disconnected",
+  "name": "Settlement cut off",
+  "seed": 104,
+  "synthetic": true,
+  "note": "Synthetic demonstration scenario. Not a reconstruction of any real flood event and not validated against observations. The isolation is engineered for demonstration; it is not an observed cut-off event.",
+  "base_layers": {
+    "roads": "geojson/roads.geojson",
+    "bridges": "geojson/bridges.geojson",
+    "ferries": "geojson/ferries.geojson",
+    "places": "geojson/places.geojson",
+    "shelters": "shelters.csv",
+    "island": "geojson/majuli_boundary.geojson",
+    "dem": "majuli_dem_30m_wgs84.tif",
+    "water_occurrence": "majuli_water_occurrence_30m_demgrid.tif"
+  },
+  "selection_rule": "lowest-lying settlement point (village/hamlet/town) inside the island outline by DSM elevation, target level +1.5 m",
+  "candidates_considered": 8,
+  "perturbations": [
+    {
+      "type": "combine",
+      "water_level_m": 83.8,
+      "closure_from": [
+        "S1",
+        "S2"
+      ],
+      "target_settlement": {
+        "osm_id": 10692764768,
+        "name": "Auniati",
+        "place": "village",
+        "dem_elev_m": 82.3
+      },
+      "goal": "no path from the settlement to any shelter"
+    }
+  ],
+  "expected_effects": [
+    "settlement labelled disconnected",
+    "nearest reachable shelter recomputed",
+    "an explicit no-viable-evacuation state instead of a bogus route"
+  ],
+  "assertions": [
+    "disconnected flag matches a full reachability check",
+    "no route crosses water deeper than the threshold",
+    "the settlement appears in the hand-off list with population and reason"
+  ]
+}
