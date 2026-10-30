@@ -306,3 +306,15 @@ Existing `household-*`, `field-lat`/`field-lng`, `camp-*` ids are unchanged. `ho
 | `data-shelter-status` | on shelter markers, rows and panels | `open-reported\|closed-reported\|pre-identified` (`closed-reported` = open:false with non-zero published counts) |
 
 Existing test-ids are unchanged. See `DATA_CLASSIFICATION.md`.
+
+## Exchange (wave 11, `#/sync/exchange`)
+| id | element | attributes |
+|---|---|---|
+| `nav-exchange` | link in the Sync screen to the exchange screen | |
+| `exchange-export` | export button; downloads `setu-events-<device>-<timestamp>.jsonl` | |
+| `exchange-export-count` | number of events exported | `data-count` |
+| `exchange-import-file` | file input for a `.jsonl` file | |
+| `exchange-result-row` | per-line preview row (line number, clientEventId in Mono, errors) | `data-result=accepted\|duplicate\|rejected` |
+| `exchange-import-confirm` | imports only the accepted lines | |
+| `exchange-note` | "Imported events are saved on this device and will appear in district projections after sync." | |
+
