@@ -8,19 +8,21 @@ export function deriveConnectivity(i: { online: boolean; syncing: boolean; backe
   return i.backendReachable ? 'online' : 'backend-unreachable';
 }
 
-export const HEALTH_PATH = '/api/v1/health';
+/** The server's health endpoint is `GET /health` (not under /api/v1). */
+export const HEALTH_PATH = '/health';
 export const PROBE_TIMEOUT_MS = 4000;
 export const PROBE_INTERVAL_MS = 30_000;
 
 /**
- * Reachable = the server answered at all. The live backend returns 404 for /health,
- * so any HTTP status counts; only a network failure or timeout means unreachable.
+ * Reachable = the server answered at all (any HTTP status); only a network failure or timeout means unreachable.
+ * `baseUrl` must be the BACKEND address: a relative path would hit the app's own origin and always look reachable.
  */
-export async function probeBackend(fetchImpl: typeof fetch = fetch, timeoutMs = PROBE_TIMEOUT_MS): Promise<boolean> {
+export async function probeBackend(fetchImpl: typeof fetch = fetch, timeoutMs = PROBE_TIMEOUT_MS, baseUrl = ''): Promise<boolean> {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), timeoutMs);
   try {
-    await fetchImpl(HEALTH_PATH, { method: 'GET', cache: 'no-store', signal: ctl.signal });
+    // no-cors: only reachability matters, so a server that omits CORS headers on /health must not look unreachable.
+    await fetchImpl(`${baseUrl}${HEALTH_PATH}`, { method: 'GET', mode: 'no-cors', cache: 'no-store', signal: ctl.signal });
     return true;
   } catch {
     return false;

@@ -35,3 +35,9 @@
 .home__row { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; min-height: 56px; padding: 0.5rem 0.75rem; border: 1px solid currentColor; border-radius: 8px; text-decoration: none; color: inherit; flex-wrap: wrap; }
 .home__row-main { display: grid; gap: 0.1rem; font-size: 0.95rem; }
 .home__row-main time { font-family: ui-monospace, monospace; font-size: 0.8rem; opacity: 0.8; }
+
+/* Offline honesty: this device only knows what is saved on it. */
+.local-only-notice {
+  margin: 8px 0; padding: 10px 12px; border: 2px solid #b26a00; border-left-width: 6px;
+  background: #fff4e0; color: #3d2600; font-size: 0.95rem; line-height: 1.4; border-radius: 2px;
+}

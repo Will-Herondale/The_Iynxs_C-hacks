@@ -3,6 +3,7 @@ import { Badge } from '@setu/ui';
 import { useQueue, useSyncState } from '../../sync/index.js';
 import {
   PROBE_INTERVAL_MS,
+  PROBE_TIMEOUT_MS,
   deriveConnectivity,
   probeBackend,
   reportBackendResult,
@@ -12,6 +13,7 @@ import {
 import { formatIst, formatRelative, staleLevel } from './staleness.js';
 import { ORIGIN_SHAPE, originLabel, type Origin } from './origin.js';
 import { useNow } from './useNow.js';
+import { API_BASE_URL } from '../../app/api.js';
 import './status.css';
 
 const LABEL: Record<ConnectivityState, { icon: string; text: string }> = {
@@ -21,15 +23,16 @@ const LABEL: Record<ConnectivityState, { icon: string; text: string }> = {
   syncing: { icon: '↻', text: 'Synchronising' },
 };
 
-const PROBE_ENABLED = import.meta.env.VITE_API_MODE === 'http';
+/** The apps always use the real backend, so the probe is on by default (tests pass `probe={false}` explicitly). */
+const PROBE_ENABLED = true;
 
-/** Probes /api/v1/health while the browser says it is online. Only against the real backend. */
+/** Probes the backend's /health while the browser says it is online. Only against the real backend. */
 function useBackendProbe(enabled: boolean, online: boolean): void {
   useEffect(() => {
     if (!enabled || !online) return;
     let cancelled = false;
     const run = async () => {
-      const ok = await probeBackend();
+      const ok = await probeBackend(fetch, PROBE_TIMEOUT_MS, API_BASE_URL);
       if (!cancelled) reportBackendResult(ok);
     };
     void run();
@@ -119,5 +122,23 @@ export function OriginBadge({ origin, accepted = false }: { origin: Origin; acce
         <span aria-hidden="true">{s.glyph}</span> {originLabel(origin, accepted)}
       </Badge>
     </span>
+  );
+}
+
+/**
+ * Honest scope of an offline device: it only knows what is saved on it. Shown whenever the browser is offline or the backend
+ * is unreachable, on every screen. Never implies the local view is the district-wide situation.
+ */
+export function LocalOnlyNotice() {
+  const { online } = useSyncState();
+  const reachable = useBackendReachable();
+  if (online && reachable) return null;
+  return (
+    <div role="status" className="local-only-notice" data-testid="local-only-notice" data-reason={online ? 'backend-unreachable' : 'offline'}>
+      <strong>{online ? 'Backend unreachable.' : 'You are offline.'}</strong>{' '}
+      This device only knows what is saved on it: your own reports and the last district data it received.
+      It cannot see reports from other devices, so what you see is <strong>not</strong> the district-wide situation.
+      Reports marked <em>Local (this device)</em> are not yet shared; <em>District (synced)</em> ones came from the server.
+    </div>
   );
 }

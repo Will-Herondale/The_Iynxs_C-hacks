@@ -6,8 +6,8 @@ export const ORIGIN_SHAPE: Record<Origin, { glyph: string; shape: string }> = {
   remote: { glyph: '⬢', shape: 'hexagon' },
 };
 
-/** "Local", "Local · Accepted" once the server confirmed it, or "Remote". */
+/** "Local (this device)", "Local · Accepted" once the server confirmed it, or "District (synced)" for server-received reports. */
 export function originLabel(origin: Origin, accepted = false): string {
-  if (origin === 'remote') return 'Remote';
-  return accepted ? 'Local · Accepted' : 'Local';
+  if (origin === 'remote') return 'District (synced)';
+  return accepted ? 'Local · Accepted' : 'Local (this device)';
 }

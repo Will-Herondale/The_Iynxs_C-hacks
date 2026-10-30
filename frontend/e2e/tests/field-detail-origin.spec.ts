@@ -64,7 +64,7 @@ test.describe('field report detail and local/remote origin', () => {
     const remote = page.locator('[data-testid="origin-badge"][data-origin="remote"]');
     await expect(remote.first()).toBeVisible({ timeout: 15_000 });
     // Shape/label, not colour alone.
-    await expect(remote.first()).toContainText(/Remote/);
+    await expect(remote.first()).toContainText(/District \(synced\)/);
     await expect(page.getByTestId('map-key')).toBeVisible();
   });
 });

@@ -14,7 +14,7 @@ import { ApiStatus } from './ApiStatus.js';
 import { InstallButton, UpdateToast } from '../pwa/index.js';
 import { ExchangeScreen } from '../features/exchange/index.js';
 import { QueueScreen, SyncNowButton } from '../features/queue/index.js';
-import { ConnectivityStatus, LastSyncedLine } from '../features/status/index.js';
+import { ConnectivityStatus, LastSyncedLine, LocalOnlyNotice } from '../features/status/index.js';
 import { useRoute } from './route.js';
 import type { RouteName } from './route.js';
 
@@ -138,6 +138,7 @@ export function App() {
       main={
         <>
           <OfflineBanner />
+          <LocalOnlyNotice />
           <StorageBanner />
           <ApiStatus />
           {main}

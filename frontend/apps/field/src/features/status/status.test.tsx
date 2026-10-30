@@ -56,9 +56,9 @@ describe('connectivity', () => {
 
 describe('origin', () => {
   it('labels', () => {
-    expect(originLabel('local')).toBe('Local');
+    expect(originLabel('local')).toBe('Local (this device)');
     expect(originLabel('local', true)).toBe('Local · Accepted');
-    expect(originLabel('remote')).toBe('Remote');
+    expect(originLabel('remote')).toBe('District (synced)');
   });
   it('badge carries data-origin and a distinct glyph', () => {
     const { rerender } = render(<OriginBadge origin="local" accepted />);
