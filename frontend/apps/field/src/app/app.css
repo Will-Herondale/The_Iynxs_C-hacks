@@ -15,6 +15,9 @@
   .setu-app-shell__nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; padding: 0.25rem; background: var(--setu-surface, #fff); border-top: 2px solid var(--setu-border, #999); border-bottom: 0; }
   .setu-app-shell__main { padding: 0.75rem; }
   .setu-app-shell__header { padding: 0.25rem 0.75rem; }
+  .field-header { gap: 0 0.75rem; }
+  .field-header .queue-last-synced { display: none; }
+  .field-nav a { font-size: 0.7rem; }
 }
 
 /* Home */
