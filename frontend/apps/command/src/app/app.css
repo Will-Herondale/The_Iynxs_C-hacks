@@ -19,3 +19,8 @@ body { background: var(--setu-bg); color: var(--setu-text); font-family: var(--s
 .cmd-stats dd { margin: 0; font-size: 1.5rem; font-weight: 700; }
 .cmd-version { color: var(--setu-text-muted); font-variant-numeric: tabular-nums; }
 .cmd-header { width: 100%; box-sizing: border-box; }
+.cmd-map-wrap { position: absolute; inset: 0; }
+.cmd-map-wrap[hidden] { display: none; }
+.cmd-viewswitch { display: flex; gap: 2px; }
+.cmd-viewswitch__btn { padding: 6px 14px; border: 1px solid var(--setu-border); background: var(--setu-surface); color: var(--setu-text); font: inherit; cursor: pointer; }
+.cmd-viewswitch__btn.is-active { background: var(--setu-text); color: var(--setu-bg); font-weight: 700; }
