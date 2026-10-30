@@ -1,43 +1,29 @@
 # SETU — Agent Message: Claude-Darsh (frontend agent)
 
-Use this file to post round-trip notes from Darsh's frontend agent. Other agents read this to catch up on what changed since their last session.
+**This replaces the stale copy on this branch.** Yes — the frontend agent received your handoff and has replied, but only on the frontend's own branches and GitHub issues, which your agent isn't checking. Please read these from now on:
 
-## Latest update
-
-| Item | Value |
+| Where | What |
 |---|---|
-| Branch | `frontend/main` |
-| Last commit | `6059fc88` frontend: shared test-id and dev-port contract for app and QA teams |
-| Previous commit | `589ab33` frontend: integrate mock-backend (store, seed scenarios, relay + adapter), README |
+| Branch `frontend/main` (head via `git fetch origin frontend/main`) | Full status in `docs/coordination/messages/claude-darsh.md` (update 5) |
+| Issues #2, #5, #6, #15, #22, #23, #26 | The frontend's requests and findings (all open) |
+| PRs #24 (http integration), #25 (offline PWA), #27 (data honesty) | Merged into `frontend/main` |
 
-## Work completed
+## Status (2026-10-30)
+- **http mode is live in the code.** Both apps default to `createApiClient({mode:'http'})` with `VITE_API_URL` (the tunnel URL is not hard-coded). The mock relay is removed from the apps, and the apps show only real data. Mock data stays for unit tests.
+- `@setu/contract` zod schemas validate every response. SSE `/api/v1/stream` is `subscribe`, falling back to polling `/projections?sinceVersion=` every 5 s.
+- Offline-first PWA is merged: installable, IndexedDB queue, retries that never change `clientEventId`, stale-data warnings.
+- Data honesty (after Karthik's findings): shelters are shown as 'Pre-identified · not confirmed', and fixture ETAs/routes as 'not verified'.
 
-- Frontend monorepo under `frontend/` with workspaces:
-  - `packages/contract` — zod schemas: `FieldEvent`, `SubmitAck`, `EventStatus`, `ProjectionSnapshot`, `EventRecord`, `ApiClient` interface, error taxonomy.
-  - `packages/api-client` — `createApiClient({mode:'mock'|'http'})`; `http` adapter throws `NotImplementedError("pending API contract sign-off")`.
-  - `packages/mock-backend` — in-process store with `MockStore`, `scenarioRules`, `BroadcastChannel('setu-mock')` cross-tab sync, dev relay on port 5199.
-  - `packages/ui` — React 19 component kit with `<SyncStatusBadge>`, `<AppShell>`, `<Panel>`, `<Badge>`, `<Button>`, `<Field>`, `<OnlineIndicator>`.
-  - Seed scenario: Guwahati, Assam (~26.14N, 91.73E), roads R1–R10, settlements S1–S6, shelters SH1–SH3, routes EVAC-1/2/3.
-- Docs: `frontend/docs/API_CONTRACT.md` (DRAFT wire contract for backend review), `frontend/docs/TEST_IDS.md` (data-testid contract for QA + dev ports).
+## Findings against the live tunnel (read-only, plus ONE tagged test event)
+1. **Rejected valid events.** `POST /api/v1/events:batch` with a valid `flood_report` (no `areaId`) returns `rejected`: `Append failed: contentHash: payload contains floats at area_id`. The same bug class as before (`passable_by` for a `road_blockage` without `passableBy`). Omitted **optional** fields seem to reach the content hash as non-integers. Then `/events/status` returns `unknown`.
+2. **`GET /api/v1/events` returns the internal envelope** (`{"type":"obs.water","point_id":…,"depth_dm":…}`) in `event`. The contract says `event` is a wire `FieldEvent` and the record is `{eventId, event, serverState, receivedAt, appliedAtVersion}`. Our zod validation will reject these.
+3. **Health path.** `GET /health` returns 200, but the doc §3.6 says `/api/v1/health` (404). Please align the doc, or add the route. The frontend doesn't depend on it.
+4. `GET /api/v1/stream` sends nothing until the first bump (no initial `version` event), so clients can't tell a live stream from a dead one. Please send an initial `data: {"type":"version","version":N}`.
+5. Karthik found that routes and ETAs in the fixtures are not computed. The frontend now shows every route as 'not verified'. Issue #26 asks for a per-route provenance signal.
 
-## What frontend needs from backend (open questions)
+## Requests
+- Fix 1 and 2 first; they block end-to-end sync. Tell us the commit.
+- Answer #15 (contract needs), #23 (JSONL export/import schema) and #26 (route provenance).
 
-| OQ | Topic | Blocker? |
-|---|---|---|
-| OQ-01 | Wire event format: FieldEvent vs internal envelope | Yes — translation layer needed |
-| OQ-08 | Version semantics (global counter, acceptedAtVersion) | Yes — needed for `subscribe()` |
-| OQ-09 | Conflict rules (blockage vs cleared) | Yes — for `conflict` acks |
-| OQ-07 | Subscribe mechanism (polling fallback OK for G1) | Yes — `http` adapter stub |
-
-## For OpenCode backend agent
-
-- Your `@setu/contract` zod schemas are authoritative for wire field names — do not change without PR review.
-- Backend implements `/api/v1/events:batch`, `/api/v1/events/status`, `/api/v1/projections`, `/api/v1/events`, `/api/v1/stream`.
-- Translation: wire `clientEventId` (UUID) → internal `id` (ULID); wire `occurredAt` (ISO) → internal `at` (epoch ms); wire `lat`/`lng` (floats) → internal microdegrees; wire `depthCm`/`levelCm` (floats) → internal decimetres.
-- `acceptedAtVersion` = version AFTER event is applied; `getProjections(sinceVersion)` returns full snapshot.
-
-## For Karthik's data/QA agent
-
-- Seed scenario is Guwahati (not Majuli) — frontend keeps its own fixture until Majuli artifacts integrate.
-- Dev ports: field=5173, command=5174, mock relay=5199.
-- Mock failure toggles via URL `?mock=offline`, `?mock=latency:800,...`, `?mock=off`.
+## Test event
+I submitted exactly one test event: `clientEventId cd708dda-d663-4da1-8c19-60102ade085f`, reporter `frontend-contract-test`, note 'CONTRACT TEST … not a real observation'. It was rejected (see 1), so nothing was written.
