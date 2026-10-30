@@ -96,8 +96,11 @@ try {
       const store = tx.objectStore('projections');
       const get = store.get('latest');
       get.onsuccess = () => {
-        if (!get.result) { reject(new Error('no cached snapshot')); return; }
-        store.put({ ...get.result, cachedAt: Date.now() - 90 * 60_000 });
+        // No backend in this run, so nothing was cached: seed an empty snapshot so the stale path can be exercised.
+        const now = new Date().toISOString();
+        const fc = { type: 'FeatureCollection', version: 0, generatedAt: now, features: [] };
+        const base = get.result ?? { key: 'latest', snapshot: { version: 0, generatedAt: now, flood: fc, roads: fc, settlements: fc, routes: fc, shelters: fc } };
+        store.put({ ...base, cachedAt: Date.now() - 90 * 60_000 });
       };
       tx.oncomplete = () => { db.close(); resolve(); };
       tx.onerror = () => reject(tx.error);
