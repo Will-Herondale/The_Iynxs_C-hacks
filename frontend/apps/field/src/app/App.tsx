@@ -3,6 +3,8 @@ import { AppShell } from '@setu/ui';
 import type { QueueItem } from '../sync/index.js';
 import { ReportScreen } from '../features/report/index.js';
 import { HouseholdScreen } from '../features/household/index.js';
+import { CampScreen } from '../features/camp/index.js';
+import { OfflineBanner } from './OfflineBanner.js';
 import { QueueScreen, OnlineStatus, PendingCount, LastSynced, SyncNowButton } from '../features/queue/index.js';
 import { useRoute } from './route.js';
 import type { Route } from './route.js';
@@ -10,6 +12,7 @@ import type { Route } from './route.js';
 const NAV: { route: Route; label: string; testId: string }[] = [
   { route: 'report', label: 'Report', testId: 'nav-report' },
   { route: 'household', label: 'Household', testId: 'nav-household' },
+  { route: 'camp', label: 'Camp', testId: 'nav-camp' },
   { route: 'queue', label: 'Queue', testId: 'nav-queue' },
 ];
 
@@ -61,9 +64,22 @@ export function App() {
       <ReportScreen editing={editing?.type !== 'household_registration' ? editing : null} onDone={done} />
     ) : route === 'household' ? (
       <HouseholdScreen editing={editing?.type === 'household_registration' ? editing : null} onDone={done} />
+    ) : route === 'camp' ? (
+      <CampScreen />
     ) : (
       <QueueScreen onEdit={onEdit} />
     );
 
-  return <AppShell header={header} nav={nav} main={main} />;
+  return (
+    <AppShell
+      header={header}
+      nav={nav}
+      main={
+        <>
+          <OfflineBanner />
+          {main}
+        </>
+      }
+    />
+  );
 }

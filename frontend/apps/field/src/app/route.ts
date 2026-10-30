@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
-export type Route = 'report' | 'household' | 'queue';
-const ROUTES: Route[] = ['report', 'household', 'queue'];
+export type Route = 'report' | 'household' | 'camp' | 'queue';
+const ROUTES: Route[] = ['report', 'household', 'camp', 'queue'];
 
 function read(): Route {
   const h = window.location.hash.replace(/^#\/?/, '');
