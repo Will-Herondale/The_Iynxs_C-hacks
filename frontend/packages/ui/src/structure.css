@@ -1,0 +1,35 @@
+/* Structural + form components: DataTable, ContextPanel, FormField, ConfirmDialog. */
+.setu-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.setu-table__search { width: 100%; max-width: 20rem; margin-bottom: var(--setu-space-2); padding: 6px 8px; font: inherit; color: var(--setu-text); background: var(--setu-bg); border: 1px solid var(--setu-border); border-radius: 3px; }
+.setu-table__scroll { max-height: 70vh; overflow: auto; border: 1px solid var(--setu-border); border-radius: 3px; }
+.setu-table table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.setu-table th, .setu-table td { padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--setu-surface-2); }
+.setu-table thead th { position: sticky; top: 0; z-index: 1; background: var(--setu-surface-2); color: var(--setu-text); font-weight: 600; }
+.setu-table__sort { all: unset; cursor: pointer; font-weight: 600; }
+.setu-table__sort:focus-visible, .setu-table tbody tr:focus-visible { outline: 2px solid var(--setu-focus); outline-offset: -2px; }
+.setu-table__row--clickable { cursor: pointer; }
+.setu-table__row--clickable:hover { background: var(--setu-surface); }
+.setu-table__empty { padding: var(--setu-space-4); color: var(--setu-text-muted); }
+.setu-table__pager { display: flex; gap: var(--setu-space-3); align-items: center; padding-top: var(--setu-space-2); color: var(--setu-text-muted); }
+
+.setu-context { background: var(--setu-surface); color: var(--setu-text); border-left: 1px solid var(--setu-border); padding: var(--setu-space-3) var(--setu-space-4); overflow: auto; }
+.setu-context:focus { outline: none; }
+.setu-context__head { display: flex; justify-content: space-between; align-items: center; gap: var(--setu-space-2); border-bottom: 1px solid var(--setu-border); padding-bottom: var(--setu-space-2); }
+.setu-context__head h2 { margin: 0; font-size: 1rem; }
+.setu-context__close { background: transparent; color: var(--setu-text); border: 1px solid var(--setu-border); border-radius: 3px; min-width: 28px; min-height: 28px; cursor: pointer; }
+.setu-context__body { padding-top: var(--setu-space-3); }
+
+.setu-formfield { display: flex; flex-direction: column; gap: 4px; margin-bottom: var(--setu-space-3); }
+.setu-formfield label { font-weight: 600; font-size: 0.875rem; }
+.setu-formfield__hint { margin: 0; font-size: 0.8125rem; color: var(--setu-text-muted); }
+.setu-formfield__error { margin: 0; font-size: 0.8125rem; color: var(--setu-danger); font-weight: 600; }
+.setu-formfield--error input, .setu-formfield--error select, .setu-formfield--error textarea { border-color: var(--setu-danger); }
+
+.setu-dialog__backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 100; }
+.setu-dialog { background: var(--setu-bg); color: var(--setu-text); border: 1px solid var(--setu-border); border-radius: 4px; padding: var(--setu-space-4); max-width: 28rem; width: calc(100% - 2rem); }
+.setu-dialog h2 { margin: 0 0 var(--setu-space-2); font-size: 1.125rem; }
+.setu-dialog__actions { display: flex; justify-content: flex-end; gap: var(--setu-space-2); margin-top: var(--setu-space-4); }
+.setu-dialog__actions button { min-height: 36px; padding: 0 14px; font: inherit; color: var(--setu-text); background: var(--setu-surface-2); border: 1px solid var(--setu-border); border-radius: 3px; cursor: pointer; }
+.setu-dialog__actions .setu-dialog__confirm { background: var(--setu-primary); color: var(--setu-primary-text); }
+.setu-dialog button:focus-visible { outline: 2px solid var(--setu-focus); outline-offset: 2px; }
