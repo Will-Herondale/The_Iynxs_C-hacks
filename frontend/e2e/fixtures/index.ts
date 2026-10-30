@@ -40,11 +40,12 @@ export async function goOnline(page: Page): Promise<void> {
 }
 
 /** Fill and submit a road_blockage report from the field app (assumes the field app is loaded). */
-export async function submitRoadBlockage(page: Page, roadId: string, blockage: 'partial' | 'full' = 'full'): Promise<void> {
+export async function submitRoadBlockage(page: Page, roadId: string, blockage: 'partial' | 'full' = 'full', cause?: 'submerged' | 'debris' | 'collapse' | 'damage' | 'other'): Promise<void> {
   await page.getByTestId('nav-report').click();
   await page.getByTestId('report-type-road_blockage').click();
   await page.getByTestId('field-roadId').selectOption(roadId);
   await page.getByTestId('field-blockage').selectOption(blockage);
+  if (cause) await page.getByTestId('field-cause').selectOption(cause);
   await page.getByTestId('report-submit').click();
 }
 

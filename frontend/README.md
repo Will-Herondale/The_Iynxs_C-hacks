@@ -2,6 +2,8 @@
 
 Offline-capable field app and command centre for SETU disaster response.
 
+**Demo:** see [docs/DEMO.md](docs/DEMO.md) for the step-by-step demo script.
+
 ## Layout
 
 ```
