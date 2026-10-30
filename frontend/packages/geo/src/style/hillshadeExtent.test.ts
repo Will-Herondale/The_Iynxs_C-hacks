@@ -11,7 +11,7 @@ describe('terrain image placement', () => {
   });
 
   it('the terrain source covers the whole image extent, not the island bounding box', () => {
-    const src = createOfflineStyle({ terrain: true }).sources[TERRAIN_SOURCE_ID] as { coordinates: number[][] };
+    const src = createOfflineStyle({ terrain: true }).sources[TERRAIN_SOURCE_ID] as unknown as { coordinates: number[][] };
     expect(src.coordinates).toEqual(meta.coordinates);
     const lngs = src.coordinates.map((c) => c[0]!); const lats = src.coordinates.map((c) => c[1]!);
     expect([Math.min(...lngs), Math.max(...lngs)]).toEqual([meta.bounds[0]![0], meta.bounds[1]![0]]);
