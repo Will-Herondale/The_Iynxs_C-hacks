@@ -38,7 +38,7 @@ describe('settlements section', () => {
     const s = cutOff();
     const id = s.settlements.features[0]!.properties.settlementId;
     wrap(<SettlementsSectionView snapshot={s} now={Date.parse('2026-10-30T12:00:00Z')} />);
-    const row = screen.getByTestId(`settlements-row-${id}`);
+    const row = screen.getByTestId(`settlement-row-${id}`);
     expect(within(row).getByTestId(`segment-${id}`).textContent).toBe('BR-1');
     expect(row.textContent).toContain('critical');
     expect(within(row).getByTestId('na-nearest-shelter').getAttribute('title')).toBe('not in contract (#15)');
@@ -49,15 +49,15 @@ describe('settlements section', () => {
   it('sorts and searches', () => {
     const s = cutOff();
     wrap(<SettlementsSectionView snapshot={s} />);
-    const first = () => screen.getAllByTestId(/^settlements-row-/)[0]!.getAttribute('data-accessibility');
+    const first = () => screen.getAllByTestId(/^settlement-row-/)[0]!.getAttribute('data-accessibility');
     expect(first()).toBe('cut_off');
     fireEvent.click(screen.getByTestId('settlements-sort-accessibility'));
     expect(first()).not.toBe('cut_off');
     const name = s.settlements.features[1]!.properties.name;
     fireEvent.change(screen.getByTestId('settlements-search'), { target: { value: name } });
-    expect(screen.getAllByTestId(/^settlements-row-/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByTestId(/^settlement-row-/).length).toBeGreaterThanOrEqual(1);
     fireEvent.change(screen.getByTestId('settlements-search'), { target: { value: 'zzzz-none' } });
-    expect(screen.queryAllByTestId(/^settlements-row-/)).toHaveLength(0);
+    expect(screen.queryAllByTestId(/^settlement-row-/)).toHaveLength(0);
   });
   it('flags no-safe-route status from server route statuses', () => {
     const s = cutOff();
@@ -73,15 +73,15 @@ describe('routes section', () => {
     r.status = 'unavailable';
     r.refusal = { summary: 'Bridge impassable', blockingFeatureIds: [] };
     wrap(<RoutesSectionView snapshot={s} />);
-    const card = screen.getByTestId(`route-card-${r.routeId}`);
+    const card = screen.getByTestId(`route-row-${r.routeId}`);
     expect(card.textContent).toContain(`${r.etaMin} min`);
     expect(within(card).getByTestId(`explain-refusal-${r.routeId}`).textContent).toContain('Bridge impassable');
     fireEvent.change(screen.getByTestId('routes-filter-origin'), { target: { value: r.from } });
-    for (const c of screen.getAllByTestId(/^route-card-/)) expect(c.textContent).toBeTruthy();
-    expect(screen.queryAllByTestId(/^route-card-/).length).toBe(s.routes.features.filter((f) => f.properties.from === r.from).length);
+    for (const c of screen.getAllByTestId(/^route-row-/)) expect(c.textContent).toBeTruthy();
+    expect(screen.queryAllByTestId(/^route-row-/).length).toBe(s.routes.features.filter((f) => f.properties.from === r.from).length);
     const other = s.shelters.features.map((f) => f.properties.shelterId).find((id) => id !== r.to)!;
     fireEvent.change(screen.getByTestId('routes-filter-destination'), { target: { value: other } });
-    expect(screen.queryAllByTestId(/^route-card-/).length).toBe(s.routes.features.filter((f) => f.properties.from === r.from && f.properties.to === other).length);
+    expect(screen.queryAllByTestId(/^route-row-/).length).toBe(s.routes.features.filter((f) => f.properties.from === r.from && f.properties.to === other).length);
   });
   it('shows alternative / replaces links', () => {
     const s = structuredClone(seed);

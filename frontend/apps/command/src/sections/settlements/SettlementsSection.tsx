@@ -69,7 +69,7 @@ export function SettlementsSectionView({ snapshot, now = Date.now() }: { snapsho
                 {view.map((r) => {
                   const isSel = selected?.kind === 'settlement' && selected.id === r.id;
                   return (
-                    <tr key={r.id} data-testid={`settlements-row-${r.id}`} data-accessibility={r.accessibility} data-status={r.status} aria-selected={isSel}
+                    <tr key={r.id} data-testid={`settlement-row-${r.id}`} data-accessibility={r.accessibility} data-status={r.status} aria-selected={isSel}
                       onClick={() => select({ kind: 'settlement', id: r.id })} style={{ cursor: 'pointer', background: isSel ? 'rgba(120,160,255,.2)' : undefined }}>
                       <td><button type="button" onClick={(e) => { e.stopPropagation(); select({ kind: 'settlement', id: r.id }); }} aria-pressed={isSel}>{r.name}</button> <MonoId>{r.id}</MonoId></td>
                       <td><Badge tone={ACCESS_TONE[r.accessibility].tone} icon={ACCESS_TONE[r.accessibility].icon}>{label(r.accessibility)}</Badge></td>

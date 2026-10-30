@@ -65,7 +65,7 @@ export function RoutesSectionView({ snapshot }: { snapshot?: ProjectionSnapshot 
               const replaced = r.replacesRouteId ? byId(r.replacesRouteId) : undefined;
               const alternative = routes.find((x) => x.replacesRouteId === r.routeId);
               return (
-                <li key={r.routeId} data-testid={`route-card-${r.routeId}`} data-status={r.status} data-selected={isSel} style={{ padding: '8px', borderBottom: '1px solid rgba(128,128,128,.3)', borderLeft: `3px solid ${isSel ? 'currentColor' : 'transparent'}` }}>
+                <li key={r.routeId} data-testid={`route-row-${r.routeId}`} data-status={r.status} data-selected={isSel} style={{ padding: '8px', borderBottom: '1px solid rgba(128,128,128,.3)', borderLeft: `3px solid ${isSel ? 'currentColor' : 'transparent'}` }}>
                   <button type="button" data-testid={`route-select-${r.routeId}`} aria-pressed={isSel} onClick={() => select({ kind: 'route', id: r.routeId })} style={{ all: 'unset', cursor: 'pointer', display: 'flex', gap: 8, justifyContent: 'space-between', width: '100%' }}>
                     <span><MonoId>{r.routeId}</MonoId> {nameOf(r.from)} → {shelterName(r.to)} <small>({r.kind})</small></span>
                     <span>
