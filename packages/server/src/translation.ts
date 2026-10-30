@@ -58,7 +58,7 @@ export function translateEvent(
       payload.depth_dm = e.depthCm !== undefined ? Math.round(e.depthCm * 10) : 0;
       payload.ref_kind = 'bridge_deck';
       payload.confidence = 80;
-      payload.area_id = e.areaId;
+      if (e.areaId !== undefined) payload.area_id = e.areaId;
       payload.severity = e.severity;
       payload.lat = loc.lat;
       payload.lng = loc.lng;

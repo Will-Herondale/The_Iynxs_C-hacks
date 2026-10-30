@@ -30,6 +30,7 @@ const MAX_EVENTS_PER_BATCH = 500;
 let log: EventLog | null = null;
 let artifacts: GeoArtifacts | null = null;
 let clientEventMappings = new Map<string, string>(); // clientEventId → eventId
+let eventIdToClientEventId = new Map<string, string>(); // eventId → clientEventId
 let projectionVersion = 0;
 let sseClients = new Set<(data: string) => void>();
 
@@ -169,6 +170,7 @@ async function handleEventsBatch(
 
     // Record mapping
     clientEventMappings.set(event.clientEventId, appended.id);
+    eventIdToClientEventId.set(appended.id, event.clientEventId);
 
     // The event is accepted; it will be applied to projections on next read
     // acceptedAtVersion = version AFTER apply (we assign at apply time)
@@ -270,6 +272,53 @@ function handleProjections(
   sendJson(res, 200, snapshot);
 }
 
+/**
+ * Translate an internal envelope back to wire format (FieldEvent) for the
+ * event list endpoint. The internal envelope stores obs.water/obs.road types
+ * with integer payloads; the wire format uses flood_report/road_blockage etc.
+ * with float-friendly fields.
+ */
+function translateEnvelopeToWire(env: Envelope): FieldEvent {
+  const p = env.payload as Record<string, unknown>;
+  const clientEventId = eventIdToClientEventId.get(env.id) ?? env.id;
+
+  const base: Record<string, unknown> = {
+    clientEventId,
+    type: env.type,
+    occurredAt: new Date(env.at).toISOString(),
+    reporterId: env.actor.id,
+    deviceId: env.origin,
+    location: {
+      lat: (typeof p.lat === 'number' ? p.lat : 0) / 1_000_000,
+      lng: (typeof p.lng === 'number' ? p.lng : 0) / 1_000_000,
+    },
+  };
+
+  switch (env.type) {
+    case 'obs.water': {
+      return {
+        ...base,
+        type: 'flood_report',
+        severity: typeof p.severity === 'number' ? p.severity : 3,
+        ...(typeof p.depth_dm === 'number'
+          ? { depthCm: Math.round(p.depth_dm / 10) }
+          : {}),
+        ...(typeof p.area_id === 'string' ? { areaId: p.area_id } : {}),
+      } as unknown as FieldEvent;
+    }
+    case 'obs.road': {
+      return {
+        ...base,
+        type: p.state === 'open' ? 'road_cleared' : 'road_blockage',
+        ...(typeof p.edge_id === 'string' ? { roadId: p.edge_id } : {}),
+        blockage: p.state === 'blocked' ? 'full' : 'partial',
+      } as unknown as FieldEvent;
+    }
+    default:
+      return base as unknown as FieldEvent;
+  }
+}
+
 async function handleListEvents(
   req: import('node:http').IncomingMessage,
   res: import('node:http').ServerResponse,
@@ -298,7 +347,7 @@ async function handleListEvents(
 
   const records = filtered.map((env) => ({
     eventId: env.id,
-    event: env.payload,
+    event: translateEnvelopeToWire(env),
     serverState: 'applied' as const,
     receivedAt: new Date(env.at).toISOString(),
     appliedAtVersion: projectionVersion,

@@ -1,2 +1,3 @@
 data/majuli/dem/*.tif
 packages/server/data/log.jsonl
+packages/server/src/debug-translate.ts
