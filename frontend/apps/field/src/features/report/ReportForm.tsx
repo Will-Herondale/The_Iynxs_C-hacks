@@ -172,6 +172,8 @@ export function ReportScreen({
   return (
     <Panel title={editing ? 'Edit rejected report' : 'New report'}>
       <form onSubmit={guardedSubmit} noValidate aria-label="Report form" className="report-form">
+        <section className="report-section" aria-labelledby="rs-type">
+          <h2 id="rs-type" className="report-section__h"><span className="report-section__n" aria-hidden="true">1</span> Report type</h2>
         <Button
           variant="primary" data-testid="quick-blocked"
           onClick={() => pickCategory('blocked_road')}
@@ -198,7 +200,10 @@ export function ReportScreen({
             );
           })}
         </div>
+        </section>
 
+        <section className="report-section" aria-labelledby="rs-details">
+          <h2 id="rs-details" className="report-section__h"><span className="report-section__n" aria-hidden="true">2</span> Severity &amp; details</h2>
         {(category === 'blocked_road' || category === 'submerged_bridge' || category === 'road_cleared') && (
           <div className="setu-field">
             <label className="setu-field__label" htmlFor="f-roadId">{category === 'blocked_road' ? 'Road' : category === 'submerged_bridge' ? 'Bridge or crossing' : 'Road or bridge'}</label>
@@ -260,10 +265,12 @@ export function ReportScreen({
           error={err('observedAt')} {...register('observedAt')}
         />
         <p className="report-hint-disabled">Defaults to now; change it if you saw this earlier.</p>
+        </section>
 
-        <fieldset className="report-location">
-          <legend>Location</legend>
-          <p data-testid="location-summary" role="status">
+        <fieldset className="report-section report-location">
+          <legend className="report-section__h"><span className="report-section__n" aria-hidden="true">3</span> Location</legend>
+          <p data-testid="location-summary" role="status" className="report-gps" data-source={hasLocation ? source : 'unknown'}>
+            <span className="report-gps__icon" aria-hidden="true">{!hasLocation ? '○' : source === 'gps' ? '◉' : source === 'map' ? '⌖' : '✎'}</span>{' '}
             {hasLocation ? describeLocation(source, accuracy === '' ? undefined : Number(accuracy)) : describeLocation('unknown')}
             {gps === 'locating' && ' (finding GPS…)'}
             {gps === 'unavailable' && !hasLocation && ' (GPS unavailable)'}
@@ -282,6 +289,7 @@ export function ReportScreen({
               onMapReady={onMapReady}
             />
           )}
+          <div className="report-latlng">
           <Field
             label="Latitude" inputMode="decimal" data-testid="field-lat" error={err('lat')}
             {...register('lat', { onChange: () => { setValue('locationSource', 'manual'); setValue('accuracyM', ''); } })}
@@ -290,19 +298,23 @@ export function ReportScreen({
             label="Longitude" inputMode="decimal" data-testid="field-lng" error={err('lng')}
             {...register('lng', { onChange: () => { setValue('locationSource', 'manual'); setValue('accuracyM', ''); } })}
           />
+          </div>
         </fieldset>
 
+        <section className="report-section" aria-labelledby="rs-ev">
+          <h2 id="rs-ev" className="report-section__h"><span className="report-section__n" aria-hidden="true">4</span> Evidence &amp; notes</h2>
         <div className="setu-field">
           <label className="setu-field__label" htmlFor="f-note">Note</label>
           <textarea id="f-note" className={SELECT} rows={3} data-testid="field-note" {...register('note')} />
         </div>
         <div className="setu-field">
-          <label className="setu-field__label" htmlFor="f-photo">Photo (reference only, not uploaded)</label>
+          <label className="setu-field__label" htmlFor="f-photo">Photo reference <span className="report-unavailable" data-testid="photo-unavailable">Unavailable: not uploaded</span></label>
           <input
             id="f-photo" type="file" accept="image/*" capture="environment"
             onChange={(e) => setValue('photoName', e.target.files?.[0]?.name ?? '')}
           />
         </div>
+        </section>
 
         {firstError && (
           <div role="alert" data-testid="form-error">
