@@ -2,7 +2,8 @@ import type { ExpressionSpecification, LayerSpecification } from 'maplibre-gl';
 import type { ProjectionSnapshot } from '@setu/contract';
 import { SETU_MAP_COLORS } from '@setu/ui';
 import type { FeatureKind } from '../app';
-/** Feature kinds the map can select. 'event' = an observation/report (needs FeatureKind to include it in app/selection). */
+
+/** Prefix of the registered observation icon images (one per server state). */
 export const OBS_ICON_PREFIX = 'setu-obs-';
 
 /** Feature kinds the map can select ('report' = an observation; id is the server eventId). */
