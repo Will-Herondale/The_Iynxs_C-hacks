@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { ProjectionSnapshot } from '@setu/contract';
 import { useApi } from '../app/api.js';
 import { useSyncState } from '../sync/index.js';
+import { reportBackendResult } from '../features/status/connectivity.js';
 import { readCachedSnapshot, writeCachedSnapshot } from './cacheDb.js';
 
 export interface CachedProjections {
@@ -32,9 +33,11 @@ export function useCachedProjections(): CachedProjections {
       try {
         const snapshot = await api.getProjections();
         const cachedAt = Date.now();
+        reportBackendResult(true);
         await writeCachedSnapshot(snapshot, cachedAt);
         if (!cancelled) setState({ snapshot, cachedAt, fresh: true });
       } catch {
+        reportBackendResult(false);
         if (!cancelled) {
           await loadCache();
           setState((s) => ({ ...s, fresh: false }));

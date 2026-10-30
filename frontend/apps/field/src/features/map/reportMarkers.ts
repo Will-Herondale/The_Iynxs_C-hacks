@@ -1,5 +1,7 @@
 import type { ClientSyncStatus } from '@setu/contract';
 import type { QueueItem } from '../../sync/index.js';
+import type { EventRecord } from '@setu/contract';
+import type { Origin } from '../status/origin.js';
 import { specStatusLabel } from '../queue/statusVocab.js';
 
 /** pending = still only on this device / in flight; accepted = server confirmed applied. */
@@ -35,6 +37,10 @@ export interface ReportMarker {
   /** Spec-vocabulary label, e.g. "Saved locally". */
   statusLabel: string;
   title: string;
+  /** local = created on this device; remote = received from the server. */
+  origin: Origin;
+  /** Local report the server has applied ("Local · Accepted"). */
+  accepted: boolean;
 }
 
 const TITLE: Record<string, string> = {
@@ -59,7 +65,40 @@ export function reportMarkers(items: QueueItem[], online: boolean): ReportMarker
       state: markerState(it.status),
       status: it.status,
       statusLabel: specStatusLabel(it.status, online),
+      origin: 'local',
+      accepted: it.status === 'synced',
       title: it.type === 'road_blockage' && ev.cause === 'submerged' ? 'Submerged crossing' : (TITLE[it.type] ?? it.type),
+    });
+  }
+  return out;
+}
+
+const REMOTE_STATE: Record<EventRecord['serverState'], { state: MarkerState; label: string }> = {
+  accepted: { state: 'pending', label: 'Received by server' },
+  applied: { state: 'accepted', label: 'Applied' },
+  conflict: { state: 'review', label: 'Requires review' },
+  rejected: { state: 'rejected', label: 'Rejected' },
+};
+
+/** Events received from the server with a location. Those this device created (same clientEventId) are shown as local instead. */
+export function remoteMarkers(records: EventRecord[], localIds: ReadonlySet<string>): ReportMarker[] {
+  const out: ReportMarker[] = [];
+  for (const r of records) {
+    const ev = r.event;
+    if (ev.type === 'household_registration' || localIds.has(ev.clientEventId)) continue;
+    const loc = ev.location;
+    if (!loc || !Number.isFinite(loc.lat) || !Number.isFinite(loc.lng)) continue;
+    const s = REMOTE_STATE[r.serverState];
+    out.push({
+      clientEventId: ev.clientEventId,
+      lat: loc.lat,
+      lng: loc.lng,
+      state: s.state,
+      status: 'synced',
+      statusLabel: s.label,
+      origin: 'remote',
+      accepted: false,
+      title: TITLE[ev.type] ?? ev.type,
     });
   }
   return out;

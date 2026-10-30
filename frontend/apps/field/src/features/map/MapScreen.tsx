@@ -1,11 +1,12 @@
 import { useMemo } from 'react';
 import { EmptyState, Panel } from '@setu/ui';
-import { useCachedProjections } from '../../offline/index.js';
+import { useCachedProjections, useRemoteEvents } from '../../offline/index.js';
+import { DataAsOf, OriginBadge, StaleWarning } from '../status/index.js';
 import { useQueue, useSyncState } from '../../sync/index.js';
 import { BASEMAP_SOURCE } from './basemap.js';
 import { MapCanvas } from './MapCanvas.js';
 import { projectionView } from './projectionLayers.js';
-import { MARKER_SHAPE, reportMarkers } from './reportMarkers.js';
+import { MARKER_SHAPE, remoteMarkers, reportMarkers } from './reportMarkers.js';
 import { useVolunteerPosition } from './useVolunteerPosition.js';
 import './map.css';
 
@@ -24,6 +25,9 @@ export function MapScreen({ onOpenReport = defaultOpen }: MapScreenProps) {
   const items = useQueue();
   const position = useVolunteerPosition();
   const reports = useMemo(() => reportMarkers(items, online), [items, online]);
+  const remoteRecords = useRemoteEvents();
+  const remote = useMemo(() => remoteMarkers(remoteRecords, new Set(items.map((i) => i.clientEventId))), [remoteRecords, items]);
+  const allMarkers = useMemo(() => [...reports, ...remote], [reports, remote]);
   const view = useMemo(() => (snapshot ? projectionView(snapshot) : undefined), [snapshot]);
 
   return (
@@ -31,7 +35,9 @@ export function MapScreen({ onOpenReport = defaultOpen }: MapScreenProps) {
       <p data-testid="map-offline-note" className="map-note">
         {online ? 'Online.' : 'Offline: showing the last saved map data.'} This map needs no network.
       </p>
-      <MapCanvas snapshot={snapshot} reports={reports} position={position} onOpenReport={onOpenReport} />
+      <StaleWarning cachedAt={cachedAt} />
+      <p className="map-note"><DataAsOf cachedAt={cachedAt} /></p>
+      <MapCanvas snapshot={snapshot} reports={allMarkers} position={position} onOpenReport={onOpenReport} />
       {BASEMAP_SOURCE === 'placeholder' && (
         <p className="map-note" data-testid="map-basemap-note">Basemap: district layers not loaded yet (plain background).</p>
       )}
@@ -42,6 +48,7 @@ export function MapScreen({ onOpenReport = defaultOpen }: MapScreenProps) {
           {(Object.keys(MARKER_SHAPE) as (keyof typeof MARKER_SHAPE)[]).map((k) => (
             <li key={k}><span aria-hidden="true">{MARKER_SHAPE[k].glyph}</span> {MARKER_SHAPE[k].name} ({MARKER_SHAPE[k].shape})</li>
           ))}
+          <li><span aria-hidden="true">●</span> Local (circle): created on this device; "Local · Accepted" once the server applied it. <span aria-hidden="true">⬢</span> Remote (hexagon, dotted outline): received from the server.</li>
           <li>Blue area: flood. Solid outline = observed; dashed = modelled, SYNTHETIC (DEM threshold, not a validated simulation).</li>
           <li>Red solid line: blocked road. Orange dashed line: partially blocked.</li>
           <li>⊘ Cut off / △ Limited access: settlement labels.</li>
@@ -90,8 +97,21 @@ export function MapScreen({ onOpenReport = defaultOpen }: MapScreenProps) {
             {reports.map((r) => (
               <li key={r.clientEventId} data-state={r.state}>
                 <button type="button" className="map-reports__open" data-testid="map-report-link" onClick={() => onOpenReport(r.clientEventId)}>
-                  <span aria-hidden="true">{MARKER_SHAPE[r.state].glyph}</span> {r.title} — {r.statusLabel}
+                  <OriginBadge origin="local" accepted={r.accepted} /> <span aria-hidden="true">{MARKER_SHAPE[r.state].glyph}</span> {r.title} — {r.statusLabel}
                 </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section aria-label="Reports received from the server" data-testid="map-remote-reports">
+        <h3>Reports from others ({remote.length})</h3>
+        {remote.length === 0 ? <p>None received yet.</p> : (
+          <ul>
+            {remote.map((r) => (
+              <li key={r.clientEventId} data-state={r.state} data-origin="remote">
+                <OriginBadge origin="remote" /> <span aria-hidden="true">{MARKER_SHAPE[r.state].glyph}</span> {r.title} — {r.statusLabel}
               </li>
             ))}
           </ul>

@@ -1,5 +1,7 @@
 import { Badge } from '@setu/ui';
 import { ViewSwitch } from './ViewSwitch';
+import { StaleBanner } from '../pwa';
+import '../pwa/pwa.css';
 import { useProjections, type ConnectionState } from '../data';
 
 const CONN: Record<ConnectionState, { tone: 'success' | 'warning' | 'danger'; icon: string; label: string }> = {
@@ -19,6 +21,7 @@ export function Header() {
       <span data-testid="connection-status" data-state={connection} role="status">
         <Badge tone={c.tone} icon={c.icon}>{c.label}</Badge>
       </span>
+      <StaleBanner />
     </div>
   );
 }

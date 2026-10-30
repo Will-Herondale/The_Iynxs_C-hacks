@@ -5,6 +5,7 @@ import type { ProjectionSnapshot } from '@setu/contract';
 import { addBaseLayers } from '@setu/geo';
 import { createBasemapStyle, DISTRICT_BOUNDS } from './basemap.js';
 import { EMPTY, PROJ, floodGeoJson, projectionView, roadsGeoJson } from './projectionLayers.js';
+import { ORIGIN_SHAPE, originLabel } from '../status/origin.js';
 import { MARKER_SHAPE, type ReportMarker } from './reportMarkers.js';
 import type { VolunteerPosition } from './useVolunteerPosition.js';
 
@@ -28,11 +29,17 @@ function reportElement(m: ReportMarker, open: (id: string) => void): HTMLElement
   b.type = 'button';
   b.dataset.testid = `map-report-${m.clientEventId}`;
   b.dataset.state = m.state;
-  b.setAttribute('aria-label', `${m.title}: ${m.statusLabel}. Open report details.`);
-  b.append(el('span', 'map-report__glyph', meta.glyph), el('span', 'map-report__label', m.statusLabel));
+  b.dataset.origin = m.origin;
+  const origin = originLabel(m.origin, m.accepted);
+  b.setAttribute('aria-label', `${origin}, ${m.title}: ${m.statusLabel}.${m.origin === 'local' ? ' Open report details.' : ''}`);
+  b.append(
+    el('span', 'map-report__glyph', meta.glyph),
+    el('span', 'map-report__origin', ORIGIN_SHAPE[m.origin].glyph),
+    el('span', 'map-report__label', `${origin} · ${m.statusLabel}`),
+  );
   b.addEventListener('click', (e) => {
     e.stopPropagation();
-    open(m.clientEventId);
+    if (m.origin === 'local') open(m.clientEventId);
   });
   return b;
 }

@@ -12,3 +12,5 @@
 .map-you { font: 700 12px system-ui, sans-serif; background: #0b5cad; color: #fff; padding: 2px 8px; border-radius: 12px; border: 2px solid #fff; }
 .map-reports__open { min-height: 44px; width: 100%; text-align: left; }
 .map-key ul { padding-left: 1.2em; }
+.map-report[data-origin="remote"] { border-style: dotted; border-width: 3px; background: #eef2f7; clip-path: polygon(8% 0, 92% 0, 100% 50%, 92% 100%, 8% 100%, 0 50%); padding-inline: 12px; }
+.map-report__origin { font-size: 14px; }

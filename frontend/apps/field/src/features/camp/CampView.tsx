@@ -3,6 +3,7 @@ import type { ProjectionSnapshot } from '@setu/contract';
 import { Badge, Button, EmptyState, Panel, SyncStatusBadge } from '@setu/ui';
 import { HouseholdScreen, DuplicateReviewPlaceholder, campSummary, householdsFromQueue } from '../household/index.js';
 import '../household/household.css';
+import { DataAsOf, StaleWarning } from '../status/index.js';
 import { useQueue } from '../../sync/index.js';
 import type { QueueItem } from '../../sync/index.js';
 
@@ -71,6 +72,8 @@ export function CampView({ snapshot, cachedAt, online, items, onOpenReport }: Ca
   return (
     <>
       <Panel title="Camp">
+        <StaleWarning cachedAt={cachedAt ?? (snapshot ? Date.parse(snapshot.generatedAt) : undefined)} />
+        <p><DataAsOf cachedAt={cachedAt} /></p>
         <div className="setu-field">
           <label className="setu-field__label" htmlFor="camp-select">Which camp are you at?</label>
           <select id="camp-select" className="setu-field__control" data-testid="camp-select" value={camp} onChange={(e) => setCamp(e.target.value)}>
