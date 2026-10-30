@@ -54,6 +54,8 @@ for (const vp of COMMAND_VIEWPORTS) {
     });
 
     test('map renders with the bundled Majuli data and all 10 layer toggles work', async ({ page }) => {
+      // Each toggle repaints the full-viewport WebGL canvas (software GL in headless CI, ~2 s at 1920x1080); 20 clicks exceed the 60 s default.
+      test.setTimeout(120_000);
       await openCommand(page, vp);
       await page.getByTestId('nav-map').click();
       const map = page.getByTestId('map');
