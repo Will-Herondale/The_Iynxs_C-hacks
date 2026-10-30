@@ -2,11 +2,11 @@ import { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
 import type { ApiClient } from '@setu/contract';
 import { createApiClient } from '@setu/api-client';
-import { createApiClientWithMock } from '@setu/mock-backend';
 
-/** The only backend access point for the app. Mode comes from VITE_API_MODE (default mock). */
+/** The only backend access point for the app: always the real HTTP API (VITE_API_URL, default http://localhost:8080). */
 export function createAppApi(): ApiClient {
-  return import.meta.env.VITE_API_MODE === 'http' ? createApiClient({ mode: 'http' }) : createApiClientWithMock();
+  const baseUrl = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:8080';
+  return createApiClient({ mode: 'http', baseUrl });
 }
 
 const ApiContext = createContext<ApiClient | null>(null);
