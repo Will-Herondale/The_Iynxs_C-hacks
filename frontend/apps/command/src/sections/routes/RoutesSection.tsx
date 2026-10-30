@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import type { ProjectionSnapshot, RouteProps } from '@setu/contract';
 import { LAYER_DATA_CLASS } from '@setu/geo';
 import { DataClassTag, EmptyState, Panel } from '@setu/ui';
-import { RouteReason, RouteStateBadge, formatIndicativeEta, routeEtaText, routeStateOf } from '../../honesty';
+import { RouteStateBadge, formatIndicativeEta, routeEtaText, routeStateOf } from '../../honesty';
 import { useSelection } from '../../app';
 import { useProjections } from '../../data';
 import { ExplainBlock } from '../../panels/Explain';
@@ -92,8 +92,7 @@ export function RoutesSectionView({ snapshot }: { snapshot?: ProjectionSnapshot 
                   {r.refusal && r.status === 'unavailable' && (
                     <ExplainBlock testId={`explain-refusal-${r.routeId}`} title="Why this route is refused" reason={r.refusal} snapshot={snapshot} />
                   )}
-                  <RouteReason routeId={r.routeId} reason={r.reason} refusalSummary={r.refusal?.summary} />
-                  {r.status === 'unavailable' && !r.refusal && !r.reason && <div style={small} data-testid={`refusal-missing-${r.routeId}`}>Refusal reason: Not provided by backend</div>}
+                  {r.status === 'unavailable' && !r.refusal && <div style={small} data-testid={`refusal-missing-${r.routeId}`}>Refusal reason: Not provided by backend</div>}
                 </li>
               );
             })}

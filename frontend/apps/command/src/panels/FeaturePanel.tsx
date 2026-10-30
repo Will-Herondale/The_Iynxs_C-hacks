@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import type { EventRecord, ProjectionSnapshot } from '@setu/contract';
 import { LAYER_DATA_CLASS } from '@setu/geo';
 import { Badge, DataClassTag, EmptyState, Panel } from '@setu/ui';
-import { RouteReason, RouteStateBadge, ShelterStatusBadge, routeEtaText, routeStateOf, ROUTE_STATE_META, shelterAttr, shelterCounts, shelterInfo } from '../honesty';
+import { RouteStateBadge, ShelterStatusBadge, routeEtaText, routeStateOf, ROUTE_STATE_META, shelterAttr, shelterCounts, shelterInfo } from '../honesty';
 import { useSelection, type FeatureKind } from '../app';
 import { featureSourceEventIds, joinProvenance, useEvents, useProjections, useProvenance, type ProvenanceItem } from '../data';
 import { formatDateTime, formatDeadline } from '../app/time';
@@ -161,7 +161,6 @@ export function FeaturePanelView({ snapshot, records, onSelectEvent, provenance 
         {p.refusal && p.status === 'unavailable' && (
           <ExplainBlock testId={`explain-refusal-${p.routeId}`} title="Why this route is refused" reason={p.refusal} snapshot={snapshot} />
         )}
-        <RouteReason routeId={p.routeId} reason={p.reason} refusalSummary={p.refusal?.summary} />
         </>
       );
       break;

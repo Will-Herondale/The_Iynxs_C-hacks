@@ -77,8 +77,6 @@ export const RoutePropsSchema = z.object({
   synthetic: z.boolean().optional(),
   /** PROPOSED (frontend): set when status = unavailable. */
   refusal: ExplanationSchema.optional(),
-  /** Backend-provided free-text reason (sent by the live backend next to `refusal`). Shown verbatim, never parsed. A machine-readable code was requested (issue #26). */
-  reason: z.string().optional(),
 });
 export const ShelterPropsSchema = z.object({
   shelterId: z.string(),

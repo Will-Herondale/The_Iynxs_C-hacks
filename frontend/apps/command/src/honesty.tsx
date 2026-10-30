@@ -42,14 +42,4 @@ export function routeEtaText(p: { status: string; etaMin?: number | null }): str
   return p.status === 'unavailable' ? 'No ETA (route unavailable)' : formatIndicativeEta(p.etaMin);
 }
 
-/** Backend-provided route reason, shown verbatim and labelled as such. Hidden when it only repeats the refusal summary. */
-export function RouteReason({ routeId, reason, refusalSummary }: { routeId: string; reason?: string | undefined; refusalSummary?: string | undefined }) {
-  if (!reason || reason === refusalSummary) return null;
-  return (
-    <div data-testid={`route-reason-${routeId}`} style={{ fontSize: '0.9em', margin: '4px 0' }}>
-      <strong>Backend reason:</strong> {reason} <small>(backend-provided, not verified here)</small>
-    </div>
-  );
-}
-
 export { formatIndicativeEta, ROUTE_STATE_META };
