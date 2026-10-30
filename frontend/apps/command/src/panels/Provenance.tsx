@@ -1,6 +1,6 @@
 import type { ProvenanceItem } from '../data';
 import { SyncStatusBadge } from '@setu/ui';
-import { EVENT_META, eventSummary, feedStatus } from '../feed';
+import { EVENT_META, eventSummary } from '../feed';
 
 export { joinProvenance, type ProvenanceItem } from '../data';
 
