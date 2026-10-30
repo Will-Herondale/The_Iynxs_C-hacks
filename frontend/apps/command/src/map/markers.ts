@@ -1,5 +1,6 @@
 import type { ProjectionSnapshot } from '@setu/contract';
 import type { Selection } from '../app';
+import type { ToggleId } from './layers';
 
 export type MarkerKind = 'bridge' | 'settlement' | 'shelter';
 export interface MarkerSpec {
@@ -14,6 +15,8 @@ export interface MarkerSpec {
   impassable: boolean;
   passability?: string;
   cutOff: boolean;
+  /** Layer toggle that shows/hides this marker. */
+  toggle: ToggleId;
 }
 
 /** Display anchor for a line: its middle vertex (placement only, nothing is computed from it). */
@@ -34,11 +37,14 @@ export function buildMarkers(s: ProjectionSnapshot): MarkerSpec[] {
     const at = lineAnchor(f.geometry.coordinates);
     if (!at) continue;
     const p = f.properties;
+    const impassable = p.passability === 'impassable' || p.status === 'blocked';
+    // Only bridges needing attention get a label; healthy bridges are drawn by the road layer.
+    if (!impassable && p.passability !== 'limited' && p.status !== 'partial') continue;
     out.push({
       key: `bridge-${p.roadId}`, kind: 'bridge', featureKind: 'road', featureId: p.roadId,
-      lng: at[0], lat: at[1], label: `${p.name} (${p.roadId})`,
-      impassable: p.passability === 'impassable' || p.status === 'blocked',
-      passability: p.passability, cutOff: false,
+      lng: at[0], lat: at[1], label: `${p.name} (${p.roadId}) — ${impassable ? 'IMPASSABLE' : 'LIMITED'}`,
+      impassable,
+      passability: p.passability, cutOff: false, toggle: 'blocked',
     });
   }
   for (const f of s.settlements.features) {
@@ -47,7 +53,7 @@ export function buildMarkers(s: ProjectionSnapshot): MarkerSpec[] {
     const [lng, lat] = f.geometry.coordinates;
     out.push({
       key: `settlement-${p.settlementId}`, kind: 'settlement', featureKind: 'settlement', featureId: p.settlementId,
-      lng, lat, label: `${p.name} — CUT OFF`, impassable: false, cutOff: true,
+      lng, lat, label: `${p.name} — CUT OFF`, impassable: false, cutOff: true, toggle: 'cutoff',
     });
   }
   for (const f of s.shelters.features) {
@@ -55,7 +61,7 @@ export function buildMarkers(s: ProjectionSnapshot): MarkerSpec[] {
     const [lng, lat] = f.geometry.coordinates;
     out.push({
       key: `shelter-${p.shelterId}`, kind: 'shelter', featureKind: 'shelter', featureId: p.shelterId,
-      lng, lat, label: `${p.name} ${p.occupancy}/${p.capacity}`, impassable: false, cutOff: false,
+      lng, lat, label: `${p.name} ${p.occupancy}/${p.capacity}`, impassable: false, cutOff: false, toggle: 'shelters',
     });
   }
   return out;
