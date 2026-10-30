@@ -2,13 +2,13 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import type { ProjectionSnapshot } from '@setu/contract';
-import { createApiClientWithMock } from '@setu/mock-backend';
+import { fixtureSnapshot } from '../testing/fixture';
 import { SelectionProvider, useSelection, type Selection } from '../app';
 import { FeaturePanelView, RoadListView, RouteListView, SettlementListView, ShelterListView } from './index';
 
 let seed: ProjectionSnapshot;
 beforeAll(async () => {
-  seed = await createApiClientWithMock().getProjections();
+  seed = fixtureSnapshot();
 });
 afterEach(cleanup);
 

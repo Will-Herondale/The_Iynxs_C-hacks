@@ -38,31 +38,29 @@ export function SettlementsSectionView({ snapshot, now = Date.now() }: { snapsho
   if (!snapshot) return <div data-testid="settlements-section"><Panel title="Settlements"><EmptyState title="Loading…" /></Panel></div>;
 
   return (
-    <div data-testid="settlements-section" className="cmd-section">
+    <div data-testid="settlements-section">
       <Panel title="Settlements">
         <div style={{ display: 'flex', gap: 12, marginBottom: 8, alignItems: 'center' }}>
           <label>Search{' '}
-            <input type="search" data-testid="settlements-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="name, id, segment…" />
+            <input type="search" className="setu-table__search" aria-label="Search settlements" data-testid="settlements-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="name, id, segment…" />
           </label>
           <span data-testid="settlements-count" aria-live="polite">{view.length} of {rows.length}</span>
         </div>
         {view.length === 0 ? (
           <EmptyState title="No settlements match" />
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table data-testid="settlements-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div className="setu-table"><div className="setu-table__scroll">
+            <table data-testid="settlements-table" className="cmd-settlements">
               <thead>
                 <tr>
                   {COLS.map((c) => (
-                    <th key={c.key} scope="col" aria-sort={sort.key === c.key ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none'} style={{ textAlign: 'left' }}>
-                      <button type="button" data-testid={`settlements-sort-${c.key}`} onClick={() => setSort((s) => ({ key: c.key, dir: s.key === c.key && s.dir === 1 ? -1 : 1 }))}>
+                    <th key={c.key} scope="col" aria-sort={sort.key === c.key ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none'}>
+                      <button type="button" className="setu-table__sort" data-testid={`settlements-sort-${c.key}`} onClick={() => setSort((s) => ({ key: c.key, dir: s.key === c.key && s.dir === 1 ? -1 : 1 }))}>
                         {c.header}{sort.key === c.key ? (sort.dir === 1 ? ' ▲' : ' ▼') : ''}
                       </button>
                     </th>
                   ))}
-                  <th scope="col" style={{ textAlign: 'left' }}>Nearest shelter</th>
-                  <th scope="col" style={{ textAlign: 'left' }}>Travel time</th>
-                  <th scope="col" style={{ textAlign: 'left' }}>Latest safe departure</th>
+                  <th scope="col">Shelter · travel · latest departure</th>
                 </tr>
               </thead>
               <tbody>
@@ -70,8 +68,8 @@ export function SettlementsSectionView({ snapshot, now = Date.now() }: { snapsho
                   const isSel = selected?.kind === 'settlement' && selected.id === r.id;
                   return (
                     <tr key={r.id} data-testid={`settlement-row-${r.id}`} data-accessibility={r.accessibility} data-status={r.status} aria-selected={isSel}
-                      onClick={() => select({ kind: 'settlement', id: r.id })} style={{ cursor: 'pointer', background: isSel ? 'rgba(120,160,255,.2)' : undefined }}>
-                      <td><button type="button" onClick={(e) => { e.stopPropagation(); select({ kind: 'settlement', id: r.id }); }} aria-pressed={isSel}>{r.name}</button> <MonoId>{r.id}</MonoId></td>
+                      onClick={() => select({ kind: 'settlement', id: r.id })} className={isSel ? 'cmd-row--selected' : 'cmd-row'}>
+                      <td><button type="button" className="cmd-linkbtn" onClick={(e) => { e.stopPropagation(); select({ kind: 'settlement', id: r.id }); }} aria-pressed={isSel}>{r.name}</button> <MonoId>{r.id}</MonoId></td>
                       <td><Badge tone={ACCESS_TONE[r.accessibility].tone} icon={ACCESS_TONE[r.accessibility].icon}>{label(r.accessibility)}</Badge></td>
                       <td data-testid={`segment-${r.id}`}>{r.criticalSegments.length ? r.criticalSegments.map((id) => <MonoId key={id}>{id}</MonoId>).flatMap((e, i) => (i ? [', ', e] : [e])) : '—'}</td>
                       <td>{r.deadline ? <time dateTime={r.deadline}>{formatDeadline(r.deadline, now)}</time> : '—'}</td>
@@ -79,15 +77,15 @@ export function SettlementsSectionView({ snapshot, now = Date.now() }: { snapsho
                       <td>
                         {r.status === 'no-safe-route' ? <Badge tone="danger" icon="⛔">{r.statusLabel}</Badge> : r.statusLabel}
                       </td>
-                      <td><Dash what="nearest-shelter" /></td>
-                      <td><Dash what="travel-time" /></td>
-                      <td><Dash what="latest-departure" /></td>
+                      <td className="cmd-settlements__na">
+                        <Dash what="nearest-shelter" /> · <Dash what="travel-time" /> · <Dash what="latest-departure" />
+                      </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
-          </div>
+          </div></div>
         )}
       </Panel>
     </div>
