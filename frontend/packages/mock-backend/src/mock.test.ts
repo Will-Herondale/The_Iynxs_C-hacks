@@ -290,4 +290,28 @@ describe('factory', () => {
     expect((await c.getProjections()).version).toBe(store.version);
     expect(NotImplementedError).toBeDefined();
   });
+
+  it('B1 submerged demo through the ApiClient: accepted first, then full projection change after the apply delay', async () => {
+    const { store } = setup();
+    const c: ApiClient = createApiClientWithMock({ store });
+    const ev: FieldEvent = { ...blockage('B1'), cause: 'submerged' } as FieldEvent;
+    const [ack] = await c.submitEvents([ev]);
+    expect(ack?.result).toBe('accepted');
+    const before = await c.getProjections();
+    expect(before.roads.features.find((f) => f.properties.roadId === 'B1')?.properties.status).toBe('open');
+    await vi.advanceTimersByTimeAsync(2000);
+    const [st] = await c.getEventStatus([ev.clientEventId]);
+    expect(st?.state).toBe('applied');
+    const after = await c.getProjections();
+    const b1 = after.roads.features.find((f) => f.properties.roadId === 'B1')!.properties;
+    expect(b1).toMatchObject({ status: 'blocked', passability: 'impassable', kind: 'bridge' });
+    const s4 = after.settlements.features.find((f) => f.properties.settlementId === 'S4')!.properties;
+    expect(s4).toMatchObject({ accessibility: 'cut_off', evacuationPriority: 'critical' });
+    expect(s4.cutOffReason?.blockingFeatureIds).toEqual(['B1']);
+    expect(s4.evacuationDeadline).toBe('2026-10-30T13:00:00.000Z');
+    const evac3 = after.routes.features.find((f) => f.properties.routeId === 'EVAC-3')!.properties;
+    expect(evac3).toMatchObject({ status: 'unavailable' });
+    expect(evac3.refusal?.blockingFeatureIds).toEqual(['B1']);
+    expect(after.version).toBeGreaterThan(before.version);
+  });
 });

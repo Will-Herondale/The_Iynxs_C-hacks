@@ -59,3 +59,22 @@
   --setu-sync-rejected: #ff7b72;
   --setu-sync-failed: #ffa657;
 }
+
+/* map / passability semantics (also exported as SETU_MAP_COLORS) */
+:root,
+[data-theme='field'] {
+  --setu-flooded: #1565c0;
+  --setu-blocked: #c62828;
+  --setu-safe: #2e7d32;
+  --setu-uncertain: #b26a00;
+}
+[data-theme='command'] {
+  --setu-flooded: #4da3ff;
+  --setu-blocked: #ff5a52;
+  --setu-safe: #4cd964;
+  --setu-uncertain: #f2b84b;
+}
+.setu-uncertain-hatch {
+  background-color: color-mix(in srgb, var(--setu-uncertain) 20%, transparent);
+  background-image: repeating-linear-gradient(45deg, var(--setu-uncertain) 0 2px, transparent 2px 8px);
+}

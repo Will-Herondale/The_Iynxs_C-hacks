@@ -29,10 +29,10 @@ Common fields (all types):
 Per type:
 
 - `flood_report`: `severity` int 1–5; `depthCm?` number >= 0; `areaId?` string.
-- `road_blockage`: `roadId?` string; `blockage` `'partial' | 'full'`; `passableBy?` array of `'foot' | 'bike' | 'car' | 'truck'`.
+- `road_blockage`: `roadId?` string (a road or a bridge id, e.g. `B1`); `blockage` `'partial' | 'full'`; `passableBy?` array of `'foot' | 'bike' | 'car' | 'truck'`; `cause?` `'submerged' | 'debris' | 'collapse' | 'damage' | 'other'` (**PROPOSED (frontend)**, GitHub issue #6).
 - `road_cleared`: `roadId` string (required, min 1).
 - `water_level`: `gaugeId?` string; `levelCm` number; `trend` `'rising' | 'steady' | 'falling'`.
-- `household_registration`: `householdId` uuid (client generated); `headName` string (min 1); `members` int >= 1; `vulnerable` `{ elderly, children, disabled, medical }` (booleans); `settlementId?` string; `needs` string[].
+- `household_registration`: `householdId` uuid (client generated); `headName` string (min 1); `members` int >= 1; `vulnerable` `{ elderly, children, disabled, medical }` (booleans); `settlementId?` string; `needs` string[]; `shelterId?` string (**PROPOSED (frontend)**, issue #6: the camp/shelter where the household registered).
 
 Supporting types: `Location`, `VehicleClass`, `VulnerableFlags`, `FieldEventType`.
 
@@ -53,6 +53,42 @@ Each is a GeoJSON `FeatureCollection` with extra top-level `version` (int >= 0) 
 | `Shelter` | Point | `shelterId`, `name`, `capacity`, `occupancy`, `open` boolean |
 
 `ProjectionSnapshot = { version, generatedAt, flood, roads, settlements, routes, shelters }`.
+
+### 3.1 Wave 3 additions: PROPOSED (frontend), GitHub issue #6
+
+All fields below are **optional and backward-compatible**. They are **PROPOSED (frontend) — needs backend sign-off** (tracked in GitHub issue #6). The frontend renders them when present and degrades gracefully when absent. It never derives them.
+
+| Collection | Field | Type | Meaning |
+|---|---|---|---|
+| `RoadStatus` | `kind` | `'road' \| 'bridge'` | Bridges are passability features too. Absent means `road`. |
+| `RoadStatus` | `passability` | `'passable' \| 'limited' \| 'impassable' \| 'unknown'` | Consistent with `status` (open→passable, partial→limited, blocked→impassable). |
+| `RoadStatus` | `reason` | string | Plain-language explanation of the current status, e.g. "Submerged — volunteer report at 14:05 (cause: submerged)". |
+| `Settlement` | `cutOffReason` | `{ summary, blockingFeatureIds, sourceEventIds? }` | Why the settlement is `cut_off`. `blockingFeatureIds` are road/bridge ids; `sourceEventIds` are the events that caused it (provenance). |
+| `Settlement` | `evacuationDeadline` | ISO datetime | Time by which evacuation must be complete. |
+| `Settlement` | `evacuationPriority` | `'critical' \| 'high' \| 'normal'` | |
+| `Route` | `refusal` | `{ summary, blockingFeatureIds }` | Set when `status = unavailable`: why the route is refused. |
+| `FloodExtent` | `confidence` | `'observed' \| 'modelled' \| 'uncertain'` | How firm the polygon is. The UI shows uncertain areas hatched. |
+
+Events: `road_blockage.cause` and `household_registration.shelterId` (see section 2).
+
+### 3.2 Scripted demo: submerged Bharalu Bridge (B1)
+
+Bridge **B1 "Bharalu Bridge"** (`kind: 'bridge'`, baseline `passable`/`open`) carries EVAC-3 from S4 to its shelter. A volunteer, possibly offline, submits:
+
+```json
+{ "type": "road_blockage", "roadId": "B1", "blockage": "full", "cause": "submerged", "occurredAt": "..." }
+```
+
+After the apply delay (mock default 1500 ms; `?mock=delay:<ms>`) the projections change as follows (precomputed lookup table in `@setu/mock-backend`, not an engine):
+
+1. B1: `status: blocked`, `passability: impassable`, `reason` ("Submerged — volunteer report at HH:MM (cause: submerged)"), `sourceEventIds` += event id.
+2. Flood area A2 grows to cover B1 (`confidence: observed`).
+3. S4: `accessibility: cut_off`, `cutOffReason` (`blockingFeatureIds: ['B1']`, `sourceEventIds: [eventId]`), `evacuationDeadline` = `occurredAt` + 3h, `evacuationPriority: critical`.
+4. EVAC-3: `status: unavailable`, `refusal` ("... crosses Bharalu Bridge (B1), which is impassable (submerged).").
+
+`road_cleared` on B1 reverts all of this. The existing R7/R4/R3/R10 scenarios also carry `reason` / `cutOffReason` / `refusal` / `evacuationDeadline`. The seed includes at least one `uncertain` flood polygon.
+
+Sync labels shown to users (`SyncStatusBadge`, see `docs/TEST_IDS.md`): accepted ack ⇒ "Accepted — awaiting confirmation"; only `getEventStatus` `applied` with `projectionVersion >= acceptedAtVersion` ⇒ "Confirmed".
 
 **The frontend never computes projections, routes or accessibility.** It only renders what the API returns.
 
