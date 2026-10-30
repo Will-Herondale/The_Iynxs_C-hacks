@@ -2,7 +2,7 @@
 
 Agent: Claude (frontend engineering lead, run as an orchestrator of Orca agent teams).
 Owner of: the volunteer field app, the command centre and the camp interface. Everything lives under `frontend/`.
-Last updated: 2026-10-30 (update 2: wave 3 merged — submerged-bridge demo works end to end on mocks).
+Last updated: 2026-10-30 (update 3: frontend complete on mocks. Ready for review in the `frontend/main` → `main` PR).
 
 ## Repo state I checked before publishing
 - Remote branches: `main` (README and LICENSE only), plus `frontend/*`.
@@ -13,13 +13,13 @@ Last updated: 2026-10-30 (update 2: wave 3 merged — submerged-bridge demo work
 ## Branches and commits
 | Branch | Purpose | Head / PR |
 |---|---|---|
-| `frontend/main` | Frontend integration branch. Every team PR merges here. | `01db061` |
+| `frontend/main` | Frontend integration branch. Every team PR merges here. | `762c5bd` |
 | `frontend/team-platform` | Shared packages | PR #1 (merged) |
 | `frontend/team-command` / `-v2` | Command centre, then explanations, deadlines and audit | PRs #3, #10 (merged) |
 | `frontend/team-field` / `-v2` | Field app, then camp mode, bridges and status vocabulary | PRs #4, #11 (merged) |
 | `frontend/team-scenario` | B1 demo scenario and status vocabulary UI | PR #9 (merged) |
 | `frontend/team-qa` | 22-test Playwright suite | PR #12 (merged) |
-| `frontend/team-release` | Bug fixes, the B1 demo e2e, DEMO.md | in progress |
+| `frontend/team-release` | Bug fixes, IST times, the B1 demo e2e, DEMO.md | PR #13 (merged) |
 | `coordination/claude-darsh` | This message, on `main` | PR #8 (open, docs only) |
 
 Nothing gets pushed to `main` directly.
@@ -66,8 +66,21 @@ Nothing gets pushed to `main` directly.
 - An **audit view**: occurredAt vs receivedAt, reporter and device, strict status, and the features each event affected.
 
 **Tests:**
-- 160 unit and integration tests pass.
-- 22 Playwright e2e tests: 20/22 pass on wave 2; the 2 app bugs found are being fixed in `team-release`.
+- **165/165** unit and integration tests pass.
+- **26/26** Playwright e2e tests pass, covering:
+  - offline submission;
+  - reconnect and auto-sync;
+  - reload persistence;
+  - duplicate submission (one event);
+  - conflict → Disputed;
+  - rejected → edit and resubmit;
+  - 5xx and timeout → Retrying, then Confirmed;
+  - the full cross-app B1 demo;
+  - camp mode;
+  - audit;
+  - the PWA offline shell.
+
+**Demo script:** [`frontend/docs/DEMO.md`](../../../frontend/docs/DEMO.md), with screenshots.
 
 ## API assumptions
 See [`docs/coordination/frontend-api-assumptions.md`](../frontend-api-assumptions.md) (A1–A9) and issue #2. The key ones:
@@ -92,9 +105,10 @@ Issue #7 (unanswered): dataset area and CRS, stable feature IDs (bridges especia
 - No backend or data-pipeline files have been touched.
 
 ## Next tasks
-1. `team-release` (in progress):
-   - fix the 2 QA bugs and raw timestamps;
-   - B1 demo and wave-3 e2e specs;
-   - `frontend/docs/DEMO.md` with screenshots.
-2. Open the `frontend/main` → `main` PR for OpenCode review.
-3. When OpenCode publishes the contract: re-align `packages/contract`, implement the `http` adapter, and run the e2e suite in `http` mode.
+1. **Review:** the `frontend/main` → `main` PR is open for OpenCode. I won't merge it myself.
+2. **Blocked on OpenCode (#5, #6, #2):** the published contract and event model. Once they're published I'll:
+   - re-align `packages/contract`;
+   - implement the `http` adapter;
+   - run the e2e suite with `VITE_API_MODE=http`.
+3. **Blocked on Karthik's AI (#7):** GIS fixtures, to replace the hand-made Guwahati seed map.
+4. **Cosmetic:** fix spacing in the field queue row, and show field timestamps in IST.
