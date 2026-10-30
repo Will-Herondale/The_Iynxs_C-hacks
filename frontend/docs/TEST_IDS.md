@@ -140,6 +140,35 @@ Status labels follow the 7-label spec vocabulary (Saved locally / Waiting to syn
 | `home-sync-now` | manual sync | |
 
 ### Report workflow and detail (Helper 1)
+| id | element | attributes |
+|---|---|---|
+| `report-categories` | category radiogroup (big buttons) | |
+| `report-type-water_level` / `report-type-flood_report` / `report-type-road_blockage` / `report-type-submerged_bridge` | Water level / Flooded road / Blocked road / Submerged bridge categories (old `report-type-*` ids kept) | `aria-checked`, `data-category` |
+| `report-type-road_cleared` | Road reopened | |
+| `report-category-damaged_infrastructure` / `report-category-other` | DISABLED, "Blocked: issue #15" | `aria-disabled="true"` |
+| `quick-blocked` | shortcut: Blocked road | |
+| `field-roadId` | road select (roads only) or bridge select (submerged bridge) | |
+| `field-blockage` / `field-cause` / `cause-fixed` | partial/full; obstruction type; fixed "submerged" for bridges | |
+| `field-severity` / `field-depthCm` / `field-areaId` | flooded road inputs | |
+| `field-levelCm` / `field-trend` / `field-gaugeId` / `estimate-hint` | water level (unit cm); disabled estimated-vs-measured hint (#15) | |
+| `field-observedAt` | editable observation time (defaults to now) | |
+| `location-summary` | GPS ±m / Manually placed / Unknown | |
+| `location-gps` / `location-map-toggle` | optional GPS; open the offline map picker | |
+| `map-picker` / `map-picker-unavailable` | compact MapLibre picker / fallback notice | |
+| `field-lat` / `field-lng` | manual coordinates | |
+| `report-submit` | "Save report" | |
+| `report-saved` / `report-saved-label` | confirmation; label text = `Saved locally` | `data-client-event-id` |
+| `report-view-detail` / `report-new-another` / `report-done` | confirmation actions | |
+| `report-detail` | detail root | `data-client-event-id`, `data-status` (ClientSyncStatus or `superseded`) |
+| `detail-status` | 7-label status badge | |
+| `detail-client-event-id` / `detail-event-id` / `detail-event-id-none` | Mono ids | |
+| `detail-location` / `detail-observed` / `detail-submitted` | location with accuracy; observed vs submitted time (IST) | |
+| `detail-payload` | original payload fields | |
+| `detail-ack` / `detail-ack-none` | server ack (eventId, acceptedAtVersion) | |
+| `detail-review` | conflict reason / rejection errors | |
+| `detail-edit` / `detail-back` | edit rejected (creates a linked replacement) / back | |
+| `provenance-superseded` / `provenance-open-replacement` | original shows what superseded it | |
+| `provenance-supersedes` / `provenance-open-original` | replacement shows what it replaces | |
 
 ### Map tab (Helper 2)
 
