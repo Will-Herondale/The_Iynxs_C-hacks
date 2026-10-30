@@ -24,7 +24,9 @@ describe('SyncStatusBadge', () => {
       expect(el.className).toContain(`setu-sync--${status}`);
       unmount();
     }
-    for (const s of [labels, classes, icons, arias]) expect(s.size).toBe(statuses.length);
+    // sending + accepted both read "Synchronising" (spec vocabulary) but differ in class, icon and aria-label.
+    for (const s of [classes, icons, arias]) expect(s.size).toBe(statuses.length);
+    expect(labels.size).toBe(statuses.length - 1);
   });
 
   it('queued and accepted are visually different pending variants', () => {
@@ -68,14 +70,14 @@ describe('wave 3 ui', () => {
       unmount();
       return t;
     };
-    expect(label('queued', false)).toBe('Saved on device');
-    expect(label('queued', true)).toBe('Queued for sync');
-    expect(label('sending')).toBe('Submitted');
-    expect(label('accepted')).toBe('Accepted — awaiting confirmation');
-    expect(label('synced')).toBe('Confirmed');
-    expect(label('conflict')).toBe('Disputed');
+    expect(label('queued', false)).toBe('Saved locally');
+    expect(label('queued', true)).toBe('Waiting to sync');
+    expect(label('sending')).toBe('Synchronising');
+    expect(label('accepted')).toBe('Synchronising');
+    expect(label('synced')).toBe('Accepted');
+    expect(label('conflict')).toBe('Requires review');
     expect(label('rejected')).toBe('Rejected');
-    expect(label('failed')).toBe('Retrying');
+    expect(label('failed')).toBe('Failed — retry available');
   });
 
   it('Explanation renders title, summary, items', () => {
@@ -100,6 +102,6 @@ describe('wave 3 ui', () => {
   it('PassabilityLegend lists four states; colours exported', () => {
     render(<PassabilityLegend />);
     for (const t of ['Flooded', 'Blocked', 'Safe', 'Uncertain']) expect(screen.getByText(t)).toBeTruthy();
-    expect(Object.keys(SETU_MAP_COLORS)).toEqual(['flooded', 'blocked', 'safe', 'uncertain']);
+    expect(Object.keys(SETU_MAP_COLORS)).toEqual(['flooded', 'blocked', 'safe', 'uncertain', 'warning', 'review']);
   });
 });
