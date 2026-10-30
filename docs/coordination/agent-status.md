@@ -18,6 +18,7 @@ Maintained by: backend orchestrator. Read by: both AI agents and the three human
 |---|---|---|
 | `main` | `f2ff75a` Initial commit | Protected default. Empty except LICENSE + README. |
 | `planning/architecture` | `618f89e` planning docs | All planning docs (docs/00–11). No application code. |
+| `coordination/team-handoff` | `ea114c4` coordination: publish multi-agent handoff | Adds docs/coordination/ (6 docs) + T4 ferry correction. From planning/architecture. |
 | `frontend/main` | `6059fc88` shared test-id + dev-port contract | Frontend monorepo: contract, api-client, mock-backend, ui. Merged `frontend/team-platform`. |
 | `frontend/team-platform` | `589ab33` integrate mock-backend | Merged into `frontend/main`. |
 
@@ -35,7 +36,7 @@ Maintained by: backend orchestrator. Read by: both AI agents and the three human
 ## 4. Work state
 
 - **Frontend:** contract schemas (zod), API client interface, mock in-process backend, dev relay, seed scenario (Guwahati), UI component kit. `http` adapter throws `NotImplementedError` pending contract sign-off. Apps (`apps/field`, `apps/command`) not yet scaffolded.
-- **Backend:** planning docs only. No code yet.
+- **Backend:** coordination docs published (`coordination/team-handoff`). Ready to scaffold `packages/core` (event envelope, HLC, canonical JSON, validation, convergence harness). No application code yet.
 - **Karthik:** nothing landed yet; DEM tiles verified downloadable, Majuli geodata audit complete.
 
 ## 5. Communication rule
