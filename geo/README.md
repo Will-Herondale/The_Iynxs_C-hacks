@@ -13,6 +13,7 @@ scripts/
   40_preview.py  PNG contact sheet of the sourced layers (no flood extent)
   50_validate.py data-level checks + the S3 water-level sweep table
   60_scenarios.py author S1–S5 configs with real feature ids
+  70_hand.py     HAND (height above nearest drainage) raster from DEM + GSW
 data/raw/        untouched downloads (never edited)
 data/out/        deliverables + manifest.csv
 ```
@@ -22,19 +23,22 @@ data/out/        deliverables + manifest.csv
 ```sh
 scripts/00_download.sh                  # DEM, GSW, OSM via Overpass, admin boundaries
 .venv/bin/python scripts/20_shelters.py # camps from the DDMA PDF
-.venv/bin/python scripts/10_process.py  # all vector + raster outputs
+.venv/bin/python scripts/10_process.py  # all vector + raster outputs (incl. embankments)
+.venv/bin/python scripts/70_hand.py     # HAND raster (needs DEM + GSW first)
 .venv/bin/python scripts/40_preview.py  # preview PNG
 .venv/bin/python scripts/50_validate.py # checks + flood_sweep.csv
+.venv/bin/python scripts/60_scenarios.py # scenario configs
 ```
 
 ## Outputs
 
 | File | Content | CRS |
 |---|---|---|
-| `data/out/majuli.gpkg` | `shelters, majuli_boundary, roads, bridges, waterways, waterbodies, ferries, places, amenities, buildings` | EPSG:4326 |
+| `data/out/majuli.gpkg` | `shelters, majuli_boundary, roads, embankments, bridges, waterways, waterbodies, ferries, places, amenities, buildings` | EPSG:4326 |
 | `data/out/geojson/*.geojson` | same layers, one file each (roads/bridges/waterways/ferries carry `length_m`, polygons `area_m2`) | EPSG:4326 |
 | `data/out/majuli_dem_30m_wgs84.tif` | Copernicus GLO-30 clipped to AOI | EPSG:4326 |
 | `data/out/majuli_dem_30m_utm46n.tif` | same, metres, for slope/length maths | EPSG:32646 |
+| `data/out/majuli_hand_30m_wgs84.tif` | **derived** HAND = height above nearest GSW-mapped drainage (D8 flow direction, GSW >25% = stream) | EPSG:4326 |
 | `data/out/majuli_water_occurrence_30m.tif` | JRC GSW occurrence 1984–2021, native 1/4000° grid | EPSG:4326 |
 | `data/out/majuli_water_occurrence_30m_demgrid.tif` | same, resampled to the DEM grid so the two stack pixel-for-pixel | EPSG:4326 |
 | `data/out/shelters.csv` | DDMA camps, coordinates only where published | EPSG:4326 |
@@ -66,3 +70,5 @@ Provenance fields on every row/file: `source, source_url, licence, retrieved, re
 6. The AOI box also takes in mainland Assam (Jorhat, Sivasagar, Dhemaji margins) and foothills to the north-west, so heights run to ~1,567 m and many bridges in `bridges.geojson` are not Majuli crossings. Mask with `majuli_boundary.geojson`, or filter on `length_m` (only 202 of 518 bridges are ≥30 m; the rest are culverts on tracks). Scenario selection applies the island mask explicitly; `50_validate.py` fails if any scenario target sits outside the island.
 7. The Majuli–Jorhat bridge is tagged `highway=construction` in OSM, so S1 excludes it and exercises only crossings that are already open.
 8. `places.geojson` mixes settlement points (6 villages, 2 towns) with 3 localities, some of which are river labels. Anything population-facing must filter to `village/hamlet/town` — S4 does.
+9. **Embankments** (`embankments.geojson`): 13 features extracted from OSM `embankment=yes` ways. OSM embankment mapping in Majuli is sparse — absence is **not** evidence of non-existence. Do not treat as authoritative flood defence data.
+10. **Population data**: only 1 of 62 places has a population tag. WorldPop `ind_ppp_2020_UNadj.tif` (1.5 GB, 100 m, CC BY 4.0) is the recommended source but was not downloaded due to size. Population remains unset (not invented) until a source is added.

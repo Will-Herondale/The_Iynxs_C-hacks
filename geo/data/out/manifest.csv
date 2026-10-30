@@ -2,6 +2,7 @@ layer,features,source,licence,retrieved,resolution,crs,synthetic
 aoi,1,Documented study box (not a boundary),n/a (derived),2026-10-30,n/a,EPSG:4326,false
 majuli_boundary,1,OpenStreetMap relation (admin boundary 'Majuli'),ODbL 1.0,2026-10-30,vector,EPSG:4326,false
 roads,11736,OpenStreetMap via Overpass API,ODbL 1.0,2026-10-30,vector,EPSG:4326,false
+embankments,13,OpenStreetMap via Overpass API,ODbL 1.0,2026-10-30,vector,EPSG:4326,false
 bridges,518,OpenStreetMap via Overpass API,ODbL 1.0,2026-10-30,vector,EPSG:4326,false
 waterways,191,OpenStreetMap via Overpass API,ODbL 1.0,2026-10-30,vector,EPSG:4326,false
 waterbodies,120,OpenStreetMap via Overpass API,ODbL 1.0,2026-10-30,vector,EPSG:4326,false

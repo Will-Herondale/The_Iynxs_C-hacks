@@ -83,6 +83,7 @@ def main() -> int:
 
     plot("majuli_boundary.geojson", facecolor="none", edgecolor="#222", linewidth=1.4)
     plot("waterways.geojson", color="#4f93b8", linewidth=0.5)
+    plot("embankments.geojson", color="#8a5a2b", linewidth=0.8, alpha=0.9)
     plot("roads.geojson", color="#b03030", linewidth=0.35, alpha=0.7)
 
     sh = plot("shelters.geojson", color="#111", marker="^", markersize=26,

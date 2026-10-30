@@ -21,6 +21,11 @@
       "detail": ""
     },
     {
+      "check": "raster exists: majuli_hand_30m_wgs84.tif",
+      "pass": true,
+      "detail": ""
+    },
+    {
       "check": "layer exists: aoi",
       "pass": true,
       "detail": ""
@@ -32,6 +37,11 @@
     },
     {
       "check": "layer exists: roads",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "layer exists: embankments",
       "pass": true,
       "detail": ""
     },
@@ -99,6 +109,31 @@
       "check": "GSW coverage inside AOI > 99%",
       "pass": true,
       "detail": "0.09% nodata"
+    },
+    {
+      "check": "HAND raster shares DEM grid",
+      "pass": true,
+      "detail": "3961x1585 vs 3961x1585"
+    },
+    {
+      "check": "HAND CRS is EPSG:4326",
+      "pass": true,
+      "detail": "EPSG:4326"
+    },
+    {
+      "check": "HAND has valid cells",
+      "pass": true,
+      "detail": "78,508 cells"
+    },
+    {
+      "check": "HAND values are non-negative",
+      "pass": true,
+      "detail": "min=0.0 m"
+    },
+    {
+      "check": "HAND max is plausible (< 1000 m)",
+      "pass": true,
+      "detail": "max=619.3 m"
     },
     {
       "check": "flood metrics are non-decreasing across the sweep",

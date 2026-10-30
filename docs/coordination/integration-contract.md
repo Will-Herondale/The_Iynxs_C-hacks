@@ -18,7 +18,7 @@ Maps `geo/data/out/` layers to `frontend/packages/contract/src/projections.ts` f
 | `Settlement.accessibility` | `accessible\|limited\|cut_off` | scenario-derived (S4/S5), not from source | synthetic |
 | `Settlement.households` | int >= 0 | **not available** — leave unset / 0 | do not invent |
 | `Settlement.needs` | string[] | **not available** — empty array | synthetic per event |
-| `RoadStatus.roadId` | string | `roads.geojson` / `bridges.geojson` `osm_id` | |
+| `RoadStatus.roadId` | string | `roads.geojson` / `bridges.geojson` / `embankments.geojson` `osm_id` | embankments are flood-relevant road crossings |
 | `RoadStatus.name` | string | `name` tag (often null) | fallback to `ref` or `highway` class |
 | `RoadStatus.status` | `open\|partial\|blocked\|unknown` | scenario-derived (S1/S2), default `unknown` | synthetic |
 | `RoadStatus.updatedAt` | ISO datetime | scenario `occurredAt` | synthetic |
@@ -32,13 +32,13 @@ Maps `geo/data/out/` layers to `frontend/packages/contract/src/projections.ts` f
 - Vector layers: EPSG:4326 (GeoJSON `[lng, lat]`), matching contract `Location {lat, lng}`.
 - DEM: `majuli_dem_30m_wgs84.tif` (EPSG:4326) + `majuli_dem_30m_utm46n.tif` (EPSG:32646, metres).
 - GSW occurrence native grid (1/4000°) and DEM-aligned copy (1/3600°, stacks pixel-for-pixel with DEM).
+- HAND: `majuli_hand_30m_wgs84.tif` (EPSG:4326, same grid as DEM, derived from DEM + GSW).
 
 ## Synthetic vs sourced (keep separate)
-- Sourced (real): buildings, roads, bridges, waterways, waterbodies, ferries, places, shelters, DEM, GSW occurrence, island boundary.
+- Sourced (real): buildings, roads, bridges, embankments, waterways, waterbodies, ferries, places, shelters, DEM, GSW occurrence, island boundary, HAND (derived from DEM + GSW).
 - Synthetic (authored, labelled `synthetic: true`): scenario configs S1–S5, flood_sweep.csv levels, road closures, bridge submergence, settlement accessibility, route status, flood extents.
 
 ## Known gaps to flag to backend
 - Shelter capacity/occupancy not published → must not be invented; suggest `capacity: 0, occupancy: 0, open: false` with `needs_review: true` provenance flag.
-- Population available for only 1 of 62 places.
-- No HAND/drainage rasters yet (flow direction needed).
+- Population available for only 1 of 62 places; WorldPop `ind_ppp_2020_UNadj.tif` (1.5 GB, 100 m) is the recommended source but was not downloaded due to size.
 - Output format not yet confirmed by team lead.

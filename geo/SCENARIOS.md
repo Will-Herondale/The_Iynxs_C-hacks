@@ -6,8 +6,8 @@ All scenarios are **synthetic and parameterised**. None is a reconstruction of a
 scenario_id, name, seed, base_layers, perturbations[], expected_effects, assertions[]
 ```
 
-Base graph: OSM roads (`roads.geojson`) + ferries (`ferries.geojson`), nodes anchored on `places.geojson`, shelters from `shelters.csv`.
-Elevation: Copernicus GLO-30 (`majuli_dem_30m_wgs84.tif`).
+Base graph: OSM roads (`roads.geojson`) + ferries (`ferries.geojson`), nodes anchored on `places.geojson`, embankments (`embankments.geojson`), shelters from `shelters.csv`.
+Elevation: Copernicus GLO-30 (`majuli_dem_30m_wgs84.tif`) + derived HAND (`majuli_hand_30m_wgs84.tif`, height above nearest GSW-mapped drainage).
 Water reference: JRC GSW occurrence (not a flood forecast — used only to show where water usually is).
 
 ---

@@ -34,9 +34,10 @@ DEM = OUT / "majuli_dem_30m_wgs84.tif"
 DEM_UTM = OUT / "majuli_dem_30m_utm46n.tif"
 GSW = OUT / "majuli_water_occurrence_30m.tif"
 GSW_GRID = OUT / "majuli_water_occurrence_30m_demgrid.tif"
+HAND = OUT / "majuli_hand_30m_wgs84.tif"
 
-EXPECTED_R = [DEM, DEM_UTM, GSW, GSW_GRID]
-EXPECTED_V = ["aoi", "majuli_boundary", "roads", "bridges", "waterways", "waterbodies",
+EXPECTED_R = [DEM, DEM_UTM, GSW, GSW_GRID, HAND]
+EXPECTED_V = ["aoi", "majuli_boundary", "roads", "embankments", "bridges", "waterways", "waterbodies",
               "ferries", "places", "amenities", "buildings", "shelters"]
 
 LEVELS = list(range(78, 93))  # metres; island interior is ~77-111 m
@@ -130,6 +131,26 @@ def main() -> int:
         gsw_arr = g.read(1)
         gsw_gap = float((gsw_arr == 255).mean())
     check("GSW coverage inside AOI > 99%", gsw_gap < 0.01, f"{gsw_gap*100:.2f}% nodata")
+
+    # ------------------------------------------------- 3b. HAND raster checks
+    with rasterio.open(DEM) as d, rasterio.open(HAND) as h:
+        hand_arr = h.read(1)
+        hand_nodata = h.nodata
+    check("HAND raster shares DEM grid",
+          h.width == d.width and h.height == d.height
+          and h.transform.almost_equals(d.transform),
+          f"{h.width}x{h.height} vs {d.width}x{d.height}")
+    check("HAND CRS is EPSG:4326", h.crs.to_string() == CRS_GEO, h.crs.to_string())
+    hand_valid = hand_arr[hand_arr != hand_nodata]
+    check("HAND has valid cells", int(np.count_nonzero(hand_valid)) > 0,
+          f"{int(np.count_nonzero(hand_valid)):,} cells")
+    if len(hand_valid) > 0:
+        check("HAND values are non-negative",
+              bool(np.all(hand_valid >= 0)),
+              f"min={hand_valid.min():.1f} m")
+        check("HAND max is plausible (< 1000 m)",
+              bool(hand_valid.max() < 1000),
+              f"max={hand_valid.max():.1f} m")
 
     # ---------------------------------------------- 4. S3 style level sweep
     roads = gpd.read_file(GJ / "roads.geojson")

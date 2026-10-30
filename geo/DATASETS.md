@@ -30,7 +30,24 @@ Admin context: 2 revenue circles (Ujani Majuli, Majuli), ~20 Gram Panchayats, **
 
 ---
 
-## 2. Rivers and waterways
+## 2. HAND (Height Above Nearest Drainage) — derived raster
+
+| | HAND from Copernicus GLO-30 + JRC GSW |
+|---|---|
+| Provider | Derived — computed by `scripts/70_hand.py` |
+| Resolution | 1 arc-sec ≈ 30 m (same grid as DEM) |
+| Coverage | AOI box (93.60–94.70 E, 26.78–27.22 N) |
+| Format | GeoTIFF, EPSG:4326, float32, nodata=-9999 |
+| Licence | Derived from Copernicus DEM (free, attribution) + JRC GSW (free, Copernicus) |
+| Access | `scripts/70_hand.py` → `data/out/majuli_hand_30m_wgs84.tif` |
+| Limitations | **Drainage network = GSW occurrence > 25%**, which captures perennial/seasonal water but misses small streams and intermittent channels. 87% of AOI cells drain off-raster or to sinks without reaching mapped drainage → those cells are nodata, not invented. Within the island boundary, 95% of cells have HAND=0 (Majuli is almost entirely at river level). HAND is **not** a historical flood extent. |
+
+Algorithm: D8 flow direction on the gap-filled DEM → stream cells from GSW > 25% → HAND propagated upstream (HAND[cell] = DEM[cell] − DEM[downstream] + HAND[downstream]). Cells with no path to mapped drainage are nodata.
+
+---
+
+
+## 3. Rivers and waterways
 
 | | OSM waterways (primary, vector) | JRC Global Surface Water (primary, raster) | HydroRIVERS v1.0 (context) |
 |---|---|---|---|
@@ -46,7 +63,7 @@ Admin context: 2 revenue circles (Ujani Majuli, Majuli), ~20 Gram Panchayats, **
 
 ---
 
-## 3. Roads and bridges
+## 4. Roads and bridges
 
 | | OSM road + bridge network |
 |---|---|
@@ -62,7 +79,21 @@ No open, georeferenced Assam PWD / PMGSY road or bridge layer was found. Commerc
 
 ---
 
-## 4. Villages and settlement locations
+## 5. Embankments and dykes
+
+| | OSM embankment / dyke ways |
+|---|---|
+| Provider | OpenStreetMap contributors |
+| Resolution | Vector |
+| Coverage | Global; completeness in Majuli **very sparse** — only 13 embankment=yes ways extracted (~11 km total), all tagged on highway ways |
+| Format | GeoJSON / GPKG layer `embankments` |
+| Licence | **ODbL 1.0** |
+| Access | Extracted from the same Overpass AOI extract as roads (`scripts/10_process.py` separates `embankment=yes` ways) |
+| Limitations | OSM embankment mapping in Majuli is incomplete — **absence is not evidence of non-existence**. Most Assam embankments are likely unmapped. Layer is included for completeness but should not be treated as authoritative. |
+
+---
+
+## 6. Villages and settlement locations
 
 | | OSM places + buildings | Census of India 2011 village tables | Google Open Buildings V3 polygons | Open Buildings 2.5D Temporal |
 |---|---|---|---|---|
@@ -76,9 +107,11 @@ No open, georeferenced Assam PWD / PMGSY road or bridge layer was found. Commerc
 
 **Join strategy:** Census 2011 village name + LGD code → OSM `place` point (fuzzy match, manual review) → building count/population from Open Buildings. Keep unmatched villages in a separate `unmatched` table; do not silently drop them.
 
+**Population data gap:** only 1 of 62 OSM places in the AOI has a `population` tag. WorldPop `ind_ppp_2020_UNadj.tif` (1.5 GB, 100 m resolution, CC BY 4.0) is the recommended source but was not downloaded due to size — it can be sampled at settlement points when needed. Until then, settlement `population` is unset (not invented).
+
 ---
 
-## 5. Shelters
+## 7. Shelters
 
 **No authoritative open georeferenced shelter layer exists.** What does exist:
 
@@ -92,7 +125,7 @@ No open, georeferenced Assam PWD / PMGSY road or bridge layer was found. Commerc
 
 ---
 
-## 6. Supporting layers (recommended, needed by the scenarios)
+## 8. Supporting layers (recommended, needed by the scenarios)
 
 | Layer | Source | Res | Licence | Why |
 |---|---|---|---|---|

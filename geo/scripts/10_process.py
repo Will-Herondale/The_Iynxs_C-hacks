@@ -217,7 +217,7 @@ def main() -> int:
         log("majuli_boundary: no suitable OSM admin relation - layer not written")
 
     # --------------------------------------------------------- feature split
-    roads, water_lines, water_polys, bridges, ferries, buildings = [], [], [], [], [], []
+    roads, embankments, water_lines, water_polys, bridges, ferries, buildings = [], [], [], [], [], [], []
     for oid, geom, t in ways:
         rec = dict(osm_id=oid, name=t.get("name"), highway=t.get("highway"),
                    ref=t.get("ref"), surface=t.get("surface"), bridge=t.get("bridge"),
@@ -225,6 +225,8 @@ def main() -> int:
                    natural=t.get("natural"), water=t.get("water"), geometry=geom)
         if t.get("highway"):
             roads.append(rec)
+            if t.get("embankment") == "yes":
+                embankments.append(rec)
             if t.get("bridge") not in (None, "no") or t.get("man_made") == "bridge":
                 bridges.append(rec)
         if t.get("waterway"):
@@ -252,16 +254,17 @@ def main() -> int:
 
     # kind per layer drives which metric column gets attached
     layers = {
-        "roads":       (to_gdf(roads, WAY_COLS, "line", AOI_GEOM), "line"),
-        "bridges":     (to_gdf(bridges, WAY_COLS, "line", AOI_GEOM), "line"),
-        "waterways":   (to_gdf(water_lines, WAY_COLS, "line", AOI_GEOM), "line"),
-        "waterbodies": (to_gdf(water_polys, WAY_COLS, "polygon", AOI_GEOM), "polygon"),
-        "ferries":     (to_gdf(ferries, WAY_COLS, "line", AOI_GEOM), "line"),
-        "places":      (to_gdf(places, ["osm_id", "name", "place", "population"],
+        "roads":        (to_gdf(roads, WAY_COLS, "line", AOI_GEOM), "line"),
+        "embankments":  (to_gdf(embankments, WAY_COLS, "line", AOI_GEOM), "line"),
+        "bridges":      (to_gdf(bridges, WAY_COLS, "line", AOI_GEOM), "line"),
+        "waterways":    (to_gdf(water_lines, WAY_COLS, "line", AOI_GEOM), "line"),
+        "waterbodies":  (to_gdf(water_polys, WAY_COLS, "polygon", AOI_GEOM), "polygon"),
+        "ferries":      (to_gdf(ferries, WAY_COLS, "line", AOI_GEOM), "line"),
+        "places":       (to_gdf(places, ["osm_id", "name", "place", "population"],
                                "point", AOI_GEOM), None),
-        "amenities":   (to_gdf(amenities, ["osm_id", "name", "amenity"],
+        "amenities":    (to_gdf(amenities, ["osm_id", "name", "amenity"],
                                "point", AOI_GEOM), None),
-        "buildings":   (to_gdf(buildings, ["osm_id", "name", "building"],
+        "buildings":    (to_gdf(buildings, ["osm_id", "name", "building"],
                                "polygon", AOI_GEOM), "polygon"),
     }
 
