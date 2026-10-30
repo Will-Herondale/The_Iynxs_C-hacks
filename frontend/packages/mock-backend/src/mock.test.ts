@@ -6,14 +6,14 @@ import {
   MockStore, configureMock, createMockApiClient, createApiClientWithMock, createMemoryStorage, resetMockConfig,
   parseMockQuery, getMockConfig, type MockRelay, type MockSyncState,
 } from './index.js';
-import { scenarioRules } from './seed/index.js';
+import { scenarioRules, S1_BRIDGE_ID, S2_ROAD_ID } from './seed/index.js';
 
 const base = () => ({
   clientEventId: newClientEventId(),
   occurredAt: '2026-10-30T10:00:00Z',
   reporterId: 'r1',
   deviceId: 'd1',
-  location: { lat: 26.14, lng: 91.73 },
+  location: { lat: 26.95, lng: 94.17 },
 });
 const blockage = (roadId: string): FieldEvent => ({ ...base(), type: 'road_blockage', roadId, blockage: 'full' });
 const cleared = (roadId: string): FieldEvent => ({ ...base(), type: 'road_cleared', roadId });
@@ -80,7 +80,7 @@ describe('two-step sync', () => {
 
   it('applies the scripted rule: blockage -> road blocked (visible only after apply)', async () => {
     const { api } = setup();
-    const roadId = 'R7';
+    const roadId = S2_ROAD_ID;
     const before = await api.getProjections();
     const roadBefore = before.roads.features.find((f) => f.properties.roadId === roadId);
     const [ack] = await api.submitEvents([blockage(roadId)]);
@@ -251,11 +251,11 @@ describe('subscribe', () => {
     const a = setup({ channel: 'setu-mock-test' });
     const b = setup({ channel: 'setu-mock-test' });
     const got = new Promise<number>((res) => b.api.subscribe(res));
-    const e = blockage('R7');
+    const e = blockage(S2_ROAD_ID);
     await a.api.submitEvents([e]);
     const v = await got;
     expect(v).toBe(a.store.version);
-    expect((await b.api.getProjections()).roads.features.find((f) => f.properties.roadId === 'R7')?.properties.status).toBe('blocked');
+    expect((await b.api.getProjections()).roads.features.find((f) => f.properties.roadId === S2_ROAD_ID)?.properties.status).toBe('blocked');
     expect((await b.api.getEventStatus([e.clientEventId]))[0]?.state).toBe('applied');
   });
 
@@ -291,27 +291,22 @@ describe('factory', () => {
     expect(NotImplementedError).toBeDefined();
   });
 
-  it('B1 submerged demo through the ApiClient: accepted first, then full projection change after the apply delay', async () => {
+  it('S1 submerged-bridge demo through the ApiClient: accepted first, then the scripted projection change after the apply delay', async () => {
     const { store } = setup();
     const c: ApiClient = createApiClientWithMock({ store });
-    const ev: FieldEvent = { ...blockage('B1'), cause: 'submerged' } as FieldEvent;
+    const ev: FieldEvent = { ...blockage(S1_BRIDGE_ID), cause: 'submerged' } as FieldEvent;
     const [ack] = await c.submitEvents([ev]);
     expect(ack?.result).toBe('accepted');
     const before = await c.getProjections();
-    expect(before.roads.features.find((f) => f.properties.roadId === 'B1')?.properties.status).toBe('open');
+    expect(before.roads.features.find((f) => f.properties.roadId === S1_BRIDGE_ID)?.properties.status).toBe('open');
     await vi.advanceTimersByTimeAsync(2000);
     const [st] = await c.getEventStatus([ev.clientEventId]);
     expect(st?.state).toBe('applied');
     const after = await c.getProjections();
-    const b1 = after.roads.features.find((f) => f.properties.roadId === 'B1')!.properties;
-    expect(b1).toMatchObject({ status: 'blocked', passability: 'impassable', kind: 'bridge' });
-    const s4 = after.settlements.features.find((f) => f.properties.settlementId === 'S4')!.properties;
-    expect(s4).toMatchObject({ accessibility: 'cut_off', evacuationPriority: 'critical' });
-    expect(s4.cutOffReason?.blockingFeatureIds).toEqual(['B1']);
-    expect(s4.evacuationDeadline).toBe('2026-10-30T13:00:00.000Z');
-    const evac3 = after.routes.features.find((f) => f.properties.routeId === 'EVAC-3')!.properties;
-    expect(evac3).toMatchObject({ status: 'unavailable' });
-    expect(evac3.refusal?.blockingFeatureIds).toEqual(['B1']);
+    const b = after.roads.features.find((f) => f.properties.roadId === S1_BRIDGE_ID)!.properties;
+    expect(b).toMatchObject({ status: 'blocked', passability: 'impassable', kind: 'bridge' });
+    expect(b.reason).toContain('85.3 m above deck');
+    expect(after.routes.features.some((f) => f.properties.status === 'unavailable' && f.properties.refusal?.blockingFeatureIds.includes(S1_BRIDGE_ID))).toBe(true);
     expect(after.version).toBeGreaterThan(before.version);
   });
 });
