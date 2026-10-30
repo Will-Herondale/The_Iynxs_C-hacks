@@ -24,3 +24,6 @@ body { background: var(--setu-bg); color: var(--setu-text); font-family: var(--s
 .cmd-viewswitch { display: flex; gap: 2px; }
 .cmd-viewswitch__btn { padding: 6px 14px; border: 1px solid var(--setu-border); background: var(--setu-surface); color: var(--setu-text); font: inherit; cursor: pointer; }
 .cmd-viewswitch__btn.is-active { background: var(--setu-text); color: var(--setu-bg); font-weight: 700; }
+.cmd-situation { display: flex; gap: var(--setu-space-3); align-items: baseline; padding: var(--setu-space-2) var(--setu-space-4); background: var(--setu-surface); border-bottom: 1px solid var(--setu-border); font-size: 1rem; }
+.cmd-situation[data-all-clear='false'] { background: #fdecea; border-left: 6px solid #c62828; }
+.cmd-situation ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; font-weight: 600; }

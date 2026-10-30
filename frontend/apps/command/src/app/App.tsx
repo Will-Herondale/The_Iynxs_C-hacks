@@ -4,6 +4,7 @@ import { ApiProvider } from '../data';
 import { SelectionProvider } from './selection';
 import { LayerProvider } from './layers';
 import { ViewProvider } from './view';
+import { SituationSummary } from './SituationSummary';
 import { Header } from './Header';
 import { FeaturePanelSlot, FeedSlot, LeftSlot, MapSlot } from './slots';
 
@@ -15,7 +16,7 @@ export function App({ client }: { client?: ApiClient } = {}) {
         <LayerProvider>
           <div className="cmd-root">
             <AppShell
-              header={<Header />}
+              header={<><Header /><SituationSummary /></>}
               nav={<LeftSlot />}
               main={<MapSlot />}
               aside={
