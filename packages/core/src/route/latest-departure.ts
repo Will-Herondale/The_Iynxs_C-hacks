@@ -6,8 +6,6 @@
 
 import {
   buildExpandedGraph,
-  type ExpandedArc,
-  type ExpandedNode,
   type RouteEdge,
   type Passability,
 } from './dag.js';
@@ -102,5 +100,3 @@ export function latestSafeDeparture(
 
   return results;
 }
-
-export type { Slot };

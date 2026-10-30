@@ -7,17 +7,6 @@
 // - null retained; undefined omitted
 // - Arrays preserve order
 
-function isInteger(value: unknown): boolean {
-  return typeof value === 'number' && Number.isInteger(value) && isFinite(value);
-}
-
-function isValidScalar(value: unknown): boolean {
-  if (value === null || value === true || value === false) return true;
-  if (typeof value === 'string') return true;
-  if (isInteger(value)) return true;
-  return false;
-}
-
 function canonicalize(value: unknown): string {
   if (value === null) return 'null';
   if (value === true) return 'true';

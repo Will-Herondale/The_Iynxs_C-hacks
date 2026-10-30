@@ -5,8 +5,6 @@
 // firstSubmerge[v] = edge that submerges first on v's route.
 
 import {
-  buildExpandedGraph,
-  type ExpandedArc,
   type RouteEdge,
   type Passability,
   type Slot,

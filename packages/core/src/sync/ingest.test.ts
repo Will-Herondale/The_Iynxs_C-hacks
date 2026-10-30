@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { ingestEvent, ingestBatch, MAX_EVENT_BYTES, type IngestResult } from './ingest.js';
+import { ingestEvent, ingestBatch, MAX_EVENT_BYTES } from './ingest.js';
 import { syncStateEmpty, type SyncState } from './types.js';
 import { createEnvelope, type Envelope } from '../event/envelope.js';
 import { hlcInitial } from '../event/hlc.js';
 
-async function makeEnv(overrides: Partial<Envelope> = {}): Promise<Envelope> {
+type MakeEnvOverrides = Omit<Partial<Envelope>, 'v' | 'id' | 'hash' | 'sig'>;
+
+async function makeEnv(overrides: MakeEnvOverrides = {}): Promise<Envelope> {
   const s = hlcInitial();
   const h = { l: s.l, c: s.c };
   return createEnvelope({

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   projectNetwork,
-  selectRoadState,
   type RoadObservation,
 } from './network.js';
 import { createEnvelope, type Envelope } from '../event/envelope.js';
@@ -28,7 +27,6 @@ async function makeRoadObs(
 }
 
 async function makeEnv(obs: RoadObservation): Promise<Envelope> {
-  const s = hlcInitial();
   return createEnvelope({
     origin: obs.origin,
     seq: obs.seq,

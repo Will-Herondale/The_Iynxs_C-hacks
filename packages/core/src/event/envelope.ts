@@ -22,8 +22,10 @@ export interface Envelope {
   sig: string | null;         // ed25519 over hash, base64url (optional in v1)
 }
 
-export interface EnvelopeInput extends Omit<Envelope, 'id' | 'hash' | 'sig'> {
+export interface EnvelopeInput extends Omit<Envelope, 'id' | 'hash' | 'sig' | 'v'> {
   id?: string;
+  v?: 1;
+  sig?: string | null;
 }
 
 export async function createEnvelope(

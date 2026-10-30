@@ -1,5 +1,8 @@
 // Sync request/response types (planning doc 04, §3).
 
+import type { VersionVector } from './version-vector.js';
+import type { Envelope } from '../event/envelope.js';
+
 export interface SyncRequest {
   proto: 1;
   replica_id: string;
@@ -27,6 +30,6 @@ export function syncStateEmpty(): SyncState {
   return { hwm: {}, holes: new Map(), seen: new Set() };
 }
 
-export type { VersionVector } from './version-vector.js';
+export type { VersionVector };
 export { vvGet, vvSet, vvClone } from './version-vector.js';
-export type { Envelope } from '../event/envelope.js';
+export type { Envelope };

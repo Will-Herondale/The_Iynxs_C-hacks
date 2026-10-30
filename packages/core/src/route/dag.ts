@@ -78,8 +78,8 @@ export function buildExpandedGraph(
   // Wait arcs: (node, s) -> (node, s+1) if node is passable at both slots
   for (const nodeId of allNodes) {
     for (let s = 0; s < slotCount - 1; s++) {
-      const passCurr = isNodePassable(nodeId, s, passByEdge, slotCount);
-      const passNext = isNodePassable(nodeId, s + 1, passByEdge, slotCount);
+      const passCurr = isNodePassable(s, passByEdge);
+      const passNext = isNodePassable(s + 1, passByEdge);
       if (passCurr && passNext) {
         arcs.push({
           from: { nodeId, slot: s },
@@ -116,7 +116,7 @@ export function buildExpandedGraph(
       if (!allPass) continue;
 
       // Destination node must be passable at arrival slot
-      const destPass = isNodePassable(e.toNode, sPrime, passByEdge, slotCount);
+      const destPass = isNodePassable(sPrime, passByEdge);
       if (!destPass) continue;
 
       arcs.push({
@@ -131,10 +131,8 @@ export function buildExpandedGraph(
 }
 
 function isNodePassable(
-  nodeId: string,
   slot: Slot,
   passByEdge: Map<string, Passability[]>,
-  slotCount: number,
 ): boolean {
   // A node is passable if at least one incident edge is passable at this slot
   // (node itself isn't flooded; edges define passability)
@@ -152,7 +150,7 @@ function isNodePassable(
 export function earliestArrivalFrom(
   srcNode: string,
   srcSlot: Slot,
-  { nodes, arcs, slotCount }: ReturnType<typeof buildExpandedGraph>,
+  { arcs, slotCount }: ReturnType<typeof buildExpandedGraph>,
 ): Map<string, number> {
   // nodeId -> earliest arrival slot index (or Infinity)
   const bestSlot = new Map<string, number>();
@@ -164,13 +162,7 @@ export function earliestArrivalFrom(
     for (const arc of arcs) {
       if (arc.to.slot !== s) continue;
       const fromSlot = arc.from.slot;
-      const arrivalAtDest = s; // arc.to.slot
       const currentBest = bestSlot.get(arc.from.nodeId) ?? Infinity;
-      // We can reach arc.from.nodeId at fromSlot, then arrive at arc.to.nodeId at s
-      // The earliest arrival at arc.from.nodeId is min(current, fromSlot)
-      // But we want earliest arrival AT each node, so propagate backwards:
-      // if we can arrive at arc.to.nodeId at s, and arc goes from->to with cost,
-      // then earliest at from node is fromSlot
       if (fromSlot < currentBest) {
         bestSlot.set(arc.from.nodeId, fromSlot);
       }
@@ -190,7 +182,7 @@ export function findFastestPath(
   srcSlot: Slot,
   graph: ReturnType<typeof buildExpandedGraph>,
 ): { path: string[]; etaS: number; waits: Array<{ nodeId: string; holdS: number }> | null } {
-  const { nodes, arcs, slotCount } = graph;
+  const { arcs, slotCount } = graph;
 
   // Forward DP: earliest arrival slot at each (node, slot)
   // dist[node][slot] = earliest arrival slot at node when departing src at srcSlot
@@ -239,7 +231,6 @@ export function findFastestPath(
   const pathEdges: string[] = [];
   const waits: Array<{ nodeId: string; holdS: number }> = [];
   let currentKey = bestDstKey;
-  let currentSlot = bestDstSlot;
 
   while (currentKey !== srcKey) {
     const p = prev.get(currentKey);
@@ -253,7 +244,6 @@ export function findFastestPath(
       waits.push({ nodeId: arc.from.nodeId, holdS: 0 }); // wait is 1 slot = slotLengthMs
     }
     currentKey = `${arc.from.nodeId}:${p.prevSlot}`;
-    currentSlot = p.prevSlot;
   }
 
   pathEdges.reverse();

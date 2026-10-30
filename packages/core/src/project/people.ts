@@ -8,6 +8,8 @@
 //
 // All scoring is integer arithmetic. No floats.
 
+import { type Envelope } from '../event/envelope.js';
+
 export type Script = 'beng' | 'deva' | 'latn' | 'unknown';
 
 export interface PersonName {
@@ -32,7 +34,7 @@ export interface MatchProposal {
   b: string;
   evidence: Array<{ feature: string; value: number; weight: number }>;
   scoreBp: number;     // 0..10000
-  decidedBy: null;     // null until match.accept / match.reject
+  decidedBy: null | 'accepted' | 'rejected';  // null until match.accept / match.reject
 }
 
 export interface PersonCluster {
@@ -49,19 +51,6 @@ export interface PeopleProjection {
 }
 
 // ── Stage 1: normalise ──────────────────────────────────────────────
-
-const BENG_RANGE = [0x0980, 0x09FF];
-const DEVA_RANGE = [0x0900, 0x097F];
-
-function detectScript(text: string): Script {
-  for (const ch of text) {
-    const cp = ch.codePointAt(0)!;
-    if (cp >= BENG_RANGE[0] && cp <= BENG_RANGE[1]) return 'beng';
-    if (cp >= DEVA_RANGE[0] && cp <= DEVA_RANGE[1]) return 'deva';
-    if ((cp >= 0x0041 && cp <= 0x005A) || (cp >= 0x0061 && cp <= 0x007A)) return 'latn';
-  }
-  return 'unknown';
-}
 
 // ISO-15919-derived transliteration table (Indic → Latin)
 // Aggressive collapsing for blocking purposes only.
@@ -256,7 +245,7 @@ function scoreMatch(
 
 export function projectPeople(
   events: Envelope[],
-  asOf: number,
+  _asOf: number,
 ): PeopleProjection {
   const registers: Array<{ env: Envelope; record: PersonRecord }> = [];
   const proposals: MatchProposal[] = [];

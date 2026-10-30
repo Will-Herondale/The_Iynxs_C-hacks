@@ -4,7 +4,7 @@
 // `asOf` time, using valid-time observation selection with disputed-flag
 // resolution. See planning doc 03 (§3.2) for the selection rule.
 
-import { type Envelope, totalOrder } from '../event/envelope.js';
+import { type Envelope } from '../event/envelope.js';
 
 export type RoadState = 'open' | 'partial' | 'blocked' | 'unknown' | 'disputed';
 export type BlockageCause = 'water' | 'debris' | 'structural' | 'unknown';
@@ -87,10 +87,9 @@ export function selectRoadState(
   }
 
   // Pessimistic bias for water-caused impassability
-  let finalState = winner.state;
   if (winner.cause === 'water' && winner.state === 'open') {
     const waterBlocker = runnerUp.find((o) => o.cause === 'water' && o.state === 'blocked');
-    if (waterBlocker) finalState = 'blocked';
+    if (waterBlocker) winner.state = 'blocked';
   }
 
   return { winner, runnerUp: runnerUp.filter((o) => o !== winner), disputed };

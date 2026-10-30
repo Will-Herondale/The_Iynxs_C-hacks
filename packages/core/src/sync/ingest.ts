@@ -13,7 +13,7 @@
 //   holes: current hole table after ingest
 
 import { Envelope, envelopeIsValid } from '../event/envelope.js';
-import { SyncState, VersionVector, vvGet, vvSet, vvClone } from './types.js';
+import { SyncState, vvGet, vvSet, vvClone } from './types.js';
 
 export interface IngestResult {
   state: SyncState;
@@ -46,7 +46,7 @@ export function ingestEvent(state: SyncState, env: Envelope): IngestResult {
   }
 
   // Size limit
-  const size = new TextEncoder().encode(JSON.stringify(env)).length;
+  const size = Buffer.byteLength(JSON.stringify(env));
   if (size > MAX_EVENT_BYTES) {
     result.rejected.push({ id: env.id, reason: `event too large: ${size} bytes` });
     return result;

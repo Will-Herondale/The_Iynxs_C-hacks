@@ -1,7 +1,7 @@
-export { ulid, ulidTimestamp, ulidIsValid, type UlidOptions } from './ulid.js';
-export { hlcNow, hlcUpdate, hlcCompare, hlcInitial, type HLC, type HLCState } from './hlc.js';
-export { canonicalJson, validateNoFloats, type HashableEnvelope } from './canonical.js';
-export { contentHash } from './content-hash.js';
+export { ulid, ulidTimestamp, ulidIsValid, type UlidOptions } from './ulid';
+export { hlcNow, hlcUpdate, hlcCompare, hlcInitial, type HLC, type HLCState } from './hlc';
+export { canonicalJson, validateNoFloats, type HashableEnvelope } from './canonical';
+export { contentHash } from './content-hash';
 export {
   type Envelope,
   type EnvelopeInput,
@@ -10,7 +10,7 @@ export {
   envelopeEqual,
   happensBefore,
   totalOrder,
-} from './envelope.js';
+} from './envelope';
 export {
   vvEmpty,
   vvGet,
@@ -20,8 +20,8 @@ export {
   vvClone,
   vvToSortedEntries,
   type VersionVector,
-} from './sync/version-vector.js';
-export { type SyncRequest, type SyncResponse, type SyncState, syncStateEmpty } from './sync/types.js';
+} from './sync/version-vector';
+export { type SyncRequest, type SyncResponse, type SyncState, syncStateEmpty } from './sync/types';
 
 export {
   type EdgePassability,
@@ -29,7 +29,7 @@ export {
   type RoadState,
   projectNetwork,
   selectRoadState,
-} from './project/network.js';
+} from './project/network';
 export {
   type FloodPoint,
   type WaterObservation,
@@ -38,7 +38,7 @@ export {
   projectFlood,
   selectWaterObservation,
   computeHydraulicDepth,
-} from './project/flood.js';
+} from './project/flood';
 export {
   type PersonName,
   type PersonRecord,
@@ -48,7 +48,7 @@ export {
   projectPeople,
   normalizeName,
   phoneticKey,
-} from './project/people.js';
+} from './project/people';
 export {
   type RouteEdge,
   type Passability,
@@ -58,14 +58,14 @@ export {
   buildExpandedGraph,
   earliestArrivalFrom,
   findFastestPath,
-} from './route/dag.js';
+} from './route/dag';
 export {
   type LatestDepartureResult,
   latestSafeDeparture,
   type Slot,
-} from './route/latest-departure.js';
+} from './route/latest-departure';
 export {
   type SettlementReachability,
   type CutoffResult,
   projectReachability,
-} from './route/cutoff.js';
+} from './route/cutoff';

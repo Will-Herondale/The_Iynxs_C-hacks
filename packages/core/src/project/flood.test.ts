@@ -5,9 +5,8 @@ import {
   computeHydraulicDepth,
   type WaterObservation,
   type FloodPoint,
-} from './flood.js';
-import { createEnvelope, type Envelope } from '../event/envelope.js';
-import { hlcInitial } from '../event/hlc.js';
+} from './flood';
+import { hlcInitial } from '../event/hlc';
 
 async function makeWaterObs(
   overrides: Partial<WaterObservation> & { at?: number; origin?: string; seq?: number } = {},
@@ -25,26 +24,6 @@ async function makeWaterObs(
     suspectClock: false,
     ...overrides,
   };
-}
-
-async function makeEnv(obs: WaterObservation): Promise<Envelope> {
-  const s = hlcInitial();
-  return createEnvelope({
-    origin: obs.origin,
-    seq: obs.seq,
-    hlc: obs.hlc,
-    vv: { [obs.origin]: obs.seq },
-    type: 'obs.water',
-    actor: { id: 'actor-1', role: 'volunteer' },
-    subject: `point:${obs.pointId}`,
-    at: obs.observedAt,
-    payload: {
-      point_id: obs.pointId,
-      depth_dm: obs.depthDm,
-      ref_kind: obs.refKind,
-      confidence: obs.confidence,
-    },
-  });
 }
 
 const refPoint: FloodPoint = {
@@ -66,7 +45,7 @@ describe('projectFlood', () => {
 
   it('computes hydraulic depth from observation', () => {
     const h0 = computeHydraulicDepth(
-      { depthDm: 11, refKind: 'bridge_deck', observedAt: 1000, hlc: { l: 1000, c: 0 }, origin: 'd', seq: 1, suspectClock: false, pointId: 'P1' },
+      { depthDm: 11, refKind: 'bridge_deck', confidence: 100, observedAt: 1000, hlc: { l: 1000, c: 0 }, origin: 'd', seq: 1, suspectClock: false, pointId: 'P1' },
       refPoint,
     );
     // z_ref = 86.0m, depth = 1.1m, S = 87.1m, z_drain = 84.0m, h0 = 3.1m = 31 dm
@@ -75,7 +54,7 @@ describe('projectFlood', () => {
 
   it('rejects implausible hydraulic depth', () => {
     const h0 = computeHydraulicDepth(
-      { depthDm: 130, refKind: 'bridge_deck', observedAt: 1000, hlc: { l: 1000, c: 0 }, origin: 'd', seq: 1, suspectClock: false, pointId: 'P1' },
+      { depthDm: 130, refKind: 'bridge_deck', confidence: 100, observedAt: 1000, hlc: { l: 1000, c: 0 }, origin: 'd', seq: 1, suspectClock: false, pointId: 'P1' },
       refPoint,
     );
     expect(h0).toBeNull();
