@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "aoi",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "name": "Majuli AOI", "source": "documented study box", "area_km2": 0.484 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 94.7, 26.78 ], [ 94.7, 27.22 ], [ 93.6, 27.22 ], [ 93.6, 26.78 ], [ 94.7, 26.78 ] ] ] } }
+]
+}

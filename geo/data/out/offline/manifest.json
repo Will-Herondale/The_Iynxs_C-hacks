@@ -1,0 +1,274 @@
+{
+  "bundle": "majuli-offline-demo",
+  "description": "Self-contained Majuli flood-demo dataset for offline application use",
+  "crs": "EPSG:4326 (all vector layers and WGS84 rasters); UTM 46N DEM also provided in metres",
+  "aoi_box": [
+    93.6,
+    26.78,
+    94.7,
+    27.22
+  ],
+  "generated": "2026-10-30",
+  "network_required": false,
+  "notes": "No live Overpass, tile server, or network service needed. All layers load from local files.",
+  "classification": {
+    "REAL": "Sourced from real data (OSM, DDMA plan, Copernicus DEM, JRC GSW)",
+    "SYNTHETIC": "Authored for demonstration; not real observations",
+    "EXPERIMENTAL": "Derived but not validated; HAND only - must not drive flood extent/passability"
+  },
+  "layers": [
+    {
+      "file": "vector/majuli_boundary.geojson",
+      "features": 1,
+      "size_mb": 0.01,
+      "crs": "EPSG:4326",
+      "classification": "REAL",
+      "source": "OpenStreetMap relation (admin boundary 'Majuli')",
+      "licence": "ODbL 1.0",
+      "core": true,
+      "notes": "Island administrative outline ~798 km\u00b2 incl. river/sandbars"
+    },
+    {
+      "file": "vector/aoi.geojson",
+      "features": 1,
+      "size_mb": 0.0,
+      "crs": "EPSG:4326",
+      "classification": "REAL",
+      "source": "Documented study box (derived)",
+      "licence": "n/a (derived)",
+      "core": true,
+      "notes": "Clip mask 93.60-94.70 E, 26.78-27.22 N"
+    },
+    {
+      "file": "vector/roads.geojson",
+      "features": 11736,
+      "size_mb": 9.89,
+      "crs": "EPSG:4326",
+      "classification": "REAL",
+      "source": "OpenStreetMap via Overpass API",
+      "licence": "ODbL 1.0",
+      "core": true,
+      "notes": "11,736 highway ways on island; length_m metric attached"
+    },
+    {
+      "file": "vector/bridges.geojson",
+      "features": 518,
+      "size_mb": 0.18,
+      "crs": "EPSG:4326",
+      "classification": "REAL",
+      "source": "OpenStreetMap via Overpass API",
+      "licence": "ODbL 1.0",
+      "core": true,
+      "notes": "518 bridge-tagged ways; 202 >= 30 m; length_m attached"
+    },
+    {
+      "file": "vector/embankments.geojson",
+      "features": 13,
+      "size_mb": 0.04,
+      "crs": "EPSG:4326",
+      "classification": "REAL",
+      "source": "OpenStreetMap via Overpass API",
+      "licence": "ODbL 1.0",
+      "core": true,
+      "notes": "13 embankment=yes ways (~11 km); contextual/unverified, not authoritative flood defence"
+    },
+    {
+      "file": "vector/waterways.geojson",
+      "features": 191,
+      "size_mb": 0.37,
+      "crs": "EPSG:4326",
+      "classification": "REAL",
+      "source": "OpenStreetMap via Overpass API",
+      "licence": "ODbL 1.0",
+      "core": true,
+      "notes": "191 river/stream lines"
+    },
+    {
+      "file": "vector/waterbodies.geojson",
+      "features": 120,
+      "size_mb": 0.9,
+      "crs": "EPSG:4326",
+      "classification": "REAL",
+      "source": "OpenStreetMap via Overpass API",
+      "licence": "ODbL 1.0",
+      "core": true,
+      "notes": "120 water polygons"
+    },
+    {
+      "file": "vector/ferries.geojson",
+      "features": 2,
+      "size_mb": 0.0,
+      "crs": "EPSG:4326",
+      "classification": "REAL",
+      "source": "OpenStreetMap via Overpass API",
+      "licence": "ODbL 1.0",
+      "core": true,
+      "notes": "2 ferry crossings (Nimati-Kamalabari type)"
+    },
+    {
+      "file": "vector/settlements.geojson",
+      "features": 8,
+      "size_mb": 0.0,
+      "crs": "EPSG:4326",
+      "classification": "REAL",
+      "source": "OpenStreetMap places (village/hamlet/town on island)",
+      "licence": "ODbL 1.0",
+      "core": true,
+      "notes": "8 island settlements; population only for 1 of 62 places (unset=not invented)"
+    },
+    {
+      "file": "vector/shelters.geojson",
+      "features": 23,
+      "size_mb": 0.01,
+      "crs": "EPSG:4326",
+      "classification": "REAL",
+      "source": "DDMA Majuli Flood Contingency Plan 2026-27 PDF",
+      "licence": "DDMA Majuli (no open licence)",
+      "core": true,
+      "notes": "23 pre-identified camps; open=false (not confirmed open); coordinates as published"
+    },
+    {
+      "file": "vector/buildings.geojson",
+      "features": 182097,
+      "size_mb": 51.63,
+      "crs": "EPSG:4326",
+      "classification": "REAL",
+      "source": "OpenStreetMap via Overpass API",
+      "licence": "ODbL 1.0",
+      "core": false,
+      "notes": "182,097 building footprints; NOT needed for core demo. Simplified 0.0001\u00b0 ~11 m."
+    },
+    {
+      "file": "raster/majuli_dem_30m_wgs84.tif",
+      "features": "raster",
+      "size_mb": 21.69,
+      "crs": "EPSG:4326",
+      "classification": "REAL",
+      "source": "Copernicus DEM GLO-30 (ESA/Airbus), clipped to AOI",
+      "licence": "Copernicus DEM licence (free, attribution)",
+      "core": true,
+      "notes": "DSM (includes vegetation/buildings canopy); 0.06% nodata inside AOI"
+    },
+    {
+      "file": "raster/majuli_dem_30m_utm46n.tif",
+      "features": "raster",
+      "size_mb": 23.8,
+      "crs": "EPSG:32646",
+      "classification": "REAL",
+      "source": "Copernicus DEM GLO-30, UTM 46N reprojected",
+      "licence": "Copernicus DEM licence (free, attribution)",
+      "core": true,
+      "notes": "Metres; for slope/length maths"
+    },
+    {
+      "file": "raster/majuli_water_occurrence_30m.tif",
+      "features": "raster",
+      "size_mb": 1.48,
+      "crs": "EPSG:4326",
+      "classification": "REAL",
+      "source": "JRC Global Surface Water v1.4 occurrence 1984-2021",
+      "licence": "Copernicus, free (attribute 'Source: EC JRC/Google')",
+      "core": true,
+      "notes": "Native 1/4000\u00b0 grid; 0.09% nodata inside AOI"
+    },
+    {
+      "file": "raster/majuli_water_occurrence_30m_demgrid.tif",
+      "features": "raster",
+      "size_mb": 1.24,
+      "crs": "EPSG:4326",
+      "classification": "REAL",
+      "source": "JRC GSW resampled (nearest) onto DEM grid",
+      "licence": "Copernicus, free",
+      "core": true,
+      "notes": "Stacks pixel-for-pixel with DEM for per-pixel comparison"
+    },
+    {
+      "file": "raster/majuli_hand_30m_wgs84.tif",
+      "features": "raster",
+      "size_mb": 0.72,
+      "crs": "EPSG:4326",
+      "classification": "EXPERIMENTAL",
+      "source": "Derived from Copernicus DEM + JRC GSW (scripts/70_hand.py)",
+      "licence": "Derived from Copernicus DEM (free) + JRC GSW (free)",
+      "core": true,
+      "notes": "HAND = height above nearest GSW-mapped drainage. EXPERIMENTAL: relative terrain only, not flood extent. 87% of AOI nodata (drains off-raster/to sinks); 95% of island at HAND=0"
+    },
+    {
+      "file": "scenario/scenario_obs.json",
+      "features": "n/a",
+      "size_mb": 0.0,
+      "crs": "EPSG:4326",
+      "classification": "SYNTHETIC",
+      "source": "Authored demonstration scenario",
+      "licence": "n/a (synthetic)",
+      "core": true,
+      "notes": "S1 observation-driven: submerged bridge SH21 osm_id=284824410, water level 85.3 m"
+    },
+    {
+      "file": "scenario/road_status.json",
+      "features": 1,
+      "size_mb": 0.0,
+      "crs": "EPSG:4326",
+      "classification": "SYNTHETIC",
+      "source": "Authored demonstration impact",
+      "licence": "n/a (synthetic)",
+      "core": true,
+      "notes": "Bridge road blocked from observation event"
+    },
+    {
+      "file": "scenario/settlement_status.json",
+      "features": 8,
+      "size_mb": 0.0,
+      "crs": "EPSG:4326",
+      "classification": "SYNTHETIC",
+      "source": "Authored demonstration impact",
+      "licence": "n/a (synthetic)",
+      "core": true,
+      "notes": "Auniati cut_off; other settlements accessible"
+    },
+    {
+      "file": "scenario/shelter_status.json",
+      "features": 23,
+      "size_mb": 0.01,
+      "crs": "EPSG:4326",
+      "classification": "SYNTHETIC",
+      "source": "Authored demonstration impact",
+      "licence": "n/a (synthetic)",
+      "core": true,
+      "notes": "Shelter reassignment; open=false until DDMA confirms"
+    },
+    {
+      "file": "scenario/flood_extent.json",
+      "features": 1,
+      "size_mb": 0.0,
+      "crs": "EPSG:4326",
+      "classification": "SYNTHETIC",
+      "source": "Authored demonstration flood polygon",
+      "licence": "n/a (synthetic)",
+      "core": true,
+      "notes": "Synthetic flood polygon around bridge area; not observed or historical"
+    },
+    {
+      "file": "scenario/route_status.json",
+      "features": 1,
+      "size_mb": 0.0,
+      "crs": "EPSG:4326",
+      "classification": "SYNTHETIC",
+      "source": "Authored demonstration route",
+      "licence": "n/a (synthetic)",
+      "core": true,
+      "notes": "Recalculated evacuation route avoiding submerged bridge"
+    }
+  ],
+  "total_core_mb": 60.35,
+  "total_optional_mb": 51.63,
+  "total_mb": 111.98,
+  "summary": {
+    "real_layers": 15,
+    "synthetic_layers": 6,
+    "experimental_layers": 1,
+    "core_bundle_mb": 60.35,
+    "optional_mb": 51.63,
+    "total_mb": 111.98
+  }
+}

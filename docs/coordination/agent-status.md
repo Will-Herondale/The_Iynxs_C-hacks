@@ -22,6 +22,7 @@ Full pipeline green:
 - `scripts/60_scenarios.py` — 5 synthetic scenario configs (S1–S5), fixed seeds 101–105, `synthetic: true`, real feature ids.
 - `scripts/70_hand.py` — HAND (height above nearest drainage) raster from DEM + GSW via D8 flow direction + reverse flow tracing.
 - `scripts/80_demo_artifacts.py` — observation-driven demo artifacts: road graph, settlements, shelters, synthetic scenario S1_obs_driven.
+- `scripts/90_offline_bundle.py` — offline bundle assembler: self-contained Majuli dataset for app bundling, no network required.
 
 ## Artifacts produced (`geo/data/out/`)
 | Artifact | Size | Notes |
@@ -29,7 +30,7 @@ Full pipeline green:
 | `majuli.gpkg` | 48 MB | 12 vector layers, EPSG:4326 |
 | `majuli_dem_30m_wgs84.tif` | 21 MB | Copernicus GLO-30 clipped to AOI, EPSG:4326 |
 | `majuli_dem_30m_utm46n.tif` | 23 MB | same, EPSG:32646 |
-| `majuli_hand_30m_wgs84.tif` | — | **derived** HAND = height above nearest GSW-mapped drainage (D8 flow, GSW >25% = stream) |
+| `majuli_hand_30m_wgs84.tif` | — | **derived** HAND = height above nearest GSW-mapped drainage (D8 flow, GSW >25% = stream). Experimental — relative terrain only, not flood extent. |
 | `majuli_water_occurrence_30m.tif` | 1.4 MB | JRC GSW native grid, EPSG:4326 |
 | `majuli_water_occurrence_30m_demgrid.tif` | 1.2 MB | GSW resampled onto DEM grid |
 | `shelters.csv` | 12 KB | 23 camps, raw DMS preserved |
@@ -38,16 +39,15 @@ Full pipeline green:
 | `manifest.csv` | — | Provenance, 14 rows |
 | `scenarios/S{1..5}_*.json` | — | Synthetic scenario configs |
 | `preview/majuli_layers.png` | 1.3 MB | Sourced layers only |
-| `demo/road_graph.geojson` | 1.4 MB | REAL — 1671 road/bridge/embankment features on island |
-| `demo/settlements.geojson` | 2.6 KB | REAL — 8 island settlements (village/hamlet/town) |
-| `demo/shelters.geojson` | 5.7 KB | REAL — 23 DDMA camps, open=false |
-| `demo/scenario_obs.json` | 2.7 KB | SYNTHETIC — observation-driven scenario (S1: submerged bridge) |
-| `demo/road_status.json` | 786 B | SYNTHETIC — road closure from observation |
-| `demo/settlement_status.json` | 4.5 KB | SYNTHETIC — settlement accessibility impacts |
-| `demo/shelter_status.json` | 2.6 KB | SYNTHETIC — shelter reassignment impacts |
-| `demo/flood_extent.json` | 885 B | SYNTHETIC — synthetic flood polygon |
-| `demo/route_status.json` | 809 B | SYNTHETIC — recalculated evacuation route |
-| `geojson/*.geojson` | — | Per-layer GeoJSON |
+| `offline/OFFLINE.md` | — | Offline bundle documentation |
+| `offline/manifest.json` | — | Bundle manifest: sizes, CRS, classification |
+| `offline/vector/*.geojson` | ~12 MB core | Roads, bridges, embankments, waterways, waterbodies, ferries, settlements, shelters, boundary, aoi (+ buildings optional) |
+| `offline/raster/*.tif` | ~48 MB core | DEM WGS84 + UTM46N, GSW native + demgrid, HAND experimental |
+| `offline/scenario/*.json` | <1 MB core | Synthetic scenario + impact JSONs |
+| `geojson/*.geojson` | — | Per-layer GeoJSON (working copies) |
+
+Core offline bundle: **60 MB** total (~12 MB vector + ~48 MB raster + <1 MB scenario).
+Optional buildings layer: **52 MB** (excluded from core).
 
 Layer counts: buildings 182,097; roads 11,736; embankments 13; bridges 518 (202 ≥30 m); waterways 191; waterbodies 120; places 62; amenities 8; ferries 2; shelters 23; boundary 1.
 
@@ -77,6 +77,15 @@ Layer counts: buildings 182,097; roads 11,736; embankments 13; bridges 518 (202 
 - `50_validate.py`: 28 checks, 28 pass, `"ok": true`.
 - Flood sweep island totals at 92 m: 745.1 km of 893 km road flooded (83.4%), 14 of 23 camps, 11,661 island buildings.
 - Demo artifacts (`80_demo_artifacts.py`): road graph (1671 features), settlements (8), shelters (23), scenario S1_obs_driven — all generate cleanly, real vs synthetic clearly flagged.
+- Offline bundle (`90_offline_bundle.py`): 60 MB core bundle, all layers loadable locally, no network services required. Manifest at `geo/data/out/offline/manifest.json`.
+
+## Offline readiness (P0)
+- **No live Overpass:** All OSM data is pre-extracted to local GeoJSON.
+- **No tile servers:** All rasters are local GeoTIFFs (DEM, GSW occurrence).
+- **No external geocoding:** All coordinates are pre-resolved in GeoJSON.
+- **Bounded extent:** All data clipped to AOI box (93.60–94.70 E, 26.78–27.22 N) or island boundary.
+- **Feature distinction:** REAL vs SYNTHETIC vs EXPERIMENTAL classified in manifest.json and `synthetic: true` fields.
+- **Minimum viable bundle:** ~33 MB (excludes buildings, UTM DEM, HAND).
 
 ## Commits and branches
 - Branch `data/karthik` pushed to `origin/data/karthik`. PR #16 open to `main`.

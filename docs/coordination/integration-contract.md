@@ -38,6 +38,14 @@ Maps `geo/data/out/` layers to `frontend/packages/contract/src/projections.ts` f
 - Sourced (real): buildings, roads, bridges, embankments, waterways, waterbodies, ferries, places, shelters, DEM, GSW occurrence, island boundary, HAND (derived from DEM + GSW).
 - Synthetic (authored, labelled `synthetic: true`): scenario configs S1–S5, flood_sweep.csv levels, road closures, bridge submergence, settlement accessibility, route status, flood extents.
 
+## Offline readiness (P0)
+All vector layers and rasters are available as local files in `geo/data/out/offline/`.
+- No live Overpass, external tile servers, or network services required.
+- All vector layers are GeoJSON EPSG:4326 `[lng, lat]`.
+- All rasters are GeoTIFF (WGS84 DEM + GSW; UTM 46N DEM in metres).
+- Bundle manifest: `geo/data/out/offline/manifest.json` (sizes, CRS, classification).
+- Core bundle: ~60 MB; minimum viable bundle ~33 MB.
+
 ## Known gaps to flag to backend
 - Shelter capacity/occupancy not published → must not be invented; suggest `capacity: 0, occupancy: 0, open: false` with `needs_review: true` provenance flag.
 - Population available for only 1 of 62 places; WorldPop `ind_ppp_2020_UNadj.tif` (1.5 GB, 100 m) is the recommended source but was not downloaded due to size.

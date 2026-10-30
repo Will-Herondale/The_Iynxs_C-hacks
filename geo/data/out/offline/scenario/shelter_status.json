@@ -1,0 +1,490 @@
+{
+  "type": "FeatureCollection",
+  "version": 1,
+  "generatedAt": "2026-10-30T14:03:31.074723+00:00",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "MJ-SH-001",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          94.29445,
+          27.08166
+        ]
+      },
+      "properties": {
+        "shelterId": "MJ-SH-001",
+        "name": "Cherpai Bhewchuk Kumarbari Balika LPS",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_auniati": false,
+        "synthetic": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "MJ-SH-002",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          94.367833,
+          27.090722
+        ]
+      },
+      "properties": {
+        "shelterId": "MJ-SH-002",
+        "name": "Amguri Pamua LPS",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_auniati": false,
+        "synthetic": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "MJ-SH-003",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          94.4045,
+          27.095111
+        ]
+      },
+      "properties": {
+        "shelterId": "MJ-SH-003",
+        "name": "2No. Ujani Ratanpur Miri LP",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_auniati": false,
+        "synthetic": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "MJ-SH-004",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          94.383528,
+          27.087528
+        ]
+      },
+      "properties": {
+        "shelterId": "MJ-SH-004",
+        "name": "Nehru Smrity L.P",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_auniati": false,
+        "synthetic": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "MJ-SH-005",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          94.383201,
+          27.0853
+        ]
+      },
+      "properties": {
+        "shelterId": "MJ-SH-005",
+        "name": "Ujani Majuli Kherkotia college",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_auniati": false,
+        "synthetic": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "MJ-SH-006",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          94.315389,
+          27.05675
+        ]
+      },
+      "properties": {
+        "shelterId": "MJ-SH-006",
+        "name": "No. Nava Ratanpur L.P",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_auniati": false,
+        "synthetic": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "MJ-SH-007",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          94.319306,
+          27.05675
+        ]
+      },
+      "properties": {
+        "shelterId": "MJ-SH-007",
+        "name": "No.Telia Bari L.P",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_auniati": false,
+        "synthetic": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "MJ-SH-008",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          94.335944,
+          27.036889
+        ]
+      },
+      "properties": {
+        "shelterId": "MJ-SH-008",
+        "name": "Rangalibahar LPS",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_auniati": false,
+        "synthetic": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "MJ-SH-009",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          94.288528,
+          27.039953
+        ]
+      },
+      "properties": {
+        "shelterId": "MJ-SH-009",
+        "name": "Jengraimukh College",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_auniati": true,
+        "synthetic": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "MJ-SH-010",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          94.360056,
+          27.029389
+        ]
+      },
+      "properties": {
+        "shelterId": "MJ-SH-010",
+        "name": "Luit Poria No. Kuhiyarbari Adarsha LPS",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_auniati": false,
+        "synthetic": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "MJ-SH-011",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          94.426917,
+          27.069444
+        ]
+      },
+      "properties": {
+        "shelterId": "MJ-SH-011",
+        "name": "Sonowal Kochari LPS",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_auniati": false,
+        "synthetic": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "MJ-SH-012",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          94.2875,
+          27.072111
+        ]
+      },
+      "properties": {
+        "shelterId": "MJ-SH-012",
+        "name": "Bongaon Community Hall",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_auniati": false,
+        "synthetic": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "MJ-SH-013",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          94.284639,
+          26.954444
+        ]
+      },
+      "properties": {
+        "shelterId": "MJ-SH-013",
+        "name": "12 no.Karhal gaon LPS",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_auniati": false,
+        "synthetic": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "MJ-SH-014",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          94.290222,
+          26.924806
+        ]
+      },
+      "properties": {
+        "shelterId": "MJ-SH-014",
+        "name": "Meragarh Misamari MES",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_auniati": false,
+        "synthetic": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "MJ-SH-015",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          94.290222,
+          26.964278
+        ]
+      },
+      "properties": {
+        "shelterId": "MJ-SH-015",
+        "name": "Meragarh Misamari LPS",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_auniati": false,
+        "synthetic": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "MJ-SH-016",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          94.278371,
+          27.048615
+        ]
+      },
+      "properties": {
+        "shelterId": "MJ-SH-016",
+        "name": "1. Phuloni GP Phuloni HS",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_auniati": false,
+        "synthetic": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "MJ-SH-017",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          94.277123,
+          26.935787
+        ]
+      },
+      "properties": {
+        "shelterId": "MJ-SH-017",
+        "name": "1. Bongaon GP Pub Majuli College",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_auniati": false,
+        "synthetic": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "MJ-SH-018",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          94.393944,
+          27.091889
+        ]
+      },
+      "properties": {
+        "shelterId": "MJ-SH-018",
+        "name": "Ratanpur Miri H.S",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_auniati": false,
+        "synthetic": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "MJ-SH-019",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          94.266543,
+          27.036389
+        ]
+      },
+      "properties": {
+        "shelterId": "MJ-SH-019",
+        "name": "Jengrai Karkichuk Mising Community hall",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_auniati": false,
+        "synthetic": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "MJ-SH-020",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          94.3475,
+          27.082715
+        ]
+      },
+      "properties": {
+        "shelterId": "MJ-SH-020",
+        "name": "Kathalkhuwa Kathamia LPS",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_auniati": false,
+        "synthetic": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "MJ-SH-021",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          94.287005,
+          26.964278
+        ]
+      },
+      "properties": {
+        "shelterId": "MJ-SH-021",
+        "name": "Atoichuk Jyoti Mahila Samittee Rangamansa",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_auniati": false,
+        "synthetic": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "MJ-SH-022",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          94.146683,
+          26.979248
+        ]
+      },
+      "properties": {
+        "shelterId": "MJ-SH-022",
+        "name": "Pitambar Dev Goswami Junior College",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_auniati": false,
+        "synthetic": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "MJ-SH-023",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          94.156445,
+          26.979931
+        ]
+      },
+      "properties": {
+        "shelterId": "MJ-SH-023",
+        "name": "Garamur Sadar LPS",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_auniati": false,
+        "synthetic": true
+      }
+    }
+  ]
+}

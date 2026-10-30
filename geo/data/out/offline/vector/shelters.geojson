@@ -1,0 +1,30 @@
+{
+"type": "FeatureCollection",
+"name": "shelters",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "shelterId": "MJ-SH-001", "name": "Cherpai Bhewchuk Kumarbari Balika LPS", "capacity": 0, "occupancy": 0, "open": false, "synthetic": false }, "geometry": { "type": "Point", "coordinates": [ 94.29445, 27.08166 ] } },
+{ "type": "Feature", "properties": { "shelterId": "MJ-SH-002", "name": "Amguri Pamua LPS", "capacity": 0, "occupancy": 0, "open": false, "synthetic": false }, "geometry": { "type": "Point", "coordinates": [ 94.367833, 27.090722 ] } },
+{ "type": "Feature", "properties": { "shelterId": "MJ-SH-003", "name": "2No. Ujani Ratanpur Miri LP", "capacity": 0, "occupancy": 0, "open": false, "synthetic": false }, "geometry": { "type": "Point", "coordinates": [ 94.4045, 27.095111 ] } },
+{ "type": "Feature", "properties": { "shelterId": "MJ-SH-004", "name": "Nehru Smrity L.P", "capacity": 0, "occupancy": 0, "open": false, "synthetic": false }, "geometry": { "type": "Point", "coordinates": [ 94.383528, 27.087528 ] } },
+{ "type": "Feature", "properties": { "shelterId": "MJ-SH-005", "name": "Ujani Majuli Kherkotia college", "capacity": 0, "occupancy": 0, "open": false, "synthetic": false }, "geometry": { "type": "Point", "coordinates": [ 94.383201, 27.0853 ] } },
+{ "type": "Feature", "properties": { "shelterId": "MJ-SH-006", "name": "No. Nava Ratanpur L.P", "capacity": 0, "occupancy": 0, "open": false, "synthetic": false }, "geometry": { "type": "Point", "coordinates": [ 94.315389, 27.05675 ] } },
+{ "type": "Feature", "properties": { "shelterId": "MJ-SH-007", "name": "No.Telia Bari L.P", "capacity": 0, "occupancy": 0, "open": false, "synthetic": false }, "geometry": { "type": "Point", "coordinates": [ 94.319306, 27.05675 ] } },
+{ "type": "Feature", "properties": { "shelterId": "MJ-SH-008", "name": "Rangalibahar LPS", "capacity": 0, "occupancy": 0, "open": false, "synthetic": false }, "geometry": { "type": "Point", "coordinates": [ 94.335944, 27.036889 ] } },
+{ "type": "Feature", "properties": { "shelterId": "MJ-SH-009", "name": "Jengraimukh College", "capacity": 0, "occupancy": 0, "open": false, "synthetic": false }, "geometry": { "type": "Point", "coordinates": [ 94.288528, 27.039953 ] } },
+{ "type": "Feature", "properties": { "shelterId": "MJ-SH-010", "name": "Luit Poria No. Kuhiyarbari Adarsha LPS", "capacity": 0, "occupancy": 0, "open": false, "synthetic": false }, "geometry": { "type": "Point", "coordinates": [ 94.360056, 27.029389 ] } },
+{ "type": "Feature", "properties": { "shelterId": "MJ-SH-011", "name": "Sonowal Kochari LPS", "capacity": 0, "occupancy": 0, "open": false, "synthetic": false }, "geometry": { "type": "Point", "coordinates": [ 94.426917, 27.069444 ] } },
+{ "type": "Feature", "properties": { "shelterId": "MJ-SH-012", "name": "Bongaon Community Hall", "capacity": 0, "occupancy": 0, "open": false, "synthetic": false }, "geometry": { "type": "Point", "coordinates": [ 94.2875, 27.072111 ] } },
+{ "type": "Feature", "properties": { "shelterId": "MJ-SH-013", "name": "12 no.Karhal gaon LPS", "capacity": 0, "occupancy": 0, "open": false, "synthetic": false }, "geometry": { "type": "Point", "coordinates": [ 94.284639, 26.954444 ] } },
+{ "type": "Feature", "properties": { "shelterId": "MJ-SH-014", "name": "Meragarh Misamari MES", "capacity": 0, "occupancy": 0, "open": false, "synthetic": false }, "geometry": { "type": "Point", "coordinates": [ 94.290222, 26.924806 ] } },
+{ "type": "Feature", "properties": { "shelterId": "MJ-SH-015", "name": "Meragarh Misamari LPS", "capacity": 0, "occupancy": 0, "open": false, "synthetic": false }, "geometry": { "type": "Point", "coordinates": [ 94.290222, 26.964278 ] } },
+{ "type": "Feature", "properties": { "shelterId": "MJ-SH-016", "name": "1. Phuloni GP Phuloni HS", "capacity": 0, "occupancy": 0, "open": false, "synthetic": false }, "geometry": { "type": "Point", "coordinates": [ 94.278371, 27.048615 ] } },
+{ "type": "Feature", "properties": { "shelterId": "MJ-SH-017", "name": "1. Bongaon GP Pub Majuli College", "capacity": 0, "occupancy": 0, "open": false, "synthetic": false }, "geometry": { "type": "Point", "coordinates": [ 94.277123, 26.935787 ] } },
+{ "type": "Feature", "properties": { "shelterId": "MJ-SH-018", "name": "Ratanpur Miri H.S", "capacity": 0, "occupancy": 0, "open": false, "synthetic": false }, "geometry": { "type": "Point", "coordinates": [ 94.393944, 27.091889 ] } },
+{ "type": "Feature", "properties": { "shelterId": "MJ-SH-019", "name": "Jengrai Karkichuk Mising Community hall", "capacity": 0, "occupancy": 0, "open": false, "synthetic": false }, "geometry": { "type": "Point", "coordinates": [ 94.266543, 27.036389 ] } },
+{ "type": "Feature", "properties": { "shelterId": "MJ-SH-020", "name": "Kathalkhuwa Kathamia LPS", "capacity": 0, "occupancy": 0, "open": false, "synthetic": false }, "geometry": { "type": "Point", "coordinates": [ 94.3475, 27.082715 ] } },
+{ "type": "Feature", "properties": { "shelterId": "MJ-SH-021", "name": "Atoichuk Jyoti Mahila Samittee Rangamansa", "capacity": 0, "occupancy": 0, "open": false, "synthetic": false }, "geometry": { "type": "Point", "coordinates": [ 94.287005, 26.964278 ] } },
+{ "type": "Feature", "properties": { "shelterId": "MJ-SH-022", "name": "Pitambar Dev Goswami Junior College", "capacity": 0, "occupancy": 0, "open": false, "synthetic": false }, "geometry": { "type": "Point", "coordinates": [ 94.146683, 26.979248 ] } },
+{ "type": "Feature", "properties": { "shelterId": "MJ-SH-023", "name": "Garamur Sadar LPS", "capacity": 0, "occupancy": 0, "open": false, "synthetic": false }, "geometry": { "type": "Point", "coordinates": [ 94.156445, 26.979931 ] } }
+]
+}
