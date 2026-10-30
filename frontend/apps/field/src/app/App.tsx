@@ -12,6 +12,7 @@ import { OfflineBanner } from './OfflineBanner.js';
 import { StorageBanner } from './StorageBanner.js';
 import { ApiStatus } from './ApiStatus.js';
 import { InstallButton, UpdateToast } from '../pwa/index.js';
+import { ExchangeScreen } from '../features/exchange/index.js';
 import { QueueScreen, SyncNowButton } from '../features/queue/index.js';
 import { ConnectivityStatus, LastSyncedLine } from '../features/status/index.js';
 import { useRoute } from './route.js';
@@ -104,7 +105,27 @@ export function App() {
       main = <CampScreen onOpenReport={openReport} />;
       break;
     case 'sync':
-      main = <QueueScreen onEdit={onEdit} />;
+      main =
+        route.param === 'exchange' ? (
+          <>
+            <a href="#/sync" className="field-header__link" style={{ display: 'inline-flex', minHeight: 44, alignItems: 'center' }}>
+              ← Back to Sync
+            </a>
+            <ExchangeScreen />
+          </>
+        ) : (
+          <>
+            <a
+              href="#/sync/exchange"
+              data-testid="nav-exchange"
+              className="field-header__link"
+              style={{ display: 'inline-flex', minHeight: 44, alignItems: 'center' }}
+            >
+              Exchange reports (file)
+            </a>
+            <QueueScreen onEdit={onEdit} />
+          </>
+        );
       break;
     default:
       main = <HomeScreen cachedAt={cachedAt} />;
