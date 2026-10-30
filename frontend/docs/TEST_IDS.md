@@ -36,7 +36,7 @@ Mock failure toggles go through the URL, e.g. `?mock=offline`, `?mock=5xx:1`, `?
 | `household-submit` | submit | |
 | `form-error` | validation error text | |
 | `queue-list` | queue container | |
-| `queue-item` | one queued item | `data-client-event-id`, `data-status` = ClientSyncStatus, `data-type` |
+| `queue-item` | one queued item | `data-client-event-id`, `data-status` = ClientSyncStatus, `data-type`, `data-attempts` |
 | `queue-retry`, `queue-discard`, `queue-edit` | per-item actions (inside `queue-item`) | |
 | `conflict-panel` | conflict details (inside `queue-item`) | |
 | `conflict-keep-mine`, `conflict-accept-server` | conflict resolution | |
@@ -66,3 +66,54 @@ The road/settlement/route lists are required. They make the projections testable
 - R4 full: S1 becomes `cut_off`; EVAC-1 is replaced by EVAC-1b.
 - R3 full: S5 becomes `cut_off`. R10 full: S6 becomes `cut_off`.
 - The mock applies an event about 1500ms after accepting it (`?mock=delay:<ms>`).
+
+## Wave 3 additions (submerged-bridge demo, camp, provenance)
+
+### Field app and camp mode
+| id | element | attributes |
+|---|---|---|
+| `field-cause` | blockage cause select (submerged, debris, collapse, damage, other) | |
+| `field-roadId` | now lists bridges too (B1, …), labelled "Bridge: <name>" | |
+| `nav-camp` | camp mode nav link (`#/camp`) | |
+| `camp-select` | choose the camp/shelter (SH1..SH3), remembered on the device | |
+| `camp-info` | capacity/occupancy of the chosen camp, from projections | `data-shelter-id` |
+| `camp-household-form` | household registration at the camp (sets `shelterId`) | reuses `household-*` field ids |
+| `camp-household-list` | households registered at this camp from this device | |
+| `camp-household-row` | one household | `data-client-event-id`, `data-status` |
+| `sync-status-label` | the visible text label inside every SyncStatusBadge | text = the brief's vocabulary (below) |
+
+Status vocabulary from the brief, shown by `SyncStatusBadge`:
+
+| Internal ClientSyncStatus | Label shown |
+|---|---|
+| `queued`, device offline | **Saved on device** (created locally) |
+| `queued`, online | **Queued for sync** |
+| `sending` | **Submitted** |
+| `accepted` | **Accepted — awaiting confirmation** |
+| `synced` | **Confirmed** |
+| `conflict` | **Disputed** |
+| `rejected` | **Rejected** |
+| `failed` | **Retrying** |
+
+### Command centre
+| id | element | attributes |
+|---|---|---|
+| `road-row-<id>` | (existing) | adds `data-kind` = road\|bridge, `data-passability` |
+| `situation-summary` | plain-language summary at the top, e.g. "Bridge B1 submerged → Kalapahar cut off → evacuate by 18:00" | |
+| `explain-cutoff-<settlementId>` | "Why cut off" block (feature-panel and settlement row) | |
+| `explain-refusal-<routeId>` | "Why this route is refused" block | |
+| `evac-deadlines` | evacuation deadline list, soonest first | |
+| `deadline-<settlementId>` | one deadline | `data-deadline` = ISO, text shows the time left |
+| `nav-audit` / `audit-view` | provenance and audit view | |
+| `audit-row` | one event | `data-event-id`, `data-client-event-id`, `data-status` |
+| `provenance-<featureId>` | "Based on these reports" list inside feature-panel | |
+| `map-legend` | legend: flooded / blocked / safe / uncertain | |
+
+### Demo scenario (scripted in mock-backend; field names PROPOSED in issue #6)
+A `road_blockage` with `roadId=B1`, `blockage=full`, `cause=submerged` (bridge "Bharalu Bridge") does all of the following:
+- B1 becomes `blocked`, `passability=impassable`, with a `reason`.
+- Flood area A2 grows (`confidence=observed`).
+- S4 becomes `cut_off`, with a `cutOffReason` whose `blockingFeatureIds` includes B1 and that event, plus an `evacuationDeadline` and `evacuationPriority=critical`.
+- EVAC-3 becomes `unavailable` with a `refusal` explaining that B1 is impassable.
+
+At least one flood polygon in the seed has `confidence=uncertain`.

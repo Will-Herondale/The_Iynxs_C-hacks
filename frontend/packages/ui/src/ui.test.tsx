@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import { ClientSyncStatusSchema } from '@setu/contract';
-import { AppShell, Button, EmptyState, Field, OnlineIndicator, Panel, SyncStatusBadge } from './index.js';
+import { DeadlineBadge, Explanation, PassabilityLegend, SETU_MAP_COLORS, AppShell, Button, EmptyState, Field, OnlineIndicator, Panel, SyncStatusBadge } from './index.js';
 
 afterEach(cleanup);
 
@@ -57,5 +57,49 @@ describe('components', () => {
     expect(screen.getByRole('main')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Go' }).getAttribute('type')).toBe('button');
     expect(screen.getByText('Nothing')).toBeTruthy();
+  });
+});
+
+describe('wave 3 ui', () => {
+  it('SyncStatusBadge vocabulary labels', () => {
+    const label = (status: (typeof statuses)[number], online?: boolean) => {
+      const { unmount } = render(<SyncStatusBadge status={status} online={online} />);
+      const t = screen.getByTestId('sync-status-label').textContent;
+      unmount();
+      return t;
+    };
+    expect(label('queued', false)).toBe('Saved on device');
+    expect(label('queued', true)).toBe('Queued for sync');
+    expect(label('sending')).toBe('Submitted');
+    expect(label('accepted')).toBe('Accepted — awaiting confirmation');
+    expect(label('synced')).toBe('Confirmed');
+    expect(label('conflict')).toBe('Disputed');
+    expect(label('rejected')).toBe('Rejected');
+    expect(label('failed')).toBe('Retrying');
+  });
+
+  it('Explanation renders title, summary, items', () => {
+    render(<Explanation title="Why cut off" summary="B1 is submerged" items={['a', 'b']} data-testid="x" />);
+    expect(screen.getByTestId('x').textContent).toContain('B1 is submerged');
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+  });
+
+  it('DeadlineBadge: ok, urgent under 1h, overdue', () => {
+    const now = Date.parse('2026-01-01T12:00:00Z');
+    const r = render(<DeadlineBadge deadline="2026-01-01T15:00:00Z" now={now} data-testid="d" />);
+    expect(screen.getByTestId('d').textContent).toContain('3h 0m left');
+    expect(screen.getByTestId('d').getAttribute('data-deadline')).toBe('2026-01-01T15:00:00Z');
+    expect(screen.getByTestId('d').className).not.toContain('urgent');
+    r.rerender(<DeadlineBadge deadline="2026-01-01T12:30:00Z" now={now} data-testid="d" />);
+    expect(screen.getByTestId('d').className).toContain('urgent');
+    r.rerender(<DeadlineBadge deadline="2026-01-01T11:00:00Z" now={now} data-testid="d" />);
+    expect(screen.getByTestId('d').textContent).toContain('OVERDUE');
+    expect(screen.getByTestId('d').className).toContain('overdue');
+  });
+
+  it('PassabilityLegend lists four states; colours exported', () => {
+    render(<PassabilityLegend />);
+    for (const t of ['Flooded', 'Blocked', 'Safe', 'Uncertain']) expect(screen.getByText(t)).toBeTruthy();
+    expect(Object.keys(SETU_MAP_COLORS)).toEqual(['flooded', 'blocked', 'safe', 'uncertain']);
   });
 });

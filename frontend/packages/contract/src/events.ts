@@ -42,6 +42,8 @@ export const RoadBlockageSchema = z.object({
   roadId: z.string().optional(),
   blockage: z.enum(['partial', 'full']),
   passableBy: z.array(VehicleClassSchema).optional(),
+  /** PROPOSED (frontend, issue #6) */
+  cause: z.enum(['submerged', 'debris', 'collapse', 'damage', 'other']).optional(),
 });
 
 export const RoadClearedSchema = z.object({
@@ -74,6 +76,8 @@ export const HouseholdRegistrationSchema = z.object({
   members: z.number().int().min(1),
   vulnerable: VulnerableFlagsSchema,
   settlementId: z.string().optional(),
+  /** PROPOSED (frontend, issue #6): camp/shelter where the household was registered. */
+  shelterId: z.string().optional(),
   needs: z.array(z.string()),
 });
 
