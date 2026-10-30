@@ -1,12 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Panel, EmptyState } from '@setu/ui';
 import { useSelection } from '../app';
-import type { ChangeBatch } from './useSnapshotChanges';
+import { useProjections } from '../data';
+import { useSnapshotChanges, type ChangeBatch } from './useSnapshotChanges';
 
 const FRESH_MS = 8000;
 
 /** "What just changed" list; the newest batch is flagged for a few seconds. */
-export function ChangesList({ batches }: { batches: ChangeBatch[] }) {
+/** Self-contained: reads the snapshot and diffs consecutive server versions. */
+export function ChangesList() {
+  const { snapshot } = useProjections();
+  return <ChangesView batches={useSnapshotChanges(snapshot)} />;
+}
+
+export function ChangesView({ batches }: { batches: ChangeBatch[] }) {
   const { select } = useSelection();
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
