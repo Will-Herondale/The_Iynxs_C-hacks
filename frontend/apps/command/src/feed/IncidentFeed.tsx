@@ -1,3 +1,4 @@
+import { formatClock } from '../app/time';
 import { useMemo } from 'react';
 import { Panel, EmptyState, SyncStatusBadge } from '@setu/ui';
 import type { EventRecord } from '@setu/contract';
@@ -48,7 +49,7 @@ export function IncidentFeed() {
                     <span>
                       {loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}
                     </span>{' '}
-                    · <time dateTime={rec.receivedAt}>{new Date(rec.receivedAt).toLocaleTimeString()}</time>
+                    · <time dateTime={rec.receivedAt}>{formatClock(rec.receivedAt)}</time>
                   </div>
                   <div>
                     <SyncStatusBadge status={status} />

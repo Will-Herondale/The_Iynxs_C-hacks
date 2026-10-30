@@ -1,3 +1,4 @@
+import { formatDateTime } from '../app/time';
 import { useMemo, useState } from 'react';
 import { Panel, EmptyState, SyncStatusBadge } from '@setu/ui';
 import type { FieldEventType } from '@setu/contract';
@@ -104,8 +105,8 @@ export function AuditView({ onShowFeature }: AuditViewProps) {
                       data-type={e.type}
                     >
                       <td style={cell}>
-                        <div>Reported <time dateTime={e.occurredAt}>{new Date(e.occurredAt).toLocaleString()}</time></div>
-                        <div>Received <time dateTime={rec.receivedAt}>{new Date(rec.receivedAt).toLocaleString()}</time></div>
+                        <div>Reported <time dateTime={e.occurredAt}>{formatDateTime(e.occurredAt)}</time></div>
+                        <div>Received <time dateTime={rec.receivedAt}>{formatDateTime(rec.receivedAt)}</time></div>
                         <div data-testid="audit-delay"><em>{delayLabel(rec)}</em></div>
                       </td>
                       <td style={cell}>

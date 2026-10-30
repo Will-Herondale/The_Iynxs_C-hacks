@@ -1,3 +1,4 @@
+import { formatDateTime } from '../app/time';
 import type { ProvenanceItem } from '../data';
 import { SyncStatusBadge } from '@setu/ui';
 import { EVENT_META, eventSummary } from '../feed';
@@ -20,7 +21,7 @@ export function ProvenanceView({ featureId, items }: { featureId: string; items:
                     <span aria-hidden="true">{EVENT_META[record.event.type].icon}</span> <strong>{EVENT_META[record.event.type].label}</strong>: {eventSummary(record)}
                   </div>
                   <div style={{ fontSize: '0.85em' }}>
-                    <time dateTime={record.event.occurredAt}>{new Date(record.event.occurredAt).toLocaleString()}</time>
+                    <time dateTime={record.event.occurredAt}>{formatDateTime(record.event.occurredAt)}</time>
                     {' · reporter '}{record.event.reporterId}{' · device '}{record.event.deviceId}
                   </div>
                   <SyncStatusBadge status={status} />

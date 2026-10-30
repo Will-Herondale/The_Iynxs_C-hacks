@@ -1,4 +1,5 @@
 import type { ProjectionSnapshot } from '@setu/contract';
+import { formatClock } from './time';
 
 /** Plain-language situation lines built ONLY from server fields (names, reasons, deadlines). No derivation. */
 export interface SituationLine {
@@ -13,8 +14,7 @@ export interface Situation {
   allClear: boolean;
 }
 
-const defaultFmt = (iso: string) =>
-  new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+const defaultFmt = formatClock;
 
 export function buildSituation(snap: ProjectionSnapshot | undefined, fmt: (iso: string) => string = defaultFmt): Situation {
   if (!snap) return { lines: [], allClear: false };

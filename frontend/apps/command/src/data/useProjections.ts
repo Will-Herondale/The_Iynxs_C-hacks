@@ -28,6 +28,21 @@ export function useProjections(): ProjectionsResult {
   const api = useApi();
   const qc = useQueryClient();
   const [subscribed, setSubscribed] = useState(true);
+  const [online, setOnline] = useState(() => typeof navigator === 'undefined' || navigator.onLine !== false);
+
+  useEffect(() => {
+    const on = () => {
+      setOnline(true);
+      void qc.invalidateQueries({ queryKey: PROJECTIONS_KEY });
+    };
+    const off = () => setOnline(false);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', off);
+    return () => {
+      window.removeEventListener('online', on);
+      window.removeEventListener('offline', off);
+    };
+  }, [qc]);
 
   useEffect(() => {
     let unsub: (() => void) | undefined;
@@ -50,7 +65,7 @@ export function useProjections(): ProjectionsResult {
     refetchInterval: (query) => (!subscribed || query.state.status === 'error' ? POLL_MS : LIVE_SAFETY_POLL_MS),
   });
 
-  const connection: ConnectionState = q.isError ? 'offline' : subscribed ? 'live' : 'polling';
+  const connection: ConnectionState = q.isError || !online ? 'offline' : subscribed ? 'live' : 'polling';
   return {
     snapshot: q.data,
     version: q.data?.version,
