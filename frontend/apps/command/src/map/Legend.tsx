@@ -118,6 +118,7 @@ export function Legend() {
   return (
     <div
       data-testid="map-legend"
+      className="cmd-legend"
       style={{
         position: 'absolute', left: 8, bottom: 24, zIndex: 2, maxWidth: 260, maxHeight: '60%', overflowY: 'auto', padding: '6px 10px',
         background: 'rgba(255,255,255,0.94)', color: '#111', borderRadius: 6, fontSize: 12,
