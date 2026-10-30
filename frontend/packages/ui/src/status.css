@@ -1,0 +1,76 @@
+/* Status + content components (StatusBadge, SeverityLabel, EventCard, ObservationCard, SyntheticTag,
+   OfflineBanner, SyncStatusSummary, LoadingState, ErrorState). Flat fills, tight radii, no gradients.
+   Every state also carries a glyph and text; colour is never the only signal. */
+.setu-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.setu-meta { font-size: var(--setu-text-sm, 0.8125rem); color: var(--setu-text-secondary, var(--setu-text-muted)); }
+.setu-meta__k { text-transform: uppercase; letter-spacing: 0.04em; font-size: var(--setu-text-xs, 0.75rem); }
+
+/* StatusBadge: border style + glyph + label differ per status */
+.setu-sync { --c: var(--setu-unavailable); display: inline-flex; align-items: center; gap: var(--setu-space-1); padding: 1px var(--setu-space-2); border-radius: var(--setu-radius-sm, 2px); font-size: var(--setu-text-sm, 0.8125rem); font-weight: 600; line-height: 1.4; border: 1px solid var(--c); color: var(--c); background: transparent; white-space: nowrap; }
+.setu-sync--queued { --c: var(--setu-unavailable); border-style: dashed; }
+.setu-sync--queued.setu-sync--offline { background: var(--setu-unavailable-bg); }
+.setu-sync--sending { --c: var(--setu-water); border-style: solid; }
+.setu-sync--accepted { --c: var(--setu-water); background: var(--setu-water-bg); border-style: dotted; border-width: 2px; }
+.setu-sync--synced { --c: var(--setu-ok); background: var(--setu-ok-bg); }
+.setu-sync--conflict { --c: var(--setu-review); background: var(--setu-review-bg); border-style: double; border-width: 3px; }
+.setu-sync--rejected { --c: var(--setu-critical); background: var(--setu-critical-bg); }
+.setu-sync--failed { --c: var(--setu-warn); background: var(--setu-warn-bg); border-style: dashed; border-width: 2px; }
+.setu-sync__icon { font-weight: 700; }
+
+/* SyntheticTag */
+.setu-synthetic { display: inline-flex; align-items: center; gap: var(--setu-space-1); padding: 0 var(--setu-space-2); border: 1px dashed var(--setu-review); border-radius: var(--setu-radius-sm, 2px); color: var(--setu-review); background: var(--setu-review-bg); font-size: var(--setu-text-xs, 0.75rem); font-weight: 700; letter-spacing: 0.06em; }
+
+/* SeverityLabel */
+.setu-severity { display: inline-flex; align-items: center; gap: var(--setu-space-1); font-size: var(--setu-text-sm, 0.8125rem); font-weight: 600; color: var(--setu-text-secondary, var(--setu-text)); }
+.setu-severity--high { color: var(--setu-warn); }
+.setu-severity--critical { color: var(--setu-critical); font-weight: 700; }
+
+/* EventCard */
+.setu-event { display: block; background: var(--setu-surface-1, var(--setu-surface)); border: 1px solid var(--setu-border-subtle, var(--setu-border)); border-radius: var(--setu-radius-md, 3px); padding: var(--setu-space-2) var(--setu-space-3); }
+.setu-event__button, .setu-event:not(.setu-event--clickable) { display: flex; flex-direction: column; gap: var(--setu-space-1); }
+.setu-event__button { all: unset; box-sizing: border-box; display: flex; flex-direction: column; gap: var(--setu-space-1); width: 100%; cursor: pointer; }
+.setu-event__button:focus-visible { outline: 2px solid var(--setu-focus); outline-offset: 2px; }
+.setu-event--clickable:hover { background: var(--setu-surface-2); }
+.setu-event__head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--setu-space-2); }
+.setu-event__title { font-weight: 600; color: var(--setu-text-primary, var(--setu-text)); }
+.setu-event__where { color: var(--setu-text-secondary, var(--setu-text-muted)); font-size: var(--setu-text-sm, 0.8125rem); }
+.setu-event__times { display: flex; flex-wrap: wrap; gap: var(--setu-space-1) var(--setu-space-3); }
+
+/* ObservationCard: observed = solid, modelled = dashed + water tint, synthetic = hatched + purple */
+.setu-obs { border: 1px solid var(--setu-border-subtle, var(--setu-border)); border-left-width: 4px; border-radius: var(--setu-radius-md, 3px); padding: var(--setu-space-2) var(--setu-space-3); background: var(--setu-surface-1, var(--setu-surface)); }
+.setu-obs--observed { border-left-color: var(--setu-ok); border-left-style: solid; }
+.setu-obs--modelled { border-left-color: var(--setu-water); border-left-style: dashed; background: var(--setu-water-bg); }
+.setu-obs--synthetic { border-left-color: var(--setu-review); border-left-style: dotted; border-style: dashed; border-left-width: 4px; background: var(--setu-review-bg); }
+.setu-obs__head { display: flex; justify-content: space-between; align-items: center; gap: var(--setu-space-2); }
+.setu-obs__kind { font-size: var(--setu-text-xs, 0.75rem); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--setu-text-secondary, var(--setu-text-muted)); }
+.setu-obs__title { margin: var(--setu-space-1) 0; font-size: var(--setu-text-md, 0.9375rem); font-weight: 600; }
+.setu-obs__body { font-size: var(--setu-text-sm, 0.8125rem); }
+.setu-obs__foot { display: flex; flex-wrap: wrap; gap: var(--setu-space-1) var(--setu-space-3); margin-top: var(--setu-space-2); }
+
+/* OfflineBanner */
+.setu-offline-banner { display: flex; align-items: center; gap: var(--setu-space-2); padding: var(--setu-space-2) var(--setu-space-4); background: var(--setu-warn-bg); color: var(--setu-warn); border-bottom: 2px solid var(--setu-warn); font-size: var(--setu-text-sm, 0.8125rem); }
+
+/* SyncStatusSummary */
+.setu-syncsum { border: 1px solid var(--setu-border-subtle, var(--setu-border)); border-radius: var(--setu-radius-md, 3px); padding: var(--setu-space-2) var(--setu-space-3); background: var(--setu-surface-1, var(--setu-surface)); }
+.setu-syncsum__pending { margin: 0 0 var(--setu-space-1); }
+.setu-syncsum__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.setu-syncsum__row { display: grid; grid-template-columns: 1.5em 1fr auto; align-items: baseline; gap: var(--setu-space-2); font-size: var(--setu-text-sm, 0.8125rem); }
+.setu-syncsum__row.is-zero { color: var(--setu-text-secondary, var(--setu-text-muted)); }
+.setu-syncsum__row--conflict:not(.is-zero) { color: var(--setu-review); font-weight: 600; }
+.setu-syncsum__row--rejected:not(.is-zero) { color: var(--setu-critical); font-weight: 600; }
+.setu-syncsum__row--failed:not(.is-zero) { color: var(--setu-warn); font-weight: 600; }
+.setu-syncsum__last { margin: var(--setu-space-2) 0 0; }
+
+/* LoadingState */
+.setu-loading { display: flex; align-items: center; justify-content: center; gap: var(--setu-space-2); padding: var(--setu-space-6, 24px); color: var(--setu-text-secondary, var(--setu-text-muted)); }
+
+/* ErrorState */
+.setu-error { display: flex; gap: var(--setu-space-3); padding: var(--setu-space-3) var(--setu-space-4); border: 1px solid var(--c); border-left-width: 4px; border-radius: var(--setu-radius-md, 3px); background: var(--bg); color: var(--setu-text-primary, var(--setu-text)); --c: var(--setu-unavailable); --bg: var(--setu-unavailable-bg); }
+.setu-error--warning { --c: var(--setu-warn); --bg: var(--setu-warn-bg); }
+.setu-error--critical { --c: var(--setu-critical); --bg: var(--setu-critical-bg); }
+.setu-error--review { --c: var(--setu-review); --bg: var(--setu-review-bg); }
+.setu-error__icon { font-weight: 700; color: var(--c); min-width: 1.2em; text-align: center; }
+.setu-error__title { margin: 0; font-weight: 700; }
+.setu-error__msg, .setu-error__detail { margin: var(--setu-space-1) 0 0; font-size: var(--setu-text-sm, 0.8125rem); }
+.setu-error__detail { font-family: var(--setu-font-mono, monospace); }
+.setu-error__action { margin-top: var(--setu-space-2); }

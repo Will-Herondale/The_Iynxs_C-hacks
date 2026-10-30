@@ -82,18 +82,18 @@ The road/settlement/route lists are required. They make the projections testable
 | `camp-household-row` | one household | `data-client-event-id`, `data-status` |
 | `sync-status-label` | the visible text label inside every SyncStatusBadge | text = the brief's vocabulary (below) |
 
-Status vocabulary from the brief, shown by `SyncStatusBadge`:
+Status vocabulary (design system, wave 5), shown by `SyncStatusBadge` / `StatusBadge`. Each status has a distinct icon, CSS class and text; "Accepted" appears only once the server confirms the event was applied (`isConfirmedSynced`), never on HTTP 2xx alone.
 
 | Internal ClientSyncStatus | Label shown |
 |---|---|
-| `queued`, device offline | **Saved on device** (created locally) |
-| `queued`, online | **Queued for sync** |
-| `sending` | **Submitted** |
-| `accepted` | **Accepted — awaiting confirmation** |
-| `synced` | **Confirmed** |
-| `conflict` | **Disputed** |
+| `queued`, device offline | **Saved locally** |
+| `queued`, online | **Waiting to sync** |
+| `sending` | **Synchronising** |
+| `accepted` (server has it, not yet confirmed applied) | **Synchronising** |
+| `synced` (confirmed applied) | **Accepted** |
+| `conflict` | **Requires review** |
 | `rejected` | **Rejected** |
-| `failed` | **Retrying** |
+| `failed` | **Failed — retry available** |
 
 ### Command centre
 | id | element | attributes |
