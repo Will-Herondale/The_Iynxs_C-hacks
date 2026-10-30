@@ -15,6 +15,8 @@ export type QueueItem = {
   validationErrors?: { path: string; message: string }[];
   /** Provenance: the clientEventId this item replaced (keep-mine resubmission or rejected→edit). */
   supersedes?: string;
+  /** Provenance tag; absent = created on this device. 'imported' = merged from a JSONL exchange file. */
+  origin?: 'local' | 'imported';
   createdAt: number;
   updatedAt: number;
 };
