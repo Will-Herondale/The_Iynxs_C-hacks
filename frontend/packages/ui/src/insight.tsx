@@ -6,6 +6,8 @@ export const SETU_MAP_COLORS = {
   blocked: '#ff5a52',
   safe: '#4cd964',
   uncertain: '#f2b84b',
+  warning: '#f2a63b',
+  review: '#d2a8ff',
 } as const;
 
 export interface ExplanationProps {
