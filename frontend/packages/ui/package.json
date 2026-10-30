@@ -5,7 +5,10 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
     "./tokens.css": "./src/tokens.css",
     "./components.css": "./src/components.css"
   },
@@ -13,13 +16,28 @@
     "build": "tsc -b",
     "test": "vitest run --root ../.. packages/ui"
   },
-  "files": ["dist", "src/tokens.css", "src/components.css"],
-  "sideEffects": ["*.css"],
-  "dependencies": { "@setu/contract": "*" },
-  "peerDependencies": { "react": ">=19" },
+  "files": [
+    "dist",
+    "src/tokens.css",
+    "src/components.css"
+  ],
+  "sideEffects": [
+    "*.css"
+  ],
+  "dependencies": {
+    "@setu/contract": "*",
+    "@fontsource/inter": "^5.1.0",
+    "@fontsource/jetbrains-mono": "^5.1.0"
+  },
+  "peerDependencies": {
+    "react": ">=19"
+  },
   "devDependencies": {
     "@testing-library/react": "^16.0.0",
     "@testing-library/dom": "^10.0.0",
-    "jsdom": "^25.0.0"
+    "jsdom": "^25.0.0",
+    "axe-core": "^4.10.0",
+    "jest-axe": "^10.0.0",
+    "@types/jest-axe": "^3.5.9"
   }
 }
