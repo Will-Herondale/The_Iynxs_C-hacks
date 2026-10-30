@@ -28,7 +28,7 @@ export function SyncNowButton() {
     <Button
       data-testid="sync-now"
       onClick={() => {
-        void syncNow();
+        void syncNow({ force: true });
       }}
       disabled={syncing || !online}
       aria-busy={syncing}

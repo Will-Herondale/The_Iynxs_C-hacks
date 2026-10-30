@@ -9,6 +9,8 @@ import { MapScreen } from '../features/map/index.js';
 import { HomeScreen } from '../features/home/index.js';
 import { useCachedProjections } from '../offline/index.js';
 import { OfflineBanner } from './OfflineBanner.js';
+import { StorageBanner } from './StorageBanner.js';
+import { InstallButton, UpdateToast } from '../pwa/index.js';
 import { QueueScreen, SyncNowButton } from '../features/queue/index.js';
 import { ConnectivityStatus, LastSyncedLine } from '../features/status/index.js';
 import { useRoute } from './route.js';
@@ -42,6 +44,7 @@ export function App() {
     <div className="field-header">
       <strong className="field-header__title">SETU Field</strong>
       <ConnectivityStatus />
+      <InstallButton />
       <LastSyncedLine />
       <SyncNowButton />
       <a href="#/camp" data-testid="nav-camp" className="field-header__link" aria-current={route.name === 'camp' ? 'page' : undefined}>
@@ -113,7 +116,9 @@ export function App() {
       main={
         <>
           <OfflineBanner />
+          <StorageBanner />
           {main}
+          <UpdateToast />
         </>
       }
     />

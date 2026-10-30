@@ -293,7 +293,7 @@ Existing `household-*`, `field-lat`/`field-lng`, `camp-*` ids are unchanged. `ho
 ### Install, update, storage (Helpers 1 and 2)
 | id | element | attributes |
 |---|---|---|
-| `pwa-install` | install button (hidden if installed or no prompt) | |
-| `pwa-update-toast` / `pwa-update-reload` / `pwa-update-dismiss` | new-version toast and its actions | |
-| `storage-error` | failed local write shown to the user; form data kept | |
+| `install-app` | install button (hidden if installed or no prompt) | |
+| `update-toast` / `update-reload` / `update-dismiss` | new-version toast and its actions | |
+| `storage-error` | banner for a failed local write (form data kept) | `data-kind=quota\|unavailable\|unknown` |
 | `queue-sync-now` | manual retry (existing id) | |

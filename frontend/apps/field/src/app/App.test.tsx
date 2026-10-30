@@ -8,6 +8,7 @@ import { App } from './App.js';
 
 vi.mock('maplibre-gl', () => ({ default: { Map: class { on() {} addControl() {} remove() {} }, Marker: class {}, NavigationControl: class {} } }));
 vi.mock('maplibre-gl/dist/maplibre-gl.css', () => ({}));
+vi.mock('../pwa/register.js', () => ({ registerServiceWorker: () => {}, useUpdateAvailable: () => ({ available: false, reload: () => {}, dismiss: () => {} }) }));
 
 const sync = vi.hoisted(() => ({ online: true }));
 vi.mock('../sync/index.js', async (orig) => ({

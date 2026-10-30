@@ -1,4 +1,4 @@
-/* global document, window, Event, navigator, console, process, fetch, setTimeout, indexedDB */
+/* global document, window, Event, navigator, console, process, fetch, setTimeout, indexedDB, URL */
 // Offline PWA acceptance (headless, production preview on our own port).
 //   npm run build -w @setu/field && node apps/field/scripts/pwa-e2e.mjs   (from frontend/)
 import { chromium } from '@playwright/test';
@@ -36,7 +36,9 @@ try {
   // 1. manifest valid + SW active (first online visit)
   await page.goto(`${base}/#/home`);
   await page.waitForSelector('[data-testid=home-screen]');
-  const swState = await page.evaluate(async () => (await navigator.serviceWorker.ready).active?.state);
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.waitForFunction(() => navigator.serviceWorker.controller || navigator.serviceWorker.getRegistration().then((r) => r?.active?.state === 'activated'));
+  const swState = await page.evaluate(async () => (await navigator.serviceWorker.getRegistration())?.active?.state);
   assert(swState === 'activated', `service worker not active: ${swState}`);
   const href = await page.getAttribute('link[rel=manifest]', 'href');
   const manifest = await (await fetch(new URL(href, base))).json();

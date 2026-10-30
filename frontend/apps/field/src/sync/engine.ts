@@ -147,7 +147,7 @@ export async function confirmAccepted(api: ApiClient, opts: EngineOptions = {}):
 
 /** One full pass: send due items in batches of <= 20, then confirm accepted ones. */
 export async function runPass(api: ApiClient, options: EngineOptions = {}): Promise<void> {
-  const opts = { now: options.now ?? Date.now, rand: options.rand ?? Math.random };
+  const opts = { now: options.now ?? Date.now, rand: options.rand ?? Math.random, force: options.force ?? false };
   const due = await dueItems(opts.now(), options.force);
   for (let i = 0; i < due.length; i += BATCH_SIZE) {
     const ok = await sendBatch(api, due.slice(i, i + BATCH_SIZE), opts);
