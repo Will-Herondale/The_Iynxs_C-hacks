@@ -1,4 +1,4 @@
-import { MapView } from '../map';
+import { MapLayersProvider, MapView } from '../map';
 import { FeaturePanel } from '../panels';
 import { AuditView } from '../audit';
 import { SettlementsSection } from '../sections/settlements';
@@ -23,6 +23,7 @@ export function Workspace() {
   const showMap = view === 'map' || split;
   const showAside = !!selected && view !== 'overview' && view !== 'audit';
   return (
+    <MapLayersProvider>
     <div className="cmd-workspace" data-view={view}>
       {split && (
         <section className="cmd-section cmd-section--split" aria-label={view} data-testid={`section-${view}`}>
@@ -56,5 +57,6 @@ export function Workspace() {
         </aside>
       )}
     </div>
+    </MapLayersProvider>
   );
 }

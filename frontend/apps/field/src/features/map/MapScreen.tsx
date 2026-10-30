@@ -5,6 +5,7 @@ import { DataAsOf, OriginBadge, StaleWarning } from '../status/index.js';
 import { useQueue, useSyncState } from '../../sync/index.js';
 import { BASEMAP_SOURCE } from './basemap.js';
 import { MapCanvas } from './MapCanvas.js';
+import { CLASS_HINT, type DataClass } from './honesty.js';
 import { projectionView } from './projectionLayers.js';
 import { MARKER_SHAPE, remoteMarkers, reportMarkers } from './reportMarkers.js';
 import { useVolunteerPosition } from './useVolunteerPosition.js';
@@ -18,6 +19,10 @@ export interface MapScreenProps {
 const defaultOpen = (id: string) => {
   window.location.hash = `#/report/${id}`;
 };
+
+function ClassTag({ c }: { c: DataClass }) {
+  return <span className="map-class" data-testid="data-class-tag" data-class={c} title={CLASS_HINT[c]}>[{c}]</span>;
+}
 
 export function MapScreen({ onOpenReport = defaultOpen }: MapScreenProps) {
   const { snapshot, cachedAt, stale } = useCachedProjections();
@@ -49,9 +54,12 @@ export function MapScreen({ onOpenReport = defaultOpen }: MapScreenProps) {
             <li key={k}><span aria-hidden="true">{MARKER_SHAPE[k].glyph}</span> {MARKER_SHAPE[k].name} ({MARKER_SHAPE[k].shape})</li>
           ))}
           <li><span aria-hidden="true">●</span> Local (circle): created on this device; "Local · Accepted" once the server applied it. <span aria-hidden="true">⬢</span> Remote (hexagon, dotted outline): received from the server.</li>
-          <li>Blue area: flood. Solid outline = observed; dashed = modelled, SYNTHETIC (DEM threshold, not a validated simulation).</li>
-          <li>Red solid line: blocked road. Orange dashed line: partially blocked.</li>
-          <li>⊘ Cut off / △ Limited access: settlement labels.</li>
+          <li data-class="EXPERIMENTAL">Blue area: flood. Solid outline = observed; dashed = modelled <ClassTag c="EXPERIMENTAL" /> (DEM threshold, not a validated simulation).</li>
+          <li data-class="SYNTHETIC">Red solid line: blocked road. Orange dashed line: partially blocked. <ClassTag c="SYNTHETIC" /></li>
+          <li data-class="SYNTHETIC">⊘ Cut off / △ Limited access: settlement labels. <ClassTag c="SYNTHETIC" /></li>
+          <li data-testid="map-key-shelter" data-class="SYNTHETIC"><span aria-hidden="true">◌</span> Dashed hollow marker: pre-identified camp, not confirmed open. <ClassTag c="SYNTHETIC" /></li>
+          <li data-class="REAL">Roads, waterways, places and the basemap: <ClassTag c="REAL" /></li>
+          <li data-testid="map-key-routes"><span aria-hidden="true">?</span> Routes and travel times are not shown: they are not verified.</li>
         </ul>
       </section>
 
@@ -66,7 +74,7 @@ export function MapScreen({ onOpenReport = defaultOpen }: MapScreenProps) {
               {stale ? 'Showing saved copy' : 'Up to date'}
               {cachedAt ? ` (fetched ${new Date(cachedAt).toLocaleTimeString()})` : ''}.
             </p>
-            <h4>Blocked roads</h4>
+            <h4>Blocked roads <ClassTag c="SYNTHETIC" /></h4>
             {view.blockedRoads.length === 0 ? <p>None reported.</p> : (
               <ul data-testid="map-blocked-list">
                 {view.blockedRoads.map((r) => (
@@ -74,13 +82,19 @@ export function MapScreen({ onOpenReport = defaultOpen }: MapScreenProps) {
                 ))}
               </ul>
             )}
+            <h4>Camps (pre-identified, not confirmed) <ClassTag c="SYNTHETIC" /></h4>
+            {view.shelters.length === 0 ? <p>None.</p> : (
+              <ul data-testid="map-shelter-list">
+                {view.shelters.map((sh) => <li key={sh.id} data-shelter-status={sh.status}>{sh.status === 'open-reported' ? '✓' : '◌'} {sh.label}: {sh.name} <small>({sh.id})</small>, capacity {sh.counts}</li>)}
+              </ul>
+            )}
             <h4>Flood areas</h4>
             {view.flood.length === 0 ? <p>None.</p> : (
               <ul data-testid="map-flood-list">
-                {view.flood.map((f) => <li key={f.id}>{f.label}: {f.id}, depth {f.depthCm} cm</li>)}
+                {view.flood.map((f) => <li key={f.id} data-class={f.observed ? 'SYNTHETIC' : 'EXPERIMENTAL'}>{f.label}: {f.id}, depth {f.depthCm} cm</li>)}
               </ul>
             )}
-            <h4>Cut-off settlements</h4>
+            <h4>Cut-off settlements <ClassTag c="SYNTHETIC" /></h4>
             {view.cutOff.length === 0 ? <p>None.</p> : (
               <ul data-testid="map-cutoff-list">
                 {view.cutOff.map((s) => <li key={s.id}>{s.accessibility === 'cut_off' ? '⊘ Cut off' : '△ Limited access'}: {s.name}{s.reason ? ` — ${s.reason}` : ''}</li>)}

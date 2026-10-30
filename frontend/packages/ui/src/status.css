@@ -74,3 +74,8 @@
 .setu-error__msg, .setu-error__detail { margin: var(--setu-space-1) 0 0; font-size: var(--setu-text-sm, 0.8125rem); }
 .setu-error__detail { font-family: var(--setu-font-mono, monospace); }
 .setu-error__action { margin-top: var(--setu-space-2); }
+
+/* DataClassTag: icon + text, never colour alone */
+.setu-dataclass { display: inline-flex; align-items: center; gap: var(--setu-space-1); padding: 0 var(--setu-space-2); border: 1px solid currentColor; border-radius: var(--setu-radius-sm, 2px); font-size: var(--setu-text-xs, 0.75rem); font-weight: 700; letter-spacing: 0.06em; color: var(--setu-text-secondary, var(--setu-text)); }
+.setu-dataclass--synthetic { border-style: dashed; color: var(--setu-review); background: var(--setu-review-bg); }
+.setu-dataclass--experimental { border-style: dotted; border-width: 2px; color: var(--setu-warn); }

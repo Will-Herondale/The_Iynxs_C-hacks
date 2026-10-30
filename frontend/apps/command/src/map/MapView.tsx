@@ -11,7 +11,7 @@ import { BASE_BOUNDS, baseLayerIds, loadBasemap, offlineStyle } from './basemap'
 import { selectionBounds } from './bounds';
 import { blockingByGroup, blockingIds, buildMarkers, type MarkerSpec } from './markers';
 import { observationsToGeoJSON, registerObservationIcons } from './observations';
-import { useMapLayers } from './toggles';
+import { MapLayerControls, useMapLayers } from './toggles';
 import { Legend } from './Legend';
 
 const CLICK_TOLERANCE_PX = 6;
@@ -21,12 +21,13 @@ function markerElement(m: MarkerSpec, onSelect: () => void): HTMLElement {
   el.dataset.testid = `map-marker-${m.featureId}`;
   el.dataset.markerKind = m.kind;
   if (m.kind === 'shelter') el.className = 'cmd-marker--shelter';
+  if (m.shelterStatus) el.dataset.shelterStatus = m.shelterStatus;
   if (m.passability) el.dataset.passability = m.passability;
   el.style.cssText = 'display:flex;flex-direction:column;align-items:center;cursor:pointer;font:600 12px system-ui,sans-serif;';
   const label = document.createElement('span');
   label.textContent = m.label;
-  const tone = m.cutOff || m.impassable ? COLORS.critical : m.kind === 'shelter' ? COLORS.shelterOpen : '#212121';
-  label.style.cssText = `background:#fff;color:${tone};border:1.5px solid ${tone};border-radius:4px;padding:1px 5px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.4);`;
+  const tone = m.cutOff || m.impassable ? COLORS.critical : m.kind === 'shelter' ? (m.shelterStatus === 'open-reported' ? COLORS.shelterOpen : COLORS.shelterClosed) : '#212121';
+  label.style.cssText = `background:#fff;color:${tone};border:1.5px solid ${tone};border-radius:4px;padding:1px 5px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.4);${m.shelterStatus && m.shelterStatus !== 'open-reported' ? 'border-style:dashed;' : ''}`;
   if (m.kind === 'bridge') {
     const icon = document.createElement('span');
     icon.setAttribute('aria-hidden', 'true');
@@ -257,6 +258,13 @@ export function MapView() {
         aria-label="Situation map"
         style={{ position: 'absolute', inset: 0 }}
       />
+      <details
+        open
+        style={{ position: 'absolute', top: 8, left: 8, zIndex: 2, maxWidth: 300, padding: '6px 10px', background: 'var(--setu-surface, #fff)', color: 'var(--setu-text, #111)', border: '1px solid var(--setu-border, #888)', borderRadius: 6, fontSize: 13 }}
+      >
+        <summary style={{ cursor: 'pointer', fontWeight: 600 }}>Layers</summary>
+        <MapLayerControls />
+      </details>
       <Legend />
     </div>
   );

@@ -67,7 +67,7 @@ export function SettlementsSectionView({ snapshot, now = Date.now() }: { snapsho
                 {view.map((r) => {
                   const isSel = selected?.kind === 'settlement' && selected.id === r.id;
                   return (
-                    <tr key={r.id} data-testid={`settlement-row-${r.id}`} data-accessibility={r.accessibility} data-status={r.status} aria-selected={isSel}
+                    <tr key={r.id} data-testid={`settlement-row-${r.id}`} data-accessibility={r.accessibility} data-status={r.status} data-route-state={r.routeState} aria-selected={isSel}
                       onClick={() => select({ kind: 'settlement', id: r.id })} className={isSel ? 'cmd-row--selected' : 'cmd-row'}>
                       <td><button type="button" className="cmd-linkbtn" onClick={(e) => { e.stopPropagation(); select({ kind: 'settlement', id: r.id }); }} aria-pressed={isSel}>{r.name}</button> <MonoId>{r.id}</MonoId></td>
                       <td><Badge tone={ACCESS_TONE[r.accessibility].tone} icon={ACCESS_TONE[r.accessibility].icon}>{label(r.accessibility)}</Badge></td>
@@ -75,7 +75,7 @@ export function SettlementsSectionView({ snapshot, now = Date.now() }: { snapsho
                       <td>{r.deadline ? <time dateTime={r.deadline}>{formatDeadline(r.deadline, now)}</time> : '—'}</td>
                       <td>{r.priority ?? '—'}</td>
                       <td>
-                        {r.status === 'no-safe-route' ? <Badge tone="danger" icon="⛔">{r.statusLabel}</Badge> : r.statusLabel}
+                        {r.status === 'no-safe-route' ? <Badge tone="danger" icon="✕">{r.statusLabel}</Badge> : r.status === 'no-route-listed' ? <Badge tone="neutral" icon="–">{r.statusLabel}</Badge> : <Badge tone="warning" icon="?">{r.statusLabel}</Badge>}
                       </td>
                       <td className="cmd-settlements__na">
                         <Dash what="nearest-shelter" /> · <Dash what="travel-time" /> · <Dash what="latest-departure" />

@@ -90,3 +90,8 @@ body { background: var(--setu-bg); color: var(--setu-text); font-family: var(--s
 .cmd-root .ov-alert { padding: 4px 8px; border: 0; border-left: 4px solid var(--setu-border); border-radius: 0; background: none; }
 .cmd-root .ov-alert[data-severity='critical'] { background: var(--setu-critical-bg); border-left-color: var(--setu-critical); }
 .cmd-root .ov-alert[data-severity='warning'] { background: var(--setu-warn-bg); border-left-color: var(--setu-warn); }
+
+/* The legend is a light card over the map: re-colour the class tags for a light background. */
+.cmd-legend .setu-dataclass { color: #333; background: #fff; }
+.cmd-legend .setu-dataclass--synthetic { color: #6a1b9a; background: #f3e5f5; }
+.cmd-legend .setu-dataclass--experimental { color: #8a4b00; background: #fff3e0; }

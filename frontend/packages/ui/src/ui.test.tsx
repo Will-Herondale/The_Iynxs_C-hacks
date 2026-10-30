@@ -102,6 +102,6 @@ describe('wave 3 ui', () => {
   it('PassabilityLegend lists four states; colours exported', () => {
     render(<PassabilityLegend />);
     for (const t of ['Flooded', 'Blocked', 'Safe', 'Uncertain']) expect(screen.getByText(t)).toBeTruthy();
-    expect(Object.keys(SETU_MAP_COLORS)).toEqual(['flooded', 'blocked', 'safe', 'uncertain', 'warning', 'review']);
+    expect(Object.keys(SETU_MAP_COLORS)).toEqual(['flooded', 'blocked', 'safe', 'uncertain', 'warning', 'review', 'unverified']);
   });
 });

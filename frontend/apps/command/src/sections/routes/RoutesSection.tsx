@@ -1,19 +1,21 @@
 import { useMemo, useState } from 'react';
 import type { ProjectionSnapshot, RouteProps } from '@setu/contract';
-import { Badge, EmptyState, Panel } from '@setu/ui';
+import { LAYER_DATA_CLASS } from '@setu/geo';
+import { DataClassTag, EmptyState, Panel } from '@setu/ui';
+import { RouteStateBadge, formatIndicativeEta, routeStateOf } from '../../honesty';
 import { useSelection } from '../../app';
 import { useProjections } from '../../data';
 import { ExplainBlock } from '../../panels/Explain';
 import { MonoId } from '../../panels/NotProvided';
-import { ROUTE_TONE, label } from '../../panels/model';
+import { label } from '../../panels/model';
 import { allRoutes, filterRoutes, hasNoSafeRoute } from './model';
 
 const small = { fontSize: '0.85em', opacity: 0.85 } as const;
 
 export function NoSafeRoute({ settlementId, name }: { settlementId: string; name: string }) {
   return (
-    <div role="alert" data-testid={`no-safe-route-${settlementId}`} style={{ border: '2px solid #c62828', borderRadius: 6, padding: '8px 12px', margin: '6px 0' }}>
-      <strong>⛔ No safe route</strong> — {name} (<MonoId>{settlementId}</MonoId>): every evacuation route is unavailable according to the server.
+    <div role="alert" data-testid={`no-safe-route-${settlementId}`} data-route-state="no-safe-route" style={{ border: '2px solid #c62828', borderRadius: 6, padding: '8px 12px', margin: '6px 0' }}>
+      <strong>✕ No safe route</strong> — {name} (<MonoId>{settlementId}</MonoId>): every known evacuation route is unavailable.
     </div>
   );
 }
@@ -37,7 +39,7 @@ export function RoutesSectionView({ snapshot }: { snapshot?: ProjectionSnapshot 
   return (
     <div data-testid="routes-section" className="cmd-section">
       <Panel title="Routes & Evacuation">
-        <p style={{ ...small, margin: '0 0 8px' }} data-testid="routes-source-note">Routes are computed by the backend; this view only displays them. Travel time shown is the server&apos;s etaMin.</p>
+        <p style={{ ...small, margin: '0 0 8px' }} data-testid="routes-source-note"><DataClassTag dataClass={LAYER_DATA_CLASS.routes} />{' '}Routes shown are scenario data. The frontend cannot confirm they were computed on the road network, so none is a verified or safe evacuation route. Travel times are the server&apos;s etaMin: indicative, source unconfirmed.</p>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
           <label>Origin settlement{' '}
             <select data-testid="routes-filter-origin" value={origin} onChange={(e) => setOrigin(e.target.value)}>
@@ -54,6 +56,9 @@ export function RoutesSectionView({ snapshot }: { snapshot?: ProjectionSnapshot 
           <span data-testid="routes-count" aria-live="polite">{shown.length} of {routes.length} routes</span>
         </div>
 
+        {settlements.filter((p) => !origin || p.settlementId === origin).filter((p) => !routes.some((r) => r.from === p.settlementId && r.kind === 'evacuation') && p.accessibility !== 'accessible').map((p) => (
+          <div key={p.settlementId} data-testid={`no-route-data-${p.settlementId}`} data-route-state="no-route-data" style={{ ...small, margin: '4px 0' }}>– No route data — {p.name} (<MonoId>{p.settlementId}</MonoId>): none provided. This is not the same as &quot;no safe route&quot;.</div>
+        ))}
         {noSafe.map((p) => <NoSafeRoute key={p.settlementId} settlementId={p.settlementId} name={p.name} />)}
 
         {shown.length === 0 ? (
@@ -65,12 +70,12 @@ export function RoutesSectionView({ snapshot }: { snapshot?: ProjectionSnapshot 
               const replaced = r.replacesRouteId ? byId(r.replacesRouteId) : undefined;
               const alternative = routes.find((x) => x.replacesRouteId === r.routeId);
               return (
-                <li key={r.routeId} data-testid={`route-row-${r.routeId}`} data-status={r.status} data-selected={isSel} style={{ padding: '8px', borderBottom: '1px solid rgba(128,128,128,.3)', borderLeft: `3px solid ${isSel ? 'currentColor' : 'transparent'}` }}>
+                <li key={r.routeId} data-testid={`route-row-${r.routeId}`} data-status={r.status} data-route-state={routeStateOf(snapshot, r)} data-selected={isSel} style={{ padding: '8px', borderBottom: '1px solid rgba(128,128,128,.3)', borderLeft: `3px solid ${isSel ? 'currentColor' : 'transparent'}` }}>
                   <button type="button" data-testid={`route-select-${r.routeId}`} aria-pressed={isSel} onClick={() => select({ kind: 'route', id: r.routeId })} style={{ all: 'unset', cursor: 'pointer', display: 'flex', gap: 8, justifyContent: 'space-between', width: '100%' }}>
                     <span><MonoId>{r.routeId}</MonoId> {nameOf(r.from)} → {shelterName(r.to)} <small>({r.kind})</small></span>
                     <span>
-                      <span data-testid={`route-eta-${r.routeId}`}>{r.etaMin} min</span>{' '}
-                      <Badge tone={ROUTE_TONE[r.status].tone} icon={ROUTE_TONE[r.status].icon}>{label(r.status)}</Badge>
+                      <span data-testid={`route-eta-${r.routeId}`}>{formatIndicativeEta(r.etaMin)}</span>{' '}
+                      <RouteStateBadge state={routeStateOf(snapshot, r)} />
                     </span>
                   </button>
                   {r.replacesRouteId && (
@@ -81,7 +86,7 @@ export function RoutesSectionView({ snapshot }: { snapshot?: ProjectionSnapshot 
                   )}
                   {alternative && (
                     <div style={small} data-testid={`route-alternative-${r.routeId}`}>
-                      Alternative: <button type="button" onClick={() => select({ kind: 'route', id: alternative.routeId })}>{alternative.routeId}</button> ({alternative.etaMin} min, {label(alternative.status)})
+                      Alternative: <button type="button" onClick={() => select({ kind: 'route', id: alternative.routeId })}>{alternative.routeId}</button> ({formatIndicativeEta(alternative.etaMin)}, {label(alternative.status)})
                     </div>
                   )}
                   {r.refusal && r.status === 'unavailable' && (

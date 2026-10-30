@@ -83,20 +83,35 @@ describe('FeaturePanel', () => {
     const p = screen.getByTestId('feature-panel');
     expect(p.textContent).toContain('S3');
     expect(p.textContent).toContain('SH2');
+    expect(p.getAttribute('data-route-state')).toBe('not-verified');
+    expect(p.textContent).toContain('Route not verified');
     expect(p.textContent).toContain('31 min');
+    expect(p.textContent).toContain('indicative, source unconfirmed');
     expect(p.textContent).toContain('recalculated');
     expect(p.textContent).toContain('replaces EVAC-2');
   });
 
-  it('shelter: capacity, occupancy, open/closed', () => {
+  it('shelter: pre-identified (open:false, 0/0) is neutral, never closed or 0/0', () => {
     const s = afterR7();
-    s.shelters.features[0]!.properties.open = false;
+    Object.assign(s.shelters.features[0]!.properties, { open: false, capacity: 0, occupancy: 0 });
     const id = s.shelters.features[0]!.properties.shelterId;
     wrap(<FeaturePanelView snapshot={s} />, { kind: 'shelter', id });
     const p = screen.getByTestId('feature-panel');
-    expect(p.textContent).toContain('closed');
-    expect(p.textContent).toContain('capacity');
-    expect(p.textContent).toContain('occupancy');
+    expect(p.getAttribute('data-shelter-status')).toBe('pre-identified');
+    expect(p.textContent).toContain('Pre-identified · not confirmed');
+    expect(p.textContent).toContain('not published');
+    expect(p.textContent).not.toContain('closed');
+    expect(p.textContent).not.toMatch(/0 \/ 0/);
+    expect(p.querySelector('[data-class="SYNTHETIC"]')).toBeTruthy();
+  });
+
+  it('shelter: only open===true shows Open (reported)', () => {
+    const s = afterR7();
+    Object.assign(s.shelters.features[0]!.properties, { open: true, capacity: 100, occupancy: 5 });
+    wrap(<FeaturePanelView snapshot={s} />, { kind: 'shelter', id: s.shelters.features[0]!.properties.shelterId });
+    const p = screen.getByTestId('feature-panel');
+    expect(p.getAttribute('data-shelter-status')).toBe('open-reported');
+    expect(p.textContent).toContain('Open (reported)');
   });
 
   it('flood area: depth and severity', () => {

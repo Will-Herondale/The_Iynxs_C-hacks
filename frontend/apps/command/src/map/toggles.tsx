@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
-import { TOGGLE_IDS, TOGGLE_LABELS, type ToggleId } from './layers';
+import { DataClassTag } from '@setu/ui';
+import { TOGGLE_IDS, TOGGLE_LABELS, toggleDataClass, type ToggleId } from './layers';
 
 export type ToggleState = Record<ToggleId, boolean>;
 export interface MapLayersApi {
@@ -31,7 +32,7 @@ export function MapLayerControls() {
   return (
     <fieldset aria-label="Map layers" data-testid="map-layer-controls" style={{ border: 0, margin: 0, padding: 0 }}>
       {TOGGLE_IDS.map((id) => (
-        <label key={id} style={{ display: 'block', padding: '2px 0' }}>
+        <label key={id} data-class={toggleDataClass(id)} style={{ display: 'block', padding: '2px 0' }}>
           <input
             type="checkbox"
             data-testid={`layer-toggle-${id}`}
@@ -39,7 +40,8 @@ export function MapLayerControls() {
             aria-checked={visible[id]}
             onChange={() => toggle(id)}
           />{' '}
-          {TOGGLE_LABELS[id]}
+          {TOGGLE_LABELS[id]}{' '}
+          <DataClassTag dataClass={toggleDataClass(id)} {...(id === 'flood' ? { label: 'Modelled · EXPERIMENTAL' } : {})} />
         </label>
       ))}
     </fieldset>
