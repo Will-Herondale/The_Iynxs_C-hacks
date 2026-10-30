@@ -9,20 +9,26 @@ npm run build -w @setu/field    # tsc + vite build (+ service worker precaching 
 npm test                        # from frontend/: includes apps/field/src/**/*.test.*
 ```
 
-## Structure
-- `src/app/`: AppShell layout, header (online-indicator, pending-count, last-synced, sync-now), hash routing
-  (`#/report`, `#/household`, `#/camp`, `#/queue`), offline banner, `ApiProvider` (`api.tsx`), reporter/device ids (`identity.ts`, localStorage).
-- `src/sync/`: queue + sync engine (Dexie, backoff, Web Locks). Public API in `src/sync/index.ts`.
-- `src/features/report`, `household`: forms (react-hook-form + zod from `@setu/contract`); submit = `enqueue()`.
-- `src/features/queue`: queue screen (status vocabulary + one-line explanations), conflict panel, header widgets.
-- `src/features/camp` (`#/camp`, nav-camp): camp mode. Pick a shelter (SH1..SH3, remembered), see capacity/occupancy
-  from the cached snapshot, register households with `shelterId` through the same offline queue, list them with sync status.
-- `src/offline`: `useCachedProjections()`: last ProjectionSnapshot in IndexedDB (Dexie), served when offline
-  ("data as of ..."). Feeds the road/bridge list (R1..R10 + B1 fallback when no cache) and camp info.
+## Structure (v3)
+Navigation: **Home · Report · Map · Households · Sync** (bottom tab bar ≤720 px; `nav-home/report/map/households/sync`), plus a
+header link to Camp. Hash routes: `#/home` (default), `#/report`, `#/report/<clientEventId>` (detail), `#/map`, `#/households`,
+`#/households/new`, `#/sync`, `#/camp`. Old `#/household` and `#/queue` still resolve.
+- `src/app/`: AppShell layout, header, routing (`route.ts`), offline banner, `ApiProvider`, reporter/device ids.
+- `src/sync/`: queue + sync engine (Dexie, backoff, Web Locks). Provenance: `QueueItem.supersedes` + `db.archive` hold the
+  replaced original (keep-mine / rejected→edit); hooks `useQueueItem`, `useArchive`.
+- `src/features/home`: Home (district fixture label, connectivity, local counts, New Report / Register household, last 5).
+- `src/features/report`, `report-detail`: category flow, location (GPS optional, map pick, manual), detail + provenance.
+- `src/features/map`: offline `@setu/geo` basemap, cached projection, local reports (pending vs accepted).
+- `src/features/queue`: Sync/Activity screen. `src/features/household`, `camp`: households, search, camp summary.
+- `src/offline`: `useCachedProjections()`: last ProjectionSnapshot in IndexedDB, served when offline.
 
-## Status vocabulary
-Every `SyncStatusBadge` gets `online`: Saved on device (queued, offline) / Queued for sync / Submitted / Accepted — awaiting
-confirmation / Confirmed / Disputed / Rejected / Retrying. Confirmed only once the server applied it (`isConfirmedSynced`).
+## Status vocabulary (spec)
+Saved locally / Waiting to sync / Synchronising / Accepted / Requires review / Rejected / Failed — retry available.
+"Accepted" only once the server applied the event (`isConfirmedSynced`).
+
+## Blocked on issue #15
+Damaged infrastructure / Other categories, estimated-vs-measured water, household member names, duplicate-household review,
+shelter capacity: shown as disabled / "Blocked: issue #15" / "not published", never faked.
 
 ## Rules it follows
 - Backend access ONLY via `ApiClient` (`VITE_API_MODE`: `mock` default | `http`). No fetch to backend URLs.

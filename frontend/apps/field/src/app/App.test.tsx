@@ -6,6 +6,9 @@ import { createApiClientWithMock } from '@setu/mock-backend';
 import { ApiProvider } from './api.js';
 import { App } from './App.js';
 
+vi.mock('maplibre-gl', () => ({ default: { Map: class { on() {} addControl() {} remove() {} }, Marker: class {}, NavigationControl: class {} } }));
+vi.mock('maplibre-gl/dist/maplibre-gl.css', () => ({}));
+
 const sync = vi.hoisted(() => ({ online: true }));
 vi.mock('../sync/index.js', async (orig) => ({
   ...(await orig<typeof import('../sync/index.js')>()),
@@ -19,7 +22,36 @@ afterEach(() => {
   window.location.hash = '';
 });
 
-describe('<App/> wave 3', () => {
+describe('<App/> v3 shell', () => {
+  it('defaults to Home and exposes the five tabs', () => {
+    render(
+      <ApiProvider api={createApiClientWithMock()}>
+        <App />
+      </ApiProvider>,
+    );
+    expect(screen.getByTestId('home-screen')).toBeTruthy();
+    for (const id of ['nav-home', 'nav-report', 'nav-map', 'nav-households', 'nav-sync']) expect(screen.getByTestId(id)).toBeTruthy();
+    expect(screen.getByTestId('nav-home').getAttribute('aria-current')).toBe('page');
+  });
+
+  it('keeps old #/queue and #/household hashes working', () => {
+    window.location.hash = '#/queue';
+    const { unmount } = render(
+      <ApiProvider api={createApiClientWithMock()}>
+        <App />
+      </ApiProvider>,
+    );
+    expect(screen.getByTestId('nav-sync').getAttribute('aria-current')).toBe('page');
+    unmount();
+    window.location.hash = '#/household';
+    render(
+      <ApiProvider api={createApiClientWithMock()}>
+        <App />
+      </ApiProvider>,
+    );
+    expect(screen.getByTestId('nav-households').getAttribute('aria-current')).toBe('page');
+  });
+
   it('has nav-camp that routes to the camp screen', () => {
     window.location.hash = '#/camp';
     render(
@@ -38,6 +70,6 @@ describe('<App/> wave 3', () => {
         <App />
       </ApiProvider>,
     );
-    expect(screen.getByTestId('offline-banner').textContent).toContain('reports are saved on this device');
+    expect(screen.getByTestId('offline-banner').textContent).toContain('saved on this device');
   });
 });
