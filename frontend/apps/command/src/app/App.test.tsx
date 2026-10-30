@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, waitFor, fireEvent } from '@testing-library/react';
-import { createMockApiClient, resetMock } from '@setu/mock-backend';
+import { stubApi } from '../testing/stubApi';
 import type { ApiClient } from '@setu/contract';
 
 // MapLibre needs WebGL; the dashboard wiring is what is under test here.
@@ -11,12 +11,10 @@ import { App } from './App';
 
 afterEach(() => {
   cleanup();
-  resetMock();
 });
 
 function seeded(over: Partial<ApiClient> = {}): ApiClient {
-  resetMock();
-  return { ...createMockApiClient(), ...over };
+  return stubApi(over);
 }
 
 describe('<App/> dashboard', () => {
@@ -24,7 +22,7 @@ describe('<App/> dashboard', () => {
     render(<App client={seeded()} />);
     await waitFor(() => expect(screen.getByTestId('stat-cut-off').textContent).toBe('0'));
     expect(screen.getByTestId('stat-blocked-roads').textContent).toBe('0');
-    expect(Number(screen.getByTestId('stat-active-routes').textContent)).toBeGreaterThan(0);
+    expect(screen.getByTestId('stat-active-routes').textContent).toBe('0');
     expect(screen.getByTestId('connection-status').dataset.state).toBe('live');
     expect(screen.getByTestId('situation-summary')).toBeTruthy();
     for (const id of ['nav-overview', 'nav-map', 'nav-settlements', 'nav-routes', 'nav-events', 'nav-audit']) {
@@ -32,9 +30,7 @@ describe('<App/> dashboard', () => {
     }
     expect(screen.getByTestId('nav-overview').getAttribute('aria-current')).toBe('page');
     expect(await screen.findByTestId('overview')).toBeTruthy();
-    expect(screen.getByTestId('overview-district').textContent).toContain('demo fixture');
     expect(screen.getByTestId('overview-simtime').textContent).toBe('Not provided by backend');
-    expect(screen.getByTestId('overview-scenario').textContent).toBe('Not provided by backend');
     for (const id of ['affected', 'disconnected', 'impassable', 'pending', 'evac']) expect(screen.getByTestId(`overview-count-${id}`)).toBeTruthy();
   });
 

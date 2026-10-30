@@ -6,6 +6,7 @@ import { SituationSummary } from './SituationSummary';
 import { Header } from './Header';
 import { Workspace } from './slots';
 import { ChangesProvider } from './changes';
+import { ApiStatus } from './ApiStatus';
 
 export function App({ client }: { client?: ApiClient } = {}) {
   return (
@@ -15,6 +16,7 @@ export function App({ client }: { client?: ApiClient } = {}) {
           <ChangesProvider>
             <div className="cmd-root">
               <Header />
+              <ApiStatus />
               <SituationSummary />
               <Workspace />
             </div>

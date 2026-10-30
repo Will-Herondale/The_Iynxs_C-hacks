@@ -13,7 +13,6 @@
     "@setu/api-client": "*",
     "@setu/contract": "*",
     "@setu/geo": "*",
-    "@setu/mock-backend": "*",
     "@setu/ui": "*",
     "@tanstack/react-query": "^5.0.0",
     "maplibre-gl": "^5.0.0",

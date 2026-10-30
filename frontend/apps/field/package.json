@@ -14,7 +14,6 @@
     "@setu/api-client": "*",
     "@setu/contract": "*",
     "@setu/geo": "*",
-    "@setu/mock-backend": "*",
     "@setu/ui": "*",
     "dexie": "^4.0.8",
     "dexie-react-hooks": "^1.1.7",
