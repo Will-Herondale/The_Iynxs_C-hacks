@@ -384,6 +384,8 @@ function buildRoutes(
           status: 'unavailable',
           etaMin: 0,
           replacesRouteId: undefined,
+          synthetic: (r as { synthetic?: boolean }).synthetic ?? false,
+          reason: 'Settlement or shelter not in road network',
         },
       });
       continue;
@@ -398,10 +400,25 @@ function buildRoutes(
 
     let status: Route['features'][number]['properties']['status'];
     let etaMin: number;
+    let reason: string | undefined;
 
     if (result.path.length === 0 || result.etaS === 0) {
       status = 'unavailable';
       etaMin = 0;
+      // Determine why no path exists
+      const settlementNode = settlement.nodeId;
+      const shelterNode = shelter.nodeId;
+      const settlementHasEdges = routeEdges.some(
+        (e) => e.fromNode === settlementNode || e.toNode === settlementNode,
+      );
+      const shelterHasEdges = routeEdges.some(
+        (e) => e.fromNode === shelterNode || e.toNode === shelterNode,
+      );
+      if (!settlementHasEdges || !shelterHasEdges) {
+        reason = 'No connected path between settlement and shelter';
+      } else {
+        reason = 'No route available — all roads blocked';
+      }
     } else {
       status = 'active';
       etaMin = Math.ceil(result.etaS / 60);
@@ -420,6 +437,7 @@ function buildRoutes(
         etaMin,
         replacesRouteId: undefined,
         synthetic: (r as { synthetic?: boolean }).synthetic ?? false,
+        ...(reason ? { reason } : {}),
       },
     });
   }

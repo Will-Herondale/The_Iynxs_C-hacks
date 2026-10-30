@@ -210,6 +210,8 @@ export interface RouteProps {
   etaMin: number;
   replacesRouteId?: string;
   synthetic?: boolean;
+  /** Human-readable reason when route is unavailable or recalculated. */
+  reason?: string;
 }
 
 export interface ShelterProps {
