@@ -39,7 +39,10 @@ describe('map markers', () => {
     const s2 = structuredClone(snap);
     s2.shelters.features[0]!.properties.capacity = 0;
     s2.shelters.features[0]!.properties.occupancy = 0;
-    expect(buildMarkers(s2).find((x) => x.kind === 'shelter')?.label).toBe('Camp');
+    s2.shelters.features[0]!.properties.open = false;
+    const m = buildMarkers(s2).find((x) => x.kind === 'shelter');
+    expect(m?.label).toBe('Camp · pre-identified');
+    expect(m?.shelterStatus).toBe('pre-identified');
   });
   it('does not label healthy bridges', () => {
     const ok = { ...snap, roads: { ...snap.roads, features: [{ ...snap.roads.features[0], properties: { ...snap.roads.features[0]!.properties, status: 'open', passability: 'passable' } }] } } as ProjectionSnapshot;

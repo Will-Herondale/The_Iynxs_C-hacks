@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import type { EventRecord, ProjectionSnapshot } from '@setu/contract';
-import { Badge, EmptyState, Panel } from '@setu/ui';
+import { LAYER_DATA_CLASS } from '@setu/geo';
+import { Badge, DataClassTag, EmptyState, Panel } from '@setu/ui';
+import { RouteStateBadge, ShelterStatusBadge, formatIndicativeEta, routeStateOf, ROUTE_STATE_META, shelterAttr, shelterCounts, shelterInfo } from '../honesty';
 import { useSelection, type FeatureKind } from '../app';
 import { featureSourceEventIds, joinProvenance, useEvents, useProjections, useProvenance, type ProvenanceItem } from '../data';
 import { formatDateTime, formatDeadline } from '../app/time';
@@ -20,6 +22,11 @@ export interface FeaturePanelProps {
 }
 
 const TITLES: Record<FeatureKind, string> = { road: 'Road', settlement: 'Settlement', route: 'Route', shelter: 'Shelter', flood: 'Flood area', report: 'Report' };
+
+const KIND_CLASS: Partial<Record<FeatureKind, 'REAL' | 'SYNTHETIC' | 'EXPERIMENTAL'>> = {
+  road: LAYER_DATA_CLASS.roads, settlement: LAYER_DATA_CLASS.settlements, route: LAYER_DATA_CLASS.routes,
+  shelter: LAYER_DATA_CLASS.shelters, flood: LAYER_DATA_CLASS['flood-modelled'],
+};
 
 function Props({ rows }: { rows: [string, ReactNode][] }) {
   return (
@@ -53,7 +60,7 @@ export function FeaturePanelView({ snapshot, records, onSelectEvent, provenance 
       </div>
     );
   }
-  const attrs = { 'data-testid': 'feature-panel', 'data-feature-kind': selected.kind, 'data-feature-id': selected.id } as const;
+  const attrs: Record<string, string> = { 'data-testid': 'feature-panel', 'data-feature-kind': selected.kind, 'data-feature-id': selected.id };
   const close = <button type="button" onClick={() => select(undefined)} aria-label="Close details">Close</button>;
   if (selected.kind === 'report') {
     return (
@@ -139,15 +146,18 @@ export function FeaturePanelView({ snapshot, records, onSelectEvent, provenance 
     }
     case 'route': {
       const p = findFeature(snapshot, 'route', selected.id) as import('@setu/contract').RouteProps;
+      attrs['data-route-state'] = routeStateOf(snapshot, p);
       body = (
         <>
         <Props rows={[
           ['routeId', p.routeId], ['kind', p.kind],
           ['from', link('settlement', p.from)], ['to', link('shelter', p.to)],
-          ['etaMin', `${p.etaMin} min`],
-          ['status', <Badge tone={ROUTE_TONE[p.status].tone} icon={ROUTE_TONE[p.status].icon}>{label(p.status)}</Badge>],
+          ['route state', <RouteStateBadge state={routeStateOf(snapshot, p)} />],
+          ['etaMin', <span data-testid="route-eta">{formatIndicativeEta(p.etaMin)}</span>],
+          ['status (server)', <Badge tone={ROUTE_TONE[p.status].tone} icon={ROUTE_TONE[p.status].icon}>{label(p.status)}</Badge>],
           ...(p.replacesRouteId ? [['replacesRouteId', <span>replaces {link('route', p.replacesRouteId)}</span>] as [string, ReactNode]] : []),
         ]} />
+        <p data-testid="route-state-note" style={{ margin: '8px 0 0' }}>{ROUTE_STATE_META[routeStateOf(snapshot, p)].explanation}</p>
         {p.refusal && p.status === 'unavailable' && (
           <ExplainBlock testId={`explain-refusal-${p.routeId}`} title="Why this route is refused" reason={p.refusal} snapshot={snapshot} />
         )}
@@ -158,14 +168,20 @@ export function FeaturePanelView({ snapshot, records, onSelectEvent, provenance 
     case 'shelter': {
       const p = findFeature(snapshot, 'shelter', selected.id) as import('@setu/contract').ShelterProps;
       const serving = snapshot.routes.features.filter((f) => f.properties.to === p.shelterId).map((f) => f.properties);
+      const info = shelterInfo(p);
       body = (
-        <Props rows={[
-          ['shelterId', p.shelterId], ['name', p.name],
-          ['capacity', p.capacity], ['occupancy', `${p.occupancy} / ${p.capacity}`],
-          ['open', <Badge tone={p.open ? 'success' : 'danger'} icon={p.open ? '✓' : '✕'}>{p.open ? 'open' : 'closed'}</Badge>],
-          ['routes in', serving.length ? serving.map((r) => link('route', r.routeId)) : 'none'],
-        ]} />
+        <>
+          <Props rows={[
+            ['shelterId', p.shelterId], ['name', p.name],
+            ['status', <ShelterStatusBadge info={info} />],
+            ['capacity', info.capacityText], ['occupancy', info.occupancyText],
+            ['counts', shelterCounts(info, p)],
+            ['routes in', serving.length ? serving.map((r) => link('route', r.routeId)) : 'none'],
+          ]} />
+          {!info.confirmed && <p data-testid="shelter-preidentified-note" style={{ margin: '8px 0 0' }}>Pre-identified camp site. Opening, capacity and occupancy are not confirmed by any source.</p>}
+        </>
       );
+      attrs['data-shelter-status'] = shelterAttr(info);
       break;
     }
     case 'flood': {
@@ -189,6 +205,7 @@ export function FeaturePanelView({ snapshot, records, onSelectEvent, provenance 
   return (
     <div {...attrs}>
       <Panel title={`${TITLES[selected.kind]} ${selected.id}`}>
+        {KIND_CLASS[selected.kind] && <p style={{ margin: '0 0 6px' }} data-class={KIND_CLASS[selected.kind]}><DataClassTag dataClass={KIND_CLASS[selected.kind]!} {...(selected.kind === 'flood' ? { label: 'Modelled · EXPERIMENTAL' } : {})} /></p>}
         {body}
         {(selected.kind === 'road' || selected.kind === 'settlement' || selected.kind === 'route') && (
           <ProvenanceView featureId={selected.id} items={provenance ?? joinProvenance(featureSourceEventIds(snapshot, selected.id), records ?? [], {}, snapshot.version)} />

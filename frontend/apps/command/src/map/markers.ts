@@ -1,5 +1,6 @@
 import type { ProjectionSnapshot } from '@setu/contract';
 import type { Selection } from '../app';
+import { shelterStatus } from '@setu/geo';
 import type { ToggleId } from './layers';
 
 export type MarkerKind = 'bridge' | 'settlement' | 'shelter';
@@ -17,6 +18,8 @@ export interface MarkerSpec {
   cutOff: boolean;
   /** Layer toggle that shows/hides this marker. */
   toggle: ToggleId;
+  /** Shelters only: open-reported | closed-reported | pre-identified. */
+  shelterStatus?: string;
 }
 
 /** Display anchor for a line: its middle vertex (placement only, nothing is computed from it). */
@@ -59,9 +62,11 @@ export function buildMarkers(s: ProjectionSnapshot): MarkerSpec[] {
   for (const f of s.shelters.features) {
     const p = f.properties;
     const [lng, lat] = f.geometry.coordinates;
+    const info = shelterStatus(p);
     out.push({
       key: `shelter-${p.shelterId}`, kind: 'shelter', featureKind: 'shelter', featureId: p.shelterId,
-      lng, lat, label: p.capacity > 0 ? `${p.name} ${p.occupancy}/${p.capacity}` : p.name, impassable: false, cutOff: false, toggle: 'shelters',
+      lng, lat, label: p.capacity > 0 ? `${p.name} ${p.occupancy}/${p.capacity}` : info.status === 'preidentified' ? `${p.name} · pre-identified` : p.name, impassable: false, cutOff: false, toggle: 'shelters',
+      shelterStatus: info.status === 'preidentified' ? 'pre-identified' : info.status,
     });
   }
   return out;

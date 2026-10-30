@@ -43,6 +43,7 @@ export function OverviewSection() {
 
   return (
     <div className="ov" data-testid="overview">
+      <p data-testid="overview-honesty-note" className="ov-note">Shelters are pre-identified camps, not confirmed. Routes and travel times are scenario data, not verified as computed (indicative, source unconfirmed).</p>
       <dl className="ov-meta">
         <div>
           <dt>District</dt>

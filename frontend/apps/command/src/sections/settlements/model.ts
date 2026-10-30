@@ -1,6 +1,6 @@
 import type { Accessibility, ProjectionSnapshot, SettlementProps } from '@setu/contract';
 import { ACCESS_RANK } from '../../panels/model';
-import { coverage, COVERAGE_LABEL, type RouteCoverage } from '../routes/model';
+import { coverage, settlementRouteState, COVERAGE_LABEL, type RouteCoverage } from '../routes/model';
 
 export interface SettlementRow {
   id: string;
@@ -12,6 +12,7 @@ export interface SettlementRow {
   priority?: SettlementProps['evacuationPriority'];
   status: RouteCoverage;
   statusLabel: string;
+  routeState: string;
 }
 
 const PRIORITY_RANK = { critical: 0, high: 1, normal: 2 } as const;
@@ -31,6 +32,7 @@ export function settlementRows(s: ProjectionSnapshot): SettlementRow[] {
       ...(p.evacuationPriority ? { priority: p.evacuationPriority } : {}),
       status: c,
       statusLabel: COVERAGE_LABEL[c],
+      routeState: settlementRouteState(s, p),
     };
   });
 }
