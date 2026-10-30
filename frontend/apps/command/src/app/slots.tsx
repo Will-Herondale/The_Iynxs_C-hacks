@@ -6,12 +6,12 @@ import { useView } from './view';
 import { LayerControls } from '../controls';
 
 export function MapSlot() {
-  const { view } = useView();
+  const { view, setView } = useView();
   // The map stays mounted (hidden) so switching back is instant and WebGL is not recreated.
   return (
     <>
       <div className="cmd-map-wrap" hidden={view !== 'map'}><MapView /></div>
-      {view === 'audit' && <AuditView />}
+      {view === 'audit' && <AuditView onShowFeature={() => setView('map')} />}
     </>
   );
 }
