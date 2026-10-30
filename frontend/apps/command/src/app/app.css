@@ -18,3 +18,4 @@ body { background: var(--setu-bg); color: var(--setu-text); font-family: var(--s
 .cmd-stats dt { font-size: 0.75rem; color: var(--setu-text-muted); }
 .cmd-stats dd { margin: 0; font-size: 1.5rem; font-weight: 700; }
 .cmd-version { color: var(--setu-text-muted); font-variant-numeric: tabular-nums; }
+.cmd-header { width: 100%; box-sizing: border-box; }

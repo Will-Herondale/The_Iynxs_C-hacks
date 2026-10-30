@@ -1,8 +1,25 @@
-// Integration seam: the lead swaps these placeholders for the helpers' components
-// (map/, panels/, feed/, controls/) once they land.
-import { EmptyState } from '@setu/ui';
+import { MapView } from '../map';
+import { FeaturePanel, RoadList, SettlementList, RouteList, ShelterList } from '../panels';
+import { IncidentFeed, ChangesList } from '../feed';
+import { LayerControls } from '../controls';
 
-export const MapSlot = () => <EmptyState title="Map" />;
-export const LeftSlot = () => <EmptyState title="Layers and lists" />;
-export const FeaturePanelSlot = () => <EmptyState title="Select a feature" />;
-export const FeedSlot = () => <EmptyState title="Incident feed" />;
+export const MapSlot = () => <MapView />;
+
+export const LeftSlot = () => (
+  <>
+    <LayerControls />
+    <SettlementList />
+    <RoadList />
+    <RouteList />
+    <ShelterList />
+  </>
+);
+
+export const FeaturePanelSlot = () => <FeaturePanel />;
+
+export const FeedSlot = () => (
+  <>
+    <ChangesList />
+    <IncidentFeed />
+  </>
+);
