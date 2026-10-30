@@ -1,0 +1,116 @@
+// @vitest-environment jsdom
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import type { ProjectionSnapshot } from '@setu/contract';
+import { createApiClientWithMock } from '@setu/mock-backend';
+import { SelectionProvider, useSelection, type Selection } from '../app';
+import { FeaturePanelView, RoadListView, RouteListView, SettlementListView, ShelterListView } from './index';
+
+let seed: ProjectionSnapshot;
+beforeAll(async () => {
+  seed = await createApiClientWithMock().getProjections();
+});
+afterEach(cleanup);
+
+/** Fixture shaped like the server snapshot after R7 full (scripted scenario). */
+function afterR7(): ProjectionSnapshot {
+  const s = structuredClone(seed);
+  s.roads.features.find((f) => f.properties.roadId === 'R7')!.properties.status = 'blocked';
+  s.settlements.features.find((f) => f.properties.settlementId === 'S3')!.properties.accessibility = 'cut_off';
+  const evac2 = s.routes.features.find((f) => f.properties.routeId === 'EVAC-2')!;
+  evac2.properties.status = 'unavailable';
+  s.routes.features.push({
+    ...evac2, id: 'EVAC-2b',
+    properties: { ...evac2.properties, routeId: 'EVAC-2b', status: 'recalculated', etaMin: 31, replacesRouteId: 'EVAC-2' },
+  });
+  return s;
+}
+
+function Probe() {
+  const { selected } = useSelection();
+  return <output data-testid="probe">{selected ? `${selected.kind}:${selected.id}` : ''}</output>;
+}
+const wrap = (ui: React.ReactNode, initial?: Selection) => render(<SelectionProvider initial={initial}>{ui}<Probe /></SelectionProvider>);
+
+describe('lists', () => {
+  it('sort blocked/cut_off first and expose status attributes', () => {
+    wrap(<><RoadListView snapshot={afterR7()} /><SettlementListView snapshot={afterR7()} /><RouteListView snapshot={afterR7()} /><ShelterListView snapshot={afterR7()} /></>);
+    expect(screen.getByTestId('road-row-R7').getAttribute('data-status')).toBe('blocked');
+    expect(screen.getAllByTestId(/^road-row-/)[0]!.getAttribute('data-testid')).toBe('road-row-R7');
+    expect(screen.getByTestId('settlement-row-S3').getAttribute('data-accessibility')).toBe('cut_off');
+    expect(screen.getAllByTestId(/^settlement-row-/)[0]!.getAttribute('data-accessibility')).toBe('cut_off');
+    expect(screen.getByTestId('route-row-EVAC-2').getAttribute('data-status')).toBe('unavailable');
+    expect(screen.getByTestId('route-row-EVAC-2b').getAttribute('data-status')).toBe('recalculated');
+    expect(screen.getByTestId('route-row-EVAC-2b').textContent).toContain('replaces EVAC-2');
+    expect(screen.getAllByTestId(/^shelter-row-/).length).toBe(seed.shelters.features.length);
+  });
+
+  it('clicking a row selects the feature', () => {
+    wrap(<><RoadListView snapshot={afterR7()} /><ShelterListView snapshot={afterR7()} /></>);
+    fireEvent.click(screen.getByTestId('road-row-R7'));
+    expect(screen.getByTestId('probe').textContent).toBe('road:R7');
+    fireEvent.click(screen.getByTestId('shelter-row-SH2'));
+    expect(screen.getByTestId('probe').textContent).toBe('shelter:SH2');
+  });
+});
+
+describe('FeaturePanel', () => {
+  it('road: all props and source event links', () => {
+    const s = afterR7();
+    s.roads.features.find((f) => f.properties.roadId === 'R7')!.properties.sourceEventIds = ['evt-1'];
+    wrap(<FeaturePanelView snapshot={s} />, { kind: 'road', id: 'R7' });
+    const p = screen.getByTestId('feature-panel');
+    expect(p.getAttribute('data-feature-kind')).toBe('road');
+    expect(p.getAttribute('data-feature-id')).toBe('R7');
+    expect(p.textContent).toContain('blocked');
+    const link = within(p).getByTestId('source-event-link');
+    expect(link.getAttribute('href')).toBe('#incident-evt-1');
+  });
+
+  it('settlement: households, needs, accessibility, serving routes and shelters', () => {
+    wrap(<FeaturePanelView snapshot={afterR7()} />, { kind: 'settlement', id: 'S3' });
+    const p = screen.getByTestId('feature-panel');
+    expect(p.textContent).toContain('cut off');
+    expect(p.textContent).toContain('households');
+    expect(within(p).getByTestId('link-route-EVAC-2')).toBeTruthy();
+    expect(within(p).getByTestId('link-shelter-SH2')).toBeTruthy();
+    fireEvent.click(within(p).getByTestId('link-route-EVAC-2'));
+    expect(screen.getByTestId('probe').textContent).toBe('route:EVAC-2');
+  });
+
+  it('route: from/to, eta, status, replaces', () => {
+    wrap(<FeaturePanelView snapshot={afterR7()} />, { kind: 'route', id: 'EVAC-2b' });
+    const p = screen.getByTestId('feature-panel');
+    expect(p.textContent).toContain('S3');
+    expect(p.textContent).toContain('SH2');
+    expect(p.textContent).toContain('31 min');
+    expect(p.textContent).toContain('recalculated');
+    expect(p.textContent).toContain('replaces EVAC-2');
+  });
+
+  it('shelter: capacity, occupancy, open/closed', () => {
+    const s = afterR7();
+    s.shelters.features[0]!.properties.open = false;
+    const id = s.shelters.features[0]!.properties.shelterId;
+    wrap(<FeaturePanelView snapshot={s} />, { kind: 'shelter', id });
+    const p = screen.getByTestId('feature-panel');
+    expect(p.textContent).toContain('closed');
+    expect(p.textContent).toContain('capacity');
+    expect(p.textContent).toContain('occupancy');
+  });
+
+  it('flood area: depth and severity', () => {
+    const f = seed.flood.features[0]!.properties;
+    wrap(<FeaturePanelView snapshot={seed} />, { kind: 'flood', id: f.areaId });
+    const p = screen.getByTestId('feature-panel');
+    expect(p.getAttribute('data-feature-kind')).toBe('flood');
+    expect(p.textContent).toContain(`${f.severity} / 5`);
+    expect(p.textContent).toContain('depthCm');
+  });
+
+  it('shows an empty state with no selection', () => {
+    wrap(<FeaturePanelView snapshot={seed} />);
+    expect(screen.queryByTestId('feature-panel')).toBeNull();
+    expect(screen.getByTestId('feature-panel-empty')).toBeTruthy();
+  });
+});

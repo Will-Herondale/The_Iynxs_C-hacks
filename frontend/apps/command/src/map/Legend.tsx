@@ -1,0 +1,82 @@
+import { COLORS } from './layers';
+
+type Swatch = 'line' | 'dashed' | 'dot' | 'halo' | 'area';
+const ROWS: { title: string; items: { label: string; color: string; swatch: Swatch }[] }[] = [
+  {
+    title: 'Roads',
+    items: [
+      { label: 'Open', color: COLORS.roadOpen, swatch: 'line' },
+      { label: 'Partial', color: COLORS.roadPartial, swatch: 'line' },
+      { label: 'Blocked', color: COLORS.roadBlocked, swatch: 'dashed' },
+      { label: 'Unknown', color: COLORS.roadUnknown, swatch: 'line' },
+    ],
+  },
+  {
+    title: 'Settlements',
+    items: [
+      { label: 'Accessible', color: COLORS.accessible, swatch: 'dot' },
+      { label: 'Limited', color: COLORS.limited, swatch: 'dot' },
+      { label: 'Cut off', color: COLORS.cutOff, swatch: 'halo' },
+    ],
+  },
+  {
+    title: 'Routes',
+    items: [
+      { label: 'Evacuation', color: COLORS.evacuation, swatch: 'line' },
+      { label: 'Supply', color: COLORS.supply, swatch: 'line' },
+      { label: 'Recalculated', color: COLORS.recalculated, swatch: 'line' },
+      { label: 'Unavailable / replaced', color: COLORS.unavailable, swatch: 'dashed' },
+    ],
+  },
+  {
+    title: 'Other',
+    items: [
+      { label: 'Flood extent (darker = more severe)', color: COLORS.flood, swatch: 'area' },
+      { label: 'Shelter (open)', color: COLORS.shelterOpen, swatch: 'dot' },
+      { label: 'Shelter (closed)', color: COLORS.shelterClosed, swatch: 'dot' },
+    ],
+  },
+];
+
+function Mark({ color, swatch }: { color: string; swatch: Swatch }) {
+  const base = { display: 'inline-block', flex: 'none' } as const;
+  switch (swatch) {
+    case 'line':
+      return <span aria-hidden style={{ ...base, width: 20, height: 4, background: color, borderRadius: 2 }} />;
+    case 'dashed':
+      return <span aria-hidden style={{ ...base, width: 20, height: 0, borderTop: `4px dashed ${color}` }} />;
+    case 'dot':
+      return <span aria-hidden style={{ ...base, width: 12, height: 12, borderRadius: '50%', background: color, border: '2px solid #fff', boxSizing: 'border-box' }} />;
+    case 'halo':
+      return <span aria-hidden style={{ ...base, width: 16, height: 16, borderRadius: '50%', background: color, boxShadow: `0 0 0 3px ${color}55` }} />;
+    case 'area':
+      return <span aria-hidden style={{ ...base, width: 18, height: 12, background: `${color}88`, border: `1px solid ${color}` }} />;
+  }
+}
+
+export function Legend() {
+  return (
+    <details
+      data-testid="map-legend"
+      open
+      style={{
+        position: 'absolute', left: 8, bottom: 24, zIndex: 2, maxWidth: 240, padding: '6px 10px',
+        background: 'rgba(255,255,255,0.94)', color: '#111', borderRadius: 6, fontSize: 12,
+        boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
+      }}
+    >
+      <summary style={{ cursor: 'pointer', fontWeight: 600 }}>Legend</summary>
+      {ROWS.map((g) => (
+        <div key={g.title} style={{ marginTop: 6 }}>
+          <div style={{ fontWeight: 600 }}>{g.title}</div>
+          {g.items.map((i) => (
+            <div key={i.label} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+              <Mark color={i.color} swatch={i.swatch} />
+              <span>{i.label}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </details>
+  );
+}
