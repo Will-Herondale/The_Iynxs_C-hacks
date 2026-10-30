@@ -101,8 +101,9 @@ describe('routes section', () => {
     r.refusal = { summary: 'Bridge impassable', blockingFeatureIds: [] };
     wrap(<RoutesSectionView snapshot={s} />);
     const card = screen.getByTestId(`route-row-${r.routeId}`);
-    expect(card.textContent).toContain(`${r.etaMin} min`);
-    expect(card.textContent).toContain('indicative, source unconfirmed');
+    // An unavailable route has no ETA: the backend sends etaMin 0, which would read as 'arrives instantly'.
+    expect(card.textContent).toContain('No ETA (route unavailable)');
+    expect(card.textContent).not.toContain(`${r.etaMin} min`);
     expect(card.getAttribute('data-route-state')).toBe('refused');
     expect(within(card).getByTestId(`explain-refusal-${r.routeId}`).textContent).toContain('Bridge impassable');
     fireEvent.change(screen.getByTestId('routes-filter-origin'), { target: { value: r.from } });

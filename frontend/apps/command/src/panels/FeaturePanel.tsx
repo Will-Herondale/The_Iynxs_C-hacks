@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import type { EventRecord, ProjectionSnapshot } from '@setu/contract';
 import { LAYER_DATA_CLASS } from '@setu/geo';
 import { Badge, DataClassTag, EmptyState, Panel } from '@setu/ui';
-import { RouteStateBadge, ShelterStatusBadge, formatIndicativeEta, routeStateOf, ROUTE_STATE_META, shelterAttr, shelterCounts, shelterInfo } from '../honesty';
+import { RouteReason, RouteStateBadge, ShelterStatusBadge, routeEtaText, routeStateOf, ROUTE_STATE_META, shelterAttr, shelterCounts, shelterInfo } from '../honesty';
 import { useSelection, type FeatureKind } from '../app';
 import { featureSourceEventIds, joinProvenance, useEvents, useProjections, useProvenance, type ProvenanceItem } from '../data';
 import { formatDateTime, formatDeadline } from '../app/time';
@@ -153,7 +153,7 @@ export function FeaturePanelView({ snapshot, records, onSelectEvent, provenance 
           ['routeId', p.routeId], ['kind', p.kind],
           ['from', link('settlement', p.from)], ['to', link('shelter', p.to)],
           ['route state', <RouteStateBadge state={routeStateOf(snapshot, p)} />],
-          ['etaMin', <span data-testid="route-eta">{formatIndicativeEta(p.etaMin)}</span>],
+          ['etaMin', <span data-testid="route-eta">{routeEtaText(p)}</span>],
           ['status (server)', <Badge tone={ROUTE_TONE[p.status].tone} icon={ROUTE_TONE[p.status].icon}>{label(p.status)}</Badge>],
           ...(p.replacesRouteId ? [['replacesRouteId', <span>replaces {link('route', p.replacesRouteId)}</span>] as [string, ReactNode]] : []),
         ]} />
@@ -161,6 +161,7 @@ export function FeaturePanelView({ snapshot, records, onSelectEvent, provenance 
         {p.refusal && p.status === 'unavailable' && (
           <ExplainBlock testId={`explain-refusal-${p.routeId}`} title="Why this route is refused" reason={p.refusal} snapshot={snapshot} />
         )}
+        <RouteReason routeId={p.routeId} reason={p.reason} refusalSummary={p.refusal?.summary} />
         </>
       );
       break;

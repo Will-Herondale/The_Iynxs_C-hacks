@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import type { ProjectionSnapshot, RouteProps } from '@setu/contract';
 import { LAYER_DATA_CLASS } from '@setu/geo';
 import { DataClassTag, EmptyState, Panel } from '@setu/ui';
-import { RouteStateBadge, formatIndicativeEta, routeStateOf } from '../../honesty';
+import { RouteReason, RouteStateBadge, formatIndicativeEta, routeEtaText, routeStateOf } from '../../honesty';
 import { useSelection } from '../../app';
 import { useProjections } from '../../data';
 import { ExplainBlock } from '../../panels/Explain';
@@ -74,7 +74,7 @@ export function RoutesSectionView({ snapshot }: { snapshot?: ProjectionSnapshot 
                   <button type="button" data-testid={`route-select-${r.routeId}`} aria-pressed={isSel} onClick={() => select({ kind: 'route', id: r.routeId })} style={{ all: 'unset', cursor: 'pointer', display: 'flex', gap: 8, justifyContent: 'space-between', width: '100%' }}>
                     <span><MonoId>{r.routeId}</MonoId> {nameOf(r.from)} → {shelterName(r.to)} <small>({r.kind})</small>{r.synthetic && <> <DataClassTag dataClass="SYNTHETIC" label="DEMO · SYNTHETIC" /></>}</span>
                     <span>
-                      <span data-testid={`route-eta-${r.routeId}`}>{formatIndicativeEta(r.etaMin)}</span>{' '}
+                      <span data-testid={`route-eta-${r.routeId}`}>{routeEtaText(r)}</span>{' '}
                       <RouteStateBadge state={routeStateOf(snapshot, r)} />
                     </span>
                   </button>
@@ -92,7 +92,8 @@ export function RoutesSectionView({ snapshot }: { snapshot?: ProjectionSnapshot 
                   {r.refusal && r.status === 'unavailable' && (
                     <ExplainBlock testId={`explain-refusal-${r.routeId}`} title="Why this route is refused" reason={r.refusal} snapshot={snapshot} />
                   )}
-                  {r.status === 'unavailable' && !r.refusal && <div style={small} data-testid={`refusal-missing-${r.routeId}`}>Refusal reason: Not provided by backend</div>}
+                  <RouteReason routeId={r.routeId} reason={r.reason} refusalSummary={r.refusal?.summary} />
+                  {r.status === 'unavailable' && !r.refusal && !r.reason && <div style={small} data-testid={`refusal-missing-${r.routeId}`}>Refusal reason: Not provided by backend</div>}
                 </li>
               );
             })}

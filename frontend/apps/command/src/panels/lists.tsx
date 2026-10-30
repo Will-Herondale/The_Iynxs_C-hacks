@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import type { ProjectionSnapshot } from '@setu/contract';
 import { LAYER_DATA_CLASS } from '@setu/geo';
 import { Badge, DataClassTag, EmptyState, Panel } from '@setu/ui';
-import { RouteStateBadge, ShelterStatusBadge, formatIndicativeEta, routeStateOf, shelterAttr, shelterCounts, shelterInfo } from '../honesty';
+import { RouteStateBadge, ShelterStatusBadge, routeEtaText, routeStateOf, shelterAttr, shelterCounts, shelterInfo } from '../honesty';
 import { useSelection, type FeatureKind } from '../app';
 import { useProjections } from '../data';
 import { ExplainBlock } from './Explain';
@@ -104,7 +104,7 @@ export function RouteListView({ snapshot: s }: ListProps) {
           extra={p.refusal && p.status === 'unavailable' ? <ExplainBlock testId={`explain-refusal-${p.routeId}`} title="Why this route is refused" reason={p.refusal} {...(s ? { snapshot: s } : {})} /> : undefined}>
           {(p as { synthetic?: boolean }).synthetic && <DataClassTag dataClass="SYNTHETIC" label="DEMO · SYNTHETIC" />}
             <span>
-            <strong>{p.routeId}</strong> {p.from}→{p.to} · <span data-testid={`route-eta-${p.routeId}`}>{formatIndicativeEta(p.etaMin)}</span>
+            <strong>{p.routeId}</strong> {p.from}→{p.to} · <span data-testid={`route-eta-${p.routeId}`}>{routeEtaText(p)}</span>
             {p.replacesRouteId ? ` · replaces ${p.replacesRouteId}` : ''}
           </span>
           <RouteStateBadge state={routeStateOf(s, p)} />
