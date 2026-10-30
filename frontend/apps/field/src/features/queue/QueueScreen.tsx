@@ -67,6 +67,7 @@ function QueueRow({ item, onEdit }: { item: QueueItem; onEdit?: (item: QueueItem
       data-testid="queue-item"
       data-client-event-id={item.clientEventId}
       data-status={item.status}
+      data-attempts={item.attempts}
       data-type={item.type}
       className={`queue-item queue-item--${item.status}`}
     >
