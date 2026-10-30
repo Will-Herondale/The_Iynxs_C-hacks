@@ -12,7 +12,7 @@
 //   rejected: event was quarantined (collision or invalid)
 //   holes: current hole table after ingest
 
-import { Envelope, envelopeIsValid, totalOrder } from '../event/envelope.js';
+import { Envelope, envelopeIsValid } from '../event/envelope.js';
 import { SyncState, VersionVector, vvGet, vvSet, vvClone } from './types.js';
 
 export interface IngestResult {
@@ -108,8 +108,12 @@ export function ingestBatch(state: SyncState, events: Envelope[]): IngestResult 
   const allAccepted: Envelope[] = [];
   const allRejected: Array<{ id: string; reason: string; env?: Envelope }> = [];
 
-  // Sort deterministically by (origin, seq, id)
-  const sorted = [...events].sort((a, b) => totalOrder(a, b));
+  // Sort deterministically by (origin, seq) — sync protocol delivery order.
+  // Total order (hlc-based) is for the fold, not for ingest.
+  const sorted = [...events].sort((a, b) => {
+    if (a.origin !== b.origin) return a.origin < b.origin ? -1 : 1;
+    return a.seq - b.seq;
+  });
 
   for (const env of sorted) {
     const result = ingestEvent(current, env);
