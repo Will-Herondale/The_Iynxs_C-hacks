@@ -260,4 +260,17 @@ describe('queue actions', () => {
     expect(n.event.note).toBe('fixed');
     expect(await db.queue.count()).toBe(1);
   });
+
+  it('replace keeps a fresh caller-supplied id and links both ways; a new id is minted only if reused', async () => {
+    const e = ev();
+    await enqueue(e);
+    await db.queue.update(e.clientEventId, { status: 'rejected' });
+    const freshId = newClientEventId();
+    const fresh = { ...e, clientEventId: freshId, note: 'fixed' } as FieldEvent;
+    const n = await replace(e.clientEventId, fresh);
+    expect(n.clientEventId).toBe(freshId);
+    expect(n.supersedes).toBe(e.clientEventId);
+    expect((await db.archive.get(e.clientEventId))?.supersededBy).toBe(freshId);
+    expect(await db.queue.get(freshId)).toBeTruthy();
+  });
 });
