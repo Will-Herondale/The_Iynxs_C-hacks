@@ -51,6 +51,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) {
   const before = await page.getByTestId('overview-count-disconnected').innerText();
 
   await submit({ type: 'road_blockage', roadId: '284824410', blockage: 'full', cause: 'submerged', location: { lat: 26.95, lng: 94.2 } });
+  await page.reload();
   await page.getByTestId('overview-alert-road-284824410').waitFor({ timeout: 15000 });
   await page.screenshot({ path: `${OUT}overview-${tag}.png` });
   results[`${tag} overview after S1`] = { disconnectedBefore: before, impassable: await page.getByTestId('overview-count-impassable').innerText() };
@@ -65,8 +66,10 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) {
   await page.waitForTimeout(800);
   await page.screenshot({ path: `${OUT}routes-s1-${tag}.png` });
 
-  await submit({ type: 'water_level', gaugeId: 'near-auniati', levelCm: 8380, trend: 'rising', location: { lat, lng } });
-  await page.getByTestId(`no-safe-route-10692764768`).waitFor({ timeout: 15000 });
+  await submit({ type: 'water_level', gaugeId: 'near-auniati', levelCm: 150, trend: 'rising', location: { lat, lng } });
+  await page.reload();
+  await page.getByTestId('nav-routes').click();
+  await page.getByTestId('no-safe-route-10692764768').waitFor({ timeout: 15000 });
   await page.screenshot({ path: `${OUT}routes-${tag}.png` });
 
   await page.getByTestId('nav-settlements').click();

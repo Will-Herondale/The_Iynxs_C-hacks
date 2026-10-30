@@ -100,15 +100,15 @@ export function criticalAlerts(snap: ProjectionSnapshot | undefined, batches: Ch
 }
 
 /**
- * The scripted scenario that the visible events/state correspond to. Only reported when an event
+ * The scripted scenarios that the visible events/state correspond to. Only reported when an event
  * actually targets the scenario's road/bridge, or its target settlement is cut off in the server
- * snapshot AND a water_level report exists. Otherwise undefined => "Not provided by backend".
+ * snapshot AND a water_level report exists. Otherwise empty => "Not provided by backend".
  */
 export function triggeredScenario(
   scenarios: readonly ScenarioMeta[],
   events: EventRecord[],
   snap: ProjectionSnapshot | undefined,
-): ScenarioMeta | undefined {
+): ScenarioMeta[] {
   const roadIds = new Set(events.flatMap((e) => (e.event.type === 'road_blockage' || e.event.type === 'road_cleared') && e.event.roadId ? [e.event.roadId] : []));
   const hasWater = events.some((e) => e.event.type === 'water_level');
   const cutOff = new Set(snap?.settlements.features.filter((f) => f.properties.accessibility === 'cut_off').map((f) => f.properties.settlementId));
@@ -118,5 +118,5 @@ export function triggeredScenario(
     if (road && roadIds.has(road)) return true;
     return !!t.settlementId && hasWater && cutOff.has(String(t.settlementId));
   };
-  return [...scenarios].reverse().find(hit);
+  return scenarios.filter(hit);
 }

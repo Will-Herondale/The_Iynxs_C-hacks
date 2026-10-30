@@ -61,7 +61,7 @@ export function buildMarkers(s: ProjectionSnapshot): MarkerSpec[] {
     const [lng, lat] = f.geometry.coordinates;
     out.push({
       key: `shelter-${p.shelterId}`, kind: 'shelter', featureKind: 'shelter', featureId: p.shelterId,
-      lng, lat, label: `${p.name} ${p.occupancy}/${p.capacity}`, impassable: false, cutOff: false, toggle: 'shelters',
+      lng, lat, label: p.capacity > 0 ? `${p.name} ${p.occupancy}/${p.capacity}` : p.name, impassable: false, cutOff: false, toggle: 'shelters',
     });
   }
   return out;

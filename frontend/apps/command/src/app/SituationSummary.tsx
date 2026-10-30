@@ -23,7 +23,7 @@ export function SituationSummary() {
       ) : (
         <ul>
           {sit.lines.slice(0, MAX_LINES).map((l) => (
-            <li key={l.key} data-kind={l.kind}>⛔ {l.text}</li>
+            <li key={l.key} data-kind={l.kind} title={l.text}>⛔ {l.text}</li>
           ))}
           {more > 0 && (
             <li>

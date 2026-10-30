@@ -36,13 +36,13 @@ describe('triggeredScenario', () => {
   const S1: ScenarioMeta = { id: 'S1', name: 'Submerged bridge', note: 'n', synthetic: true, targets: { bridgeId: '284824410' } };
   const S4: ScenarioMeta = { id: 'S4', name: 'Settlement cut off', note: 'n', synthetic: true, targets: { settlementId: '10692764768' } };
   it('is undefined until an event targets a scenario (=> Not provided by backend)', () => {
-    expect(triggeredScenario([S1, S4], [], snap({}))).toBeUndefined();
-    expect(triggeredScenario([], [ev('a', 'applied', { roadId: '284824410' })], snap({}))).toBeUndefined();
+    expect(triggeredScenario([S1, S4], [], snap({}))).toEqual([]);
+    expect(triggeredScenario([], [ev('a', 'applied', { roadId: '284824410' })], snap({}))).toEqual([]);
   });
   it('matches S1 by bridge id and S4 by water report + cut-off settlement', () => {
-    expect(triggeredScenario([S1, S4], [ev('a', 'applied', { roadId: '284824410' })], snap({}))?.id).toBe('S1');
+    expect(triggeredScenario([S1, S4], [ev('a', 'applied', { roadId: '284824410' })], snap({})).map((x) => x.id)).toEqual(['S1']);
     const wl = { ...ev('w', 'applied'), event: { type: 'water_level', levelCm: 1, trend: 'rising', occurredAt: '', location: { lat: 0, lng: 0 } } } as unknown as EventRecord;
-    expect(triggeredScenario([S1, S4], [wl], snap({ settlements: [AUN] }))?.id).toBe('S4');
-    expect(triggeredScenario([S1, S4], [wl], snap({ settlements: [OK] }))).toBeUndefined();
+    expect(triggeredScenario([S1, S4], [wl], snap({ settlements: [AUN] })).map((x) => x.id)).toEqual(['S4']);
+    expect(triggeredScenario([S1, S4], [wl], snap({ settlements: [OK] }))).toEqual([]);
   });
 });

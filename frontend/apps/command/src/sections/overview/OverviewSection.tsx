@@ -30,7 +30,7 @@ export function OverviewSection() {
   const goTo = useGoTo();
   const counts = overviewCounts(snapshot, events);
   const alerts = useMemo(() => criticalAlerts(snapshot, batches), [snapshot, batches]);
-  const scenario = useMemo(() => triggeredScenario(SCENARIO_LIST, events, snapshot), [events, snapshot]);
+  const scenarios = useMemo(() => triggeredScenario(SCENARIO_LIST, events, snapshot), [events, snapshot]);
   const recent = useMemo(
     () => [...events].sort((a, b) => Date.parse(b.receivedAt) - Date.parse(a.receivedAt)).slice(0, RECENT),
     [events],
@@ -57,10 +57,12 @@ export function OverviewSection() {
         <div>
           <dt>Active scenario</dt>
           <dd data-testid="overview-scenario">
-            {scenario ? (
-              <>
-                {scenario.id} · {scenario.name} <span className="ov-tag ov-tag--synthetic" title={scenario.note}>SYNTHETIC</span>
-              </>
+            {scenarios.length ? (
+              scenarios.map((sc) => (
+                <span key={sc.id} className="ov-scenario">
+                  {sc.id} · {sc.name} <span className="ov-tag ov-tag--synthetic" title={sc.note}>SYNTHETIC</span>
+                </span>
+              ))
             ) : (
               NOT_PROVIDED
             )}

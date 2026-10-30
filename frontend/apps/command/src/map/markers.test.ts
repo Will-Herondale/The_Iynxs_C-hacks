@@ -35,6 +35,12 @@ describe('map markers', () => {
     expect(m[2]?.toggle).toBe('shelters');
     expect(m[2]?.label).toBe('Camp 10/100');
   });
+  it('does not invent 0/0 capacity when the seed has none', () => {
+    const s2 = structuredClone(snap);
+    s2.shelters.features[0]!.properties.capacity = 0;
+    s2.shelters.features[0]!.properties.occupancy = 0;
+    expect(buildMarkers(s2).find((x) => x.kind === 'shelter')?.label).toBe('Camp');
+  });
   it('does not label healthy bridges', () => {
     const ok = { ...snap, roads: { ...snap.roads, features: [{ ...snap.roads.features[0], properties: { ...snap.roads.features[0]!.properties, status: 'open', passability: 'passable' } }] } } as ProjectionSnapshot;
     expect(buildMarkers(ok).some((x) => x.kind === 'bridge')).toBe(false);

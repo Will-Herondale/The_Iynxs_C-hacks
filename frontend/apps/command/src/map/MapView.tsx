@@ -20,6 +20,7 @@ function markerElement(m: MarkerSpec, onSelect: () => void): HTMLElement {
   const el = document.createElement('div');
   el.dataset.testid = `map-marker-${m.featureId}`;
   el.dataset.markerKind = m.kind;
+  if (m.kind === 'shelter') el.className = 'cmd-marker--shelter';
   if (m.passability) el.dataset.passability = m.passability;
   el.style.cssText = 'display:flex;flex-direction:column;align-items:center;cursor:pointer;font:600 12px system-ui,sans-serif;';
   const label = document.createElement('span');
@@ -114,9 +115,28 @@ export function MapView() {
       selectRef.current(undefined);
     });
 
+    // The container is hidden (0x0) on non-map sections and re-laid-out (full vs split) on others: keep the
+    // canvas in step and re-fit the island until the operator moves the map themselves.
+    const syncZoomClass = () => container.current?.classList.toggle('cmd-map--zoomed', map.getZoom() >= 11.5);
+    map.on('zoom', syncZoomClass);
+    let userMoved = false;
+    const markMoved = (e: { originalEvent?: unknown }) => { if (e.originalEvent) userMoved = true; };
+    map.on('dragstart', markMoved);
+    map.on('zoomstart', markMoved);
+    let lastW = 0;
+    const ro = new ResizeObserver(() => {
+      const el = container.current;
+      if (!el || el.clientWidth === 0 || el.clientHeight === 0) return;
+      map.resize();
+      if (!userMoved && el.clientWidth !== lastW) map.fitBounds(BASE_BOUNDS, { padding: 24, animate: false });
+      lastW = el.clientWidth;
+    });
+    ro.observe(container.current);
+
     const markers = markersRef.current;
     const data = lastData.current;
     return () => {
+      ro.disconnect();
       mapRef.current = null;
       for (const e of markers.values()) e.marker.remove();
       markers.clear();
