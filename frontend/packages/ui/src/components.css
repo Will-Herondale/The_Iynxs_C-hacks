@@ -1,3 +1,5 @@
+@import './structure.css';
+@import './status.css';
 /* Functional component styles; relies on tokens.css custom properties. */
 .setu-app-shell { display: grid; min-height: 100vh; background: var(--setu-bg); color: var(--setu-text); font: var(--setu-font-size) var(--setu-font);
   grid-template: 'header header' auto 'nav nav' auto 'main aside' 1fr / 1fr auto; }
@@ -24,19 +26,6 @@
 .setu-empty__title { margin: 0; font-weight: 700; color: var(--setu-text); }
 .setu-online { display: inline-flex; align-items: center; gap: var(--setu-space-1); font-weight: 700; }
 .setu-online--online { color: var(--setu-success); } .setu-online--offline { color: var(--setu-danger); }
-
-/* Sync status badge: colour + glyph + text; queued (hollow) vs accepted (half-filled) differ in fill and border style. */
-.setu-sync { display: inline-flex; align-items: center; gap: var(--setu-space-1); padding: 2px var(--setu-space-2); border-radius: var(--setu-radius); font-size: 0.85em; font-weight: 700; border: 2px solid var(--setu-sync-color, currentColor); color: var(--setu-sync-color, currentColor); background: transparent; }
-.setu-sync--queued { --setu-sync-color: var(--setu-sync-queued); border-style: dashed; }
-.setu-sync--sending { --setu-sync-color: var(--setu-sync-sending); }
-.setu-sync--accepted { --setu-sync-color: var(--setu-sync-accepted); background: linear-gradient(90deg, color-mix(in srgb, var(--setu-sync-accepted) 25%, transparent) 50%, transparent 50%); }
-.setu-sync--synced { --setu-sync-color: var(--setu-sync-synced); background: color-mix(in srgb, var(--setu-sync-synced) 18%, transparent); }
-.setu-sync--conflict { --setu-sync-color: var(--setu-sync-conflict); border-style: double; border-width: 4px; }
-.setu-sync--rejected { --setu-sync-color: var(--setu-sync-rejected); background: color-mix(in srgb, var(--setu-sync-rejected) 18%, transparent); }
-.setu-sync--failed { --setu-sync-color: var(--setu-sync-failed); border-style: dotted; }
-.setu-sync__icon { font-weight: 900; }
-@media (prefers-reduced-motion: no-preference) { .setu-sync--sending .setu-sync__icon { display: inline-block; animation: setu-spin 1s linear infinite; } }
-@keyframes setu-spin { to { transform: rotate(360deg); } }
 
 .setu-explain { border-left: 6px solid var(--setu-blocked); background: var(--setu-surface); padding: var(--setu-space-3); border-radius: var(--setu-radius); }
 .setu-explain__title { margin: 0 0 var(--setu-space-1); font-size: 1em; font-weight: 800; }

@@ -24,7 +24,7 @@ test.describe('demo: bridge B1 submerged, reported offline', () => {
     await field.getByTestId('nav-queue').click();
     const item = field.getByTestId('queue-item').first();
     await expect(item).toHaveAttribute('data-status', 'queued');
-    await expect(item.getByTestId('sync-status-label')).toHaveText('Saved on device');
+    await expect(item.getByTestId('sync-status-label')).toHaveText('Saved locally');
     await expect(field.getByTestId('offline-banner')).toBeVisible();
     const clientEventId = (await item.getAttribute('data-client-event-id')) ?? '';
     expect(clientEventId).not.toBe('');
@@ -33,7 +33,7 @@ test.describe('demo: bridge B1 submerged, reported offline', () => {
     // 4. Back online: reaches Confirmed.
     await goOnline(field);
     await expect(item).toHaveAttribute('data-status', 'synced', { timeout: 30_000 });
-    await expect(item.getByTestId('sync-status-label')).toHaveText('Confirmed');
+    await expect(item.getByTestId('sync-status-label')).toHaveText('Accepted');
     await expect(field.getByTestId('offline-banner')).toHaveCount(0);
     await field.screenshot(shot('02-field-confirmed.png'));
 

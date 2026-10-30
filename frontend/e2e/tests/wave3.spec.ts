@@ -17,11 +17,11 @@ test.describe('wave 3', () => {
     const row = page.getByTestId('camp-household-row').first();
     await expect(row).toBeVisible();
     await expect(row).toHaveAttribute('data-status', 'queued');
-    await expect(row.getByTestId('sync-status-label')).toHaveText('Saved on device');
+    await expect(row.getByTestId('sync-status-label')).toHaveText('Saved locally');
 
     await goOnline(page);
     await expect(row).toHaveAttribute('data-status', 'synced', { timeout: 30_000 });
-    await expect(row.getByTestId('sync-status-label')).toHaveText('Confirmed');
+    await expect(row.getByTestId('sync-status-label')).toHaveText('Accepted');
   });
 
   test('report form has the cause select and a bridge option', async ({ fieldPage: page }) => {
