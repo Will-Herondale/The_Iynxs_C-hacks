@@ -10,7 +10,7 @@ body { background: var(--setu-bg); color: var(--setu-text); font-family: var(--s
 .cmd-viewswitch__btn.is-active { background: var(--setu-text); color: var(--setu-bg); font-weight: 700; }
 /* Compact persistent situation strip */
 .cmd-situation { display: flex; gap: var(--setu-space-3); align-items: center; padding: 3px var(--setu-space-4); background: var(--setu-surface); border-bottom: 1px solid var(--setu-border); font-size: 0.85rem; min-width: 0; }
-.cmd-situation[data-all-clear='false'] { background: #fdecea; color: #5f1111; border-left: 6px solid #c62828; }
+.cmd-situation[data-all-clear='false'] { background: var(--setu-critical-bg); color: var(--setu-text); border-left: 6px solid var(--setu-critical); }
 .cmd-situation__title { flex: none; text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.75rem; }
 .cmd-situation ul { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 2px 16px; font-weight: 600; min-width: 0; }
 .cmd-situation__counts { margin-left: auto; display: flex; gap: var(--setu-space-3); flex: none; font-variant-numeric: tabular-nums; }
@@ -25,7 +25,7 @@ body { background: var(--setu-bg); color: var(--setu-text); font-family: var(--s
 .cmd-workspace[data-view='settlements'] .cmd-map-wrap, .cmd-workspace[data-view='routes'] .cmd-map-wrap { position: relative; inset: auto; grid-column: 2; grid-row: 1; }
 .cmd-section--split { grid-column: 1; grid-row: 1; border-right: 1px solid var(--setu-border); }
 /* Context panel: a docked column, never over the map. */
-.cmd-aside { position: absolute; top: 0; right: 0; bottom: 0; width: 360px; z-index: 5; overflow-y: auto; background: var(--setu-bg); border-left: 1px solid var(--setu-border); padding: var(--setu-space-2); box-shadow: -2px 0 8px rgba(0,0,0,0.15); }
+.cmd-aside { position: absolute; top: 0; right: 0; bottom: 0; width: 360px; z-index: 5; overflow-y: auto; background: var(--setu-bg); border-left: 1px solid var(--setu-border); padding: var(--setu-space-2); box-shadow: -2px 0 8px rgba(0,0,0,0.4); }
 .cmd-aside__close { float: right; margin-bottom: 4px; font: inherit; cursor: pointer; }
 .cmd-workspace[data-view='map']:has(.cmd-aside) .cmd-map-wrap { right: 360px; }
 .cmd-workspace[data-view='settlements']:has(.cmd-aside) .cmd-map-wrap, .cmd-workspace[data-view='routes']:has(.cmd-aside) .cmd-map-wrap { margin-right: 360px; }
@@ -41,8 +41,8 @@ body { background: var(--setu-bg); color: var(--setu-text); font-family: var(--s
 .ov-meta dt, .ov-tile__note { font-size: 0.75rem; color: var(--setu-text-muted); }
 .ov-meta dd { margin: 0; font-weight: 600; }
 .ov-tag { font-size: 0.7rem; padding: 1px 6px; border: 1px solid currentColor; border-radius: 3px; margin-left: 4px; font-weight: 700; }
-.ov-tag--synthetic { color: #6a1b9a; }
-.ov-tag--new { color: #b71c1c; }
+.ov-tag--synthetic { color: var(--setu-review); }
+.ov-tag--new { color: var(--setu-critical); }
 .ov-tiles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--setu-space-2); }
 .ov-tile { width: 100%; display: flex; flex-direction: column; text-align: left; padding: 8px 12px; background: var(--setu-surface); border: 1px solid var(--setu-border); color: inherit; font: inherit; cursor: pointer; }
 .ov-tile__value { font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
@@ -54,8 +54,8 @@ body { background: var(--setu-bg); color: var(--setu-text); font-family: var(--s
 .ov-link { margin-left: auto; background: none; border: 0; color: inherit; text-decoration: underline; cursor: pointer; font: inherit; font-size: 0.8rem; }
 .ov-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .ov-alert { width: 100%; text-align: left; font: inherit; color: inherit; background: none; border: 0; border-left: 4px solid var(--setu-border); padding: 4px 8px; cursor: pointer; }
-.ov-alert[data-severity='critical'] { border-left-color: #c62828; background: #fdecea; color: #5f1111; }
-.ov-alert[data-severity='warning'] { border-left-color: #ef6c00; background: #fff4e5; color: #5a2d00; }
+.ov-alert[data-severity='critical'] { border-left-color: var(--setu-critical); background: var(--setu-critical-bg); color: var(--setu-text); }
+.ov-alert[data-severity='warning'] { border-left-color: var(--setu-warn); background: var(--setu-warn-bg); color: var(--setu-text); }
 .ov-alert__text { display: block; font-size: 0.85rem; }
 .ov-event { border-bottom: 1px solid var(--setu-border); padding: 3px 0; }
 .ov-event__meta { font-size: 0.8rem; color: var(--setu-text-muted); }
