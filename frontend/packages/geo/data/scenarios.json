@@ -1,0 +1,99 @@
+[
+  {
+    "id": "S1",
+    "name": "Submerged bridge",
+    "slug": "submerged_bridge",
+    "note": "Synthetic demonstration scenario. Not a reconstruction of any real flood event and not validated against observations. The deck height is read from a DSM surface at the bridge midpoint, so it approximates the canopy/road surface, not a surveyed deck.",
+    "synthetic": true,
+    "targets": {
+      "bridgeId": "284824410",
+      "deckElevationM": 84.8,
+      "waterLevelM": 85.3
+    },
+    "expectedEffects": [
+      "the bridge edge disappears from every route",
+      "settlements on the far side gain at least one hop",
+      "closest reachable shelter changes for affected places"
+    ]
+  },
+  {
+    "id": "S2",
+    "name": "Blocked approach road",
+    "slug": "blocked_road",
+    "note": "Synthetic demonstration scenario. Not a reconstruction of any real flood event and not validated against observations. No live road-closure feed is used; the closure is authored.",
+    "synthetic": true,
+    "targets": {
+      "roadId": "1074461062",
+      "closureLengthM": 200,
+      "shelterId": "MJ-SH-009",
+      "shelterElevationM": 85.2
+    },
+    "expectedEffects": [
+      "detour through lower-lying roads",
+      "travel time increase for the affected shelter catchment",
+      "possible loss of access within the stated time budget"
+    ]
+  },
+  {
+    "id": "S3",
+    "name": "Rising water level",
+    "slug": "rising_water",
+    "note": "Synthetic demonstration scenario. Not a reconstruction of any real flood event and not validated against observations. The level series is arbitrary, not an observed hydrograph. Show that sentence on screen.",
+    "synthetic": true,
+    "targets": {
+      "levelsM": [
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92
+      ]
+    },
+    "expectedEffects": [
+      "monotonic growth of flooded road km, flooded camps and flooded buildings",
+      "loss of the lowest crossings first"
+    ]
+  },
+  {
+    "id": "S4",
+    "name": "Settlement cut off",
+    "slug": "settlement_disconnected",
+    "note": "Synthetic demonstration scenario. Not a reconstruction of any real flood event and not validated against observations. The isolation is engineered for demonstration; it is not an observed cut-off event.",
+    "synthetic": true,
+    "targets": {
+      "settlementId": "10692764768",
+      "settlementName": "Auniati",
+      "settlementElevationM": 82.3,
+      "waterLevelM": 83.8
+    },
+    "expectedEffects": [
+      "settlement labelled disconnected",
+      "nearest reachable shelter recomputed",
+      "an explicit no-viable-evacuation state instead of a bogus route"
+    ]
+  },
+  {
+    "id": "S5",
+    "name": "Fastest route is unsafe",
+    "slug": "unsafe_route",
+    "note": "Synthetic demonstration scenario. Not a reconstruction of any real flood event and not validated against observations. Risk weights are authored and not empirically calibrated.",
+    "synthetic": true,
+    "targets": {
+      "waterLevelM": 88
+    },
+    "expectedEffects": [
+      "the fastest route is flagged unsafe",
+      "the safe route is longer but avoids deep water and unassessed bridges"
+    ]
+  }
+]
