@@ -18,7 +18,7 @@ Maintained by: backend orchestrator. Read by: both AI agents and the three human
 |---|---|---|
 | `main` | `f2ff75a` Initial commit | Protected default. Empty except LICENSE + README. |
 | `planning/architecture` | `618f89e` planning docs | All planning docs (docs/00–11). No application code. |
-| `coordination/team-handoff` | `fd98feb` backend scaffold + 5 coordination docs | Adds packages/core (event envelope, HLC, canonical JSON, content hash, version vector, sync types, 33 tests passing). docs/coordination/ now has README, agent-status, ownership, integration-contract, open-questions, decisions, handoff-frontend, handoff-backend, messages/*. From planning/architecture. |
+| `coordination/team-handoff` | `711f863` backend: add packages/server HTTP adapter | Adds packages/server (/api/v1/* endpoints, EventLog JSONL, translation layer, projection fold, SSE stream). packages/core 66 tests passing. docs/coordination/ has README, agent-status, ownership, integration-contract, open-questions, decisions, handoff-frontend, handoff-backend, messages/*. From planning/architecture. |
 | `frontend/main` | `6059fc88` shared test-id + dev-port contract | Frontend monorepo: contract, api-client, mock-backend, ui. Merged `frontend/team-platform`. |
 | `frontend/team-platform` | `589ab33` integrate mock-backend | Merged into `frontend/main`. |
 
@@ -36,7 +36,7 @@ Maintained by: backend orchestrator. Read by: both AI agents and the three human
 ## 4. Work state
 
 - **Frontend:** contract schemas (zod), API client interface, mock in-process backend, dev relay, seed scenario (Guwahati), UI component kit. `http` adapter throws `NotImplementedError` pending contract sign-off. Apps (`apps/field`, `apps/command`) not yet scaffolded.
-- **Backend:** packages/core complete (event envelope, HLC, canonical JSON, content hash, version vector, sync ingest with hole healing, project/flood, project/network, project/people, route/dag, route/latest-departure, route/cutoff — 66 tests passing across 11 test files). Next: packages/server HTTP adapter for /api/v1/* endpoints, packages/geo Python builder (waiting on Karthik artifacts).
+- **Backend:** packages/core complete (event envelope, HLC, canonical JSON, content hash, version vector, sync ingest with hole healing, project/flood, project/network, project/people, route/dag, route/latest-departure, route/cutoff — 66 tests passing across 11 test files). packages/server complete (/api/v1/events:batch, /api/v1/events/status, /api/v1/projections, /api/v1/events, /api/v1/stream, EventLog JSONL, translation layer, CORS, health). Next: packages/geo Python builder (waiting on Karthik artifacts), deterministic event fold integration.
 - **Karthik:** nothing landed yet; DEM tiles verified downloadable, Majuli geodata audit complete.
 
 ## 5. Communication rule

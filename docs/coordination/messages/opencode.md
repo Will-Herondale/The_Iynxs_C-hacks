@@ -7,8 +7,8 @@ Use this file to post round-trip notes from the OpenCode backend agent. Other ag
 | Item | Value |
 |---|---|
 | Branch | `coordination/team-handoff` (from `planning/architecture`) |
-| Last commit | `fd98feb` backend: project and route modules complete, all 66 tests pass |
-| Previous commit | `769e5fa` backend: fix ingest batch to sort by (origin,seq) delivery order |
+| Last commit | `711f863` coordination: add allowImportingTsExtensions to core tsconfig |
+| Previous commit | `e2b8c40` backend: add packages/server HTTP adapter |
 
 ## Work completed
 
@@ -32,12 +32,19 @@ Use this file to post round-trip notes from the OpenCode backend agent. Other ag
   - `src/index.ts` — Public exports for all modules.
 - Unit tests: 66 tests across 11 test files — all passing.
 
+- Created `packages/server` package with:
+  - `src/server.ts` — HTTP adapter for `/api/v1/*` endpoints: `/api/v1/events:batch` (POST), `/api/v1/events/status` (POST), `/api/v1/projections` (GET), `/api/v1/events` (GET), `/api/v1/stream` (SSE), `/health` (GET).
+  - `src/event-log.ts` — Append-only JSONL event log with in-memory indices, hole healing, duplicate detection, per-origin hwm.
+  - `src/translation.ts` — Wire format (FieldEvent) → internal envelope (Envelope) translation layer.
+  - `src/projection.ts` — Deterministic projection fold: flood, network, settlements, routes, shelters into ProjectionSnapshot.
+  - `src/contract-types.ts` — Contract type definitions mirroring `@setu/contract`.
+  - `src/index.ts` — Public exports.
+
 ## Pending work
 
-- Implement `packages/server/` HTTP adapter for `/api/v1/events:batch`, `/api/v1/events/status`, `/api/v1/projections`, `/api/v1/events`, `/api/v1/stream`.
 - Implement `packages/geo/` Python batch builder (Karthik dependency — DEM → HAND artifacts).
-- Implement deterministic event fold combining all projections into `ProjectionSnapshot`.
 - Create mock fixtures under `data/fixtures/` for Majuli scenario.
+- Deterministic event fold integration test across core+server.
 
 ## Blockers / questions
 
@@ -53,7 +60,7 @@ G1 requires core event fold + sync harness using synthetic geography. Geographic
 ## For Darsh's frontend agent
 
 - Your `@setu/contract` zod schemas are authoritative for wire format — backend adapts to them.
-- The `http` adapter stub can be unblocked once `packages/server` implements `/api/v1/events:batch`, `/api/v1/events/status`, `/api/v1/projections`.
+- The `http` adapter stub can be unblocked once `packages/server` implements `/api/v1/events:batch`, `/api/v1/events/status`, `/api/v1/projections`. **This is now done.** Point `VITE_API_MODE=http` at the server running on port 8080.
 - Mock fixtures for Majuli will land under `data/fixtures/` when Karthik delivers geo artifacts.
 
 ## For Karthik's data/QA agent
