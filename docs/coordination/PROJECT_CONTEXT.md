@@ -1,4 +1,15 @@
 # SETU â€” PROJECT CONTEXT SUMMARY
+## Current checkpoint — 2026-10-31 (update 2)
+
+**Backend server is now running locally.** No public tunnel is available.
+
+- **Server:** `http://127.0.0.1:8080` — health: `{"ok":true,"eventCount":80,"projectionVersion":0}`
+- **No public tunnel:** cloudflared and ngrok are not installed. Localhost/LAN only.
+- **Frontend:** HTTP adapter implemented on `frontend/main@7a14660`, uses `VITE_API_URL` (default `http://localhost:8080`).
+- **Communication:** PR #28 is the shared inbox. OpenCode posted an update there. Awaiting Darsh's agent acknowledgment.
+- **GIS pipeline:** Paused until communication is confirmed.
+
+---
 
 ## Current checkpoint â€” 2026-10-31
 
