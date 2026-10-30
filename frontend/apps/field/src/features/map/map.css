@@ -1,0 +1,14 @@
+.map-canvas { width: 100%; height: min(60vh, 460px); min-height: 280px; border: 2px solid #555; border-radius: 8px; }
+.map-note { font-size: 0.9em; }
+.map-report { display: inline-flex; align-items: center; gap: 4px; min-width: 44px; min-height: 44px; padding: 2px 8px; font: 700 12px system-ui, sans-serif; border: 2px solid #111; background: #fff; color: #111; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.5); }
+.map-report--pending { border-radius: 22px; border-style: dashed; }
+.map-report--accepted { border-radius: 4px; background: #e8f5e9; border-color: #1b5e20; border-style: solid; }
+.map-report--review { border-radius: 4px; background: #f3e5f5; border-color: #6a1b9a; transform: none; }
+.map-report--rejected { border-radius: 4px; background: #ffebee; border-color: #b71c1c; }
+.map-report__glyph { font-size: 18px; }
+.map-settlement { font: 700 12px system-ui, sans-serif; background: #fff; border: 2px solid #455a64; border-radius: 4px; padding: 1px 6px; white-space: nowrap; }
+.map-settlement--cut_off { border-color: #616161; background: #eeeeee; }
+.map-settlement--limited { border-color: #ef6c00; }
+.map-you { font: 700 12px system-ui, sans-serif; background: #0b5cad; color: #fff; padding: 2px 8px; border-radius: 12px; border: 2px solid #fff; }
+.map-reports__open { min-height: 44px; width: 100%; text-align: left; }
+.map-key ul { padding-left: 1.2em; }

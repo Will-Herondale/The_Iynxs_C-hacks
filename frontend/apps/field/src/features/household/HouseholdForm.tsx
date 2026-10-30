@@ -3,20 +3,21 @@ import type { FormEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import type { Resolver } from 'react-hook-form';
 import { Button, Field, Panel } from '@setu/ui';
+import './household.css';
 import { FieldEventSchema, newClientEventId } from '@setu/contract';
-import type { FieldEvent, HouseholdRegistration } from '@setu/contract';
+import type { FieldEvent, HouseholdRegistration, ProjectionSnapshot } from '@setu/contract';
 import { enqueue, replace } from '../../sync/index.js';
 import type { QueueItem } from '../../sync/index.js';
 import { getDeviceId, getReporterId } from '../../app/identity.js';
 import { DEFAULT_LOCATION, useGeolocation } from '../report/location.js';
 
 const VULNERABLE = ['elderly', 'children', 'disabled', 'medical'] as const;
-const SETTLEMENTS = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'];
 
 export interface HouseholdValues {
   headName: string;
   members: string;
   settlementId: string;
+  shelterId: string;
   elderly: boolean;
   children: boolean;
   disabled: boolean;
@@ -28,7 +29,7 @@ export interface HouseholdValues {
 }
 
 const EMPTY: HouseholdValues = {
-  headName: '', members: '1', settlementId: '', elderly: false, children: false, disabled: false, medical: false,
+  headName: '', members: '1', settlementId: '', shelterId: '', elderly: false, children: false, disabled: false, medical: false,
   needs: '', lat: '', lng: '', note: '',
 };
 
@@ -39,8 +40,9 @@ export function buildHouseholdEvent(
   id: { reporterId: string; deviceId: string },
   clientEventId: string,
   householdId: string,
-  shelterId?: string,
+  fixedShelterId?: string,
 ) {
+  const shelterId = fixedShelterId || v.shelterId.trim() || undefined;
   const raw = {
     clientEventId,
     occurredAt: new Date().toISOString(),
@@ -64,7 +66,7 @@ export function buildHouseholdEvent(
 
 function valuesFromEvent(e: HouseholdRegistration): HouseholdValues {
   return {
-    headName: e.headName, members: String(e.members), settlementId: e.settlementId ?? '', ...e.vulnerable,
+    headName: e.headName, members: String(e.members), settlementId: e.settlementId ?? '', shelterId: e.shelterId ?? '', ...e.vulnerable,
     needs: e.needs.join(', '), lat: String(e.location.lat), lng: String(e.location.lng), note: e.note ?? '',
   };
 }
@@ -80,12 +82,14 @@ export interface HouseholdScreenProps {
   /** Camp mode: replaces the panel title and form test id. */
   title?: string;
   formTestId?: string;
+  /** Latest cached projections: source of the origin-village and camp lists. */
+  snapshot?: ProjectionSnapshot;
 }
 
 const defaultSubmit = (event: FieldEvent, editing?: QueueItem | null) =>
   editing ? replace(editing.clientEventId, event) : enqueue(event);
 
-export function HouseholdScreen({ editing, onDone, submit = defaultSubmit, shelterId, title, formTestId }: HouseholdScreenProps) {
+export function HouseholdScreen({ editing, onDone, submit = defaultSubmit, shelterId, title, formTestId, snapshot }: HouseholdScreenProps) {
   const identity = { reporterId: getReporterId(), deviceId: getDeviceId() };
   const editEvent = editing?.event.type === 'household_registration' ? editing.event : undefined;
   const idRef = useRef(newClientEventId());
@@ -107,6 +111,8 @@ export function HouseholdScreen({ editing, onDone, submit = defaultSubmit, shelt
     resolver,
   });
   const { errors, isSubmitting } = formState;
+  const settlements = (snapshot?.settlements.features ?? []).map((f) => ({ id: f.properties.settlementId, name: f.properties.name }));
+  const shelters = (snapshot?.shelters.features ?? []).map((f) => ({ id: f.properties.shelterId, name: f.properties.name }));
 
   const { gps, locate } = useGeolocation((p) => {
     if (!watch('lat') && !watch('lng')) {
@@ -123,7 +129,7 @@ export function HouseholdScreen({ editing, onDone, submit = defaultSubmit, shelt
       await submit(r.event, editing);
       idRef.current = newClientEventId();
       householdRef.current = newClientEventId();
-      setSent('Household saved to the queue. It syncs automatically.');
+      setSent('Saved locally. It will sync automatically when a connection is available.');
       reset({ ...EMPTY, lat: values.lat, lng: values.lng });
       onDone?.();
     } catch (e) {
@@ -149,25 +155,41 @@ export function HouseholdScreen({ editing, onDone, submit = defaultSubmit, shelt
 
   return (
     <Panel title={title ?? (editing ? 'Edit rejected household' : 'Register household')}>
+      <p className="household-note">Household ID (generated on this device): <code data-testid="household-id">{householdRef.current}</code></p>
       <form onSubmit={guardedSubmit} noValidate data-testid={formTestId} aria-label="Household registration form">
         <Field label="Head of household" data-testid="household-headName" error={err('headName')} {...register('headName')} />
         <Field label="Members" type="number" min={1} data-testid="household-members" error={err('members')} {...register('members')} />
+        <p className="household-note" data-testid="household-member-names-blocked" aria-disabled="true">
+          Member names: Blocked: #15 (not in the contract; only the member count is recorded).
+        </p>
         <div className="setu-field">
-          <label className="setu-field__label" htmlFor="h-settlement">Settlement</label>
-          <select id="h-settlement" className="setu-field__control" data-testid="household-settlementId" {...register('settlementId')}>
+          <label className="setu-field__label" htmlFor="h-settlement">Origin village</label>
+          <select id="h-settlement" className="setu-field__control household-control" data-testid="household-settlementId" {...register('settlementId')}>
             <option value="">Unknown</option>
-            {SETTLEMENTS.map((s) => <option key={s} value={s}>{s}</option>)}
+            {editEvent?.settlementId && !settlements.some((x) => x.id === editEvent.settlementId) && <option value={editEvent.settlementId}>{editEvent.settlementId}</option>}
+            {settlements.map((x) => <option key={x.id} value={x.id}>{x.name} ({x.id})</option>)}
           </select>
+          {settlements.length === 0 && <p className="household-note" data-testid="household-places-missing">No village list on this device yet; origin village stays Unknown until places are cached.</p>}
         </div>
+        {!shelterId && (
+          <div className="setu-field">
+            <label className="setu-field__label" htmlFor="h-shelter">Current camp</label>
+            <select id="h-shelter" className="setu-field__control household-control" data-testid="household-shelterId" {...register('shelterId')}>
+              <option value="">Not in a camp</option>
+              {editEvent?.shelterId && !shelters.some((x) => x.id === editEvent.shelterId) && <option value={editEvent.shelterId}>{editEvent.shelterId}</option>}
+              {shelters.map((x) => <option key={x.id} value={x.id}>{x.name} ({x.id})</option>)}
+            </select>
+          </div>
+        )}
         <fieldset>
-          <legend>Vulnerable members</legend>
+          <legend>Assistance requirements: vulnerable members</legend>
           {VULNERABLE.map((k) => (
-            <label key={k}>
+            <label key={k} className="household-check">
               <input type="checkbox" data-testid={`household-vulnerable-${k}`} {...register(k)} /> {k}
             </label>
           ))}
         </fieldset>
-        <Field label="Needs (comma separated)" data-testid="household-needs" {...register('needs')} />
+        <Field label="Other needs (comma separated, e.g. water, medicine)" data-testid="household-needs" {...register('needs')} />
         <fieldset>
           <legend>Location</legend>
           <Field label="Latitude" inputMode="decimal" data-testid="field-lat" error={err('lat')} {...register('lat')} />
@@ -193,7 +215,7 @@ export function HouseholdScreen({ editing, onDone, submit = defaultSubmit, shelt
           </div>
         )}
         {sent && !firstError && <p role="status">{sent}</p>}
-        <Button type="submit" variant="primary" data-testid="household-submit" disabled={isSubmitting}>
+        <Button type="submit" variant="primary" className="household-submit" data-testid="household-submit" disabled={isSubmitting}>
           {editing ? 'Resubmit' : 'Register household'}
         </Button>
       </form>

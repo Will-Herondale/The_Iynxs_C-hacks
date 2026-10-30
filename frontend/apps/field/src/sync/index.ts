@@ -2,10 +2,10 @@ import { useSyncExternalStore } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { ApiClient, ClientSyncStatus } from '@setu/contract';
 import { confirmAccepted, recoverSending, runPass } from './engine';
-import { db, LAST_SYNCED_KEY, type QueueItem } from './db';
+import { db, LAST_SYNCED_KEY, type ArchivedItem, type QueueItem } from './db';
 import { setKick } from './queue';
 
-export type { QueueItem } from './db';
+export type { QueueItem, ArchivedItem } from './db';
 export { enqueue, retry, discard, resolveConflict, replace } from './queue';
 export { backoffMs } from './backoff';
 
@@ -104,6 +104,20 @@ export function useQueue(filter?: ClientSyncStatus[]): QueueItem[] {
       return filter && filter.length ? all.filter((i) => filter.includes(i.status)) : all;
     }, [key]) ?? []
   );
+}
+
+/** One queue item by clientEventId (live), or its archived/superseded original. */
+export function useQueueItem(id: string | undefined): { item?: QueueItem; archived?: ArchivedItem; loading: boolean } {
+  const res = useLiveQuery(
+    async () => (id ? { item: await db.queue.get(id), archived: await db.archive.get(id) } : {}),
+    [id],
+  );
+  return { item: res?.item, archived: res?.archived, loading: res === undefined };
+}
+
+/** All archived (superseded) originals. */
+export function useArchive(): ArchivedItem[] {
+  return useLiveQuery(() => db.archive.toArray(), []) ?? [];
 }
 
 export function useSyncState(): { online: boolean; syncing: boolean; lastSyncedAt?: number; pendingCount: number } {
