@@ -171,12 +171,31 @@ Status labels follow the 7-label spec vocabulary (Saved locally / Waiting to syn
 | `provenance-supersedes` / `provenance-open-original` | replacement shows what it replaces | |
 
 ### Map tab (Helper 2)
+Basemap = bundled `@setu/geo` layers (works offline). Report markers: circle = pending, square = accepted, plus text labels.
+| id | element | attributes |
+|---|---|---|
+| `map-canvas` | MapLibre container | |
+| `map-offline-note` / `map-basemap-note` | connectivity note / basemap status | |
+| `map-key` | marker + layer key (shape + label) | |
+| `map-report-<clientEventId>` | marker on the map | |
+| `map-you` | volunteer location marker | |
+| `map-settlement-<id>` | cut-off settlement marker | |
+| `map-projection` / `map-projection-meta` | latest cached projection, "data as of" | |
+| `map-blocked-list` / `map-flood-list` / `map-cutoff-list` | blocked roads / flood areas (modelled/synthetic labelled) / cut-off settlements | |
+| `map-reports` / `map-report-link` | my reports list (opens detail); `li[data-state]` pending\|accepted\|review\|rejected | |
 
 ### Sync screen (Helper 2)
+Uses `@setu/ui` `SyncStatusSummary` (`sync-summary`, `sync-count-queued|synchronising|synced|conflict|rejected|failed`) and `ConfirmDialog` (role=dialog, buttons "Keep report" / "Discard report").
+| id | element | attributes |
+|---|---|---|
+| `sync-connectivity` / `sync-last-success` | connectivity; last successful sync | `data-online` / `data-ts` |
+| `queue-sync-now` | manual sync | |
+| `queue-filter-<key>` / `queue-list` / `queue-item` | filters; list; one item | item: `data-client-event-id`, `data-status`, `data-spec-label`, `data-type` |
+| `queue-item-explain` / `queue-detail-link` | one-line explanation; link to `#/report/<id>` | |
+| `queue-retry` / `queue-edit` / `queue-discard` | per-item actions (discard asks to confirm) | |
+| `conflict-panel` / `conflict-keep-mine` / `conflict-accept-server` | review panel | |
 
 ### Households and camp (Helper 3)
-
-### Field v3 — Households & camp (Helper 3)
 | id | element | attributes |
 |---|---|---|
 | `households-screen` | Households tab root | |

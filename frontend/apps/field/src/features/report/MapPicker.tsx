@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Map as MlMap, Marker, StyleSpecification } from 'maplibre-gl';
 import { MAJULI_CENTER } from './location.js';
+import { addBaseLayers } from '@setu/geo';
 import { plainOfflineStyle } from './geoStyle.js';
 
 export interface MapPickerProps {
@@ -39,7 +40,10 @@ export function MapPicker({ value, onPick, createStyle = plainOfflineStyle, onMa
           attributionControl: false,
         });
         map.current = m;
-        m.on('load', () => onMapReady?.(m));
+        m.on('load', () => {
+          void addBaseLayers(m as never).catch(() => undefined);
+          onMapReady?.(m);
+        });
         m.on('click', (e) => pick.current({ lat: +e.lngLat.lat.toFixed(6), lng: +e.lngLat.lng.toFixed(6) }));
         m.addControl(new ml.NavigationControl({ showCompass: false }), 'top-right');
         if (value) marker.current = new ml.Marker().setLngLat([value.lng, value.lat]).addTo(m);

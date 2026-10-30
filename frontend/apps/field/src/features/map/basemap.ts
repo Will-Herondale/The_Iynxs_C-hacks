@@ -1,26 +1,14 @@
 import type { StyleSpecification } from 'maplibre-gl';
+import { createOfflineStyle, MAJULI_BOUNDS, MAJULI_CENTER } from '@setu/geo';
 
-/**
- * The single seam to the offline district basemap.
- *
- * TODO(lead): once `@setu/geo` is merged, replace the body of `createBasemapStyle` with
- * `createOfflineStyle({ terrain: true })`, re-export MAJULI_BOUNDS / MAJULI_CENTER here and
- * set `BASEMAP_SOURCE = '@setu/geo'`. No other file in features/map touches the basemap.
- */
-export const BASEMAP_SOURCE: '@setu/geo' | 'placeholder' = 'placeholder';
+/** The single seam to the offline district basemap: bundled `@setu/geo` layers, no network. */
+export const BASEMAP_SOURCE: '@setu/geo' | 'placeholder' = '@setu/geo';
 
-/** Majuli (demo), approx. [lng, lat]. */
-export const DISTRICT_CENTER: [number, number] = [94.17, 26.95];
-export const DISTRICT_BOUNDS: [[number, number], [number, number]] = [
-  [93.95, 26.8],
-  [94.4, 27.1],
-];
+/** Majuli (demo), [lng, lat]. */
+export const DISTRICT_CENTER: [number, number] = MAJULI_CENTER;
+export const DISTRICT_BOUNDS: [[number, number], [number, number]] = MAJULI_BOUNDS;
 
-/** No network URLs: a plain background so projection layers and markers still render offline. */
+/** terrain:false until @setu/geo ships data/hillshade.png (file missing at 54a4957). Self-contained style (no glyphs, sprite or http URLs); data is filled by `addBaseLayers` on load. */
 export function createBasemapStyle(): StyleSpecification {
-  return {
-    version: 8,
-    sources: {},
-    layers: [{ id: 'setu-bg', type: 'background', paint: { 'background-color': '#eef1e6' } }],
-  };
+  return createOfflineStyle({ terrain: false }) as unknown as StyleSpecification;
 }

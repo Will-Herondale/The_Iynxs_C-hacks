@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react';
 import maplibregl, { type GeoJSONSource, type Map as MlMap, type Marker } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { ProjectionSnapshot } from '@setu/contract';
-import { createBasemapStyle, DISTRICT_BOUNDS, DISTRICT_CENTER } from './basemap.js';
+import { addBaseLayers } from '@setu/geo';
+import { createBasemapStyle, DISTRICT_BOUNDS } from './basemap.js';
 import { EMPTY, PROJ, floodGeoJson, projectionView, roadsGeoJson } from './projectionLayers.js';
 import { MARKER_SHAPE, type ReportMarker } from './reportMarkers.js';
 import type { VolunteerPosition } from './useVolunteerPosition.js';
@@ -80,8 +81,8 @@ export function MapCanvas({ snapshot, reports, position, onOpenReport }: MapCanv
       map = new maplibregl.Map({
         container: host.current,
         style: createBasemapStyle(),
-        center: DISTRICT_CENTER,
-        zoom: 10,
+        bounds: DISTRICT_BOUNDS,
+        fitBoundsOptions: { padding: 12 },
         maxBounds: [
           [DISTRICT_BOUNDS[0][0] - 0.3, DISTRICT_BOUNDS[0][1] - 0.3],
           [DISTRICT_BOUNDS[1][0] + 0.3, DISTRICT_BOUNDS[1][1] + 0.3],
@@ -94,6 +95,7 @@ export function MapCanvas({ snapshot, reports, position, onOpenReport }: MapCanv
     mapRef.current = map;
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
     map.on('load', () => {
+      void addBaseLayers(map as never).catch(() => undefined); // bundled GeoJSON, works offline
       map.addSource(PROJ.floodSrc, { type: 'geojson', data: EMPTY });
       map.addSource(PROJ.roadsSrc, { type: 'geojson', data: EMPTY });
       // Blue = water. Observed: solid outline; modelled/synthetic: lighter fill + dashed outline.
