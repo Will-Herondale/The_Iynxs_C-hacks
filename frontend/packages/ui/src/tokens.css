@@ -1,1 +1,61 @@
-/* @setu/ui design tokens */
+/* @setu/ui design tokens. Light = field (outdoor, high contrast); dark = command centre. */
+:root,
+[data-theme='field'] {
+  --setu-bg: #ffffff;
+  --setu-surface: #f4f4f0;
+  --setu-surface-2: #e6e6df;
+  --setu-text: #101010;
+  --setu-text-muted: #3d3d3d;
+  --setu-border: #1a1a1a;
+  --setu-focus: #0050d0;
+
+  --setu-primary: #0b3d91;
+  --setu-primary-text: #ffffff;
+  --setu-danger: #a40000;
+  --setu-warning: #8a4b00;
+  --setu-success: #0b5c1f;
+  --setu-info: #004e8c;
+
+  /* sync status (each also has distinct icon + label) */
+  --setu-sync-queued: #3d3d3d;
+  --setu-sync-sending: #004e8c;
+  --setu-sync-accepted: #8a4b00;
+  --setu-sync-synced: #0b5c1f;
+  --setu-sync-conflict: #7a1fa2;
+  --setu-sync-rejected: #a40000;
+  --setu-sync-failed: #b34700;
+
+  --setu-space-1: 4px;
+  --setu-space-2: 8px;
+  --setu-space-3: 12px;
+  --setu-space-4: 16px;
+  --setu-radius: 6px;
+  --setu-font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --setu-font-size: 16px;
+  --setu-tap-min: 44px;
+}
+
+[data-theme='command'] {
+  --setu-bg: #0d1117;
+  --setu-surface: #161b22;
+  --setu-surface-2: #21262d;
+  --setu-text: #f0f3f6;
+  --setu-text-muted: #b6bec8;
+  --setu-border: #6e7681;
+  --setu-focus: #79c0ff;
+
+  --setu-primary: #58a6ff;
+  --setu-primary-text: #0d1117;
+  --setu-danger: #ff7b72;
+  --setu-warning: #f2b84b;
+  --setu-success: #56d364;
+  --setu-info: #79c0ff;
+
+  --setu-sync-queued: #b6bec8;
+  --setu-sync-sending: #79c0ff;
+  --setu-sync-accepted: #f2b84b;
+  --setu-sync-synced: #56d364;
+  --setu-sync-conflict: #d2a8ff;
+  --setu-sync-rejected: #ff7b72;
+  --setu-sync-failed: #ffa657;
+}
