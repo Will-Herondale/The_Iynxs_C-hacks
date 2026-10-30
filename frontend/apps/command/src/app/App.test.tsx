@@ -5,9 +5,13 @@ import { stubApi } from '../testing/stubApi';
 import type { ApiClient } from '@setu/contract';
 
 // MapLibre needs WebGL; the dashboard wiring is what is under test here.
-vi.mock('../map', () => ({ MapView: () => <div data-testid="map" /> }));
+vi.mock('../map', async () => {
+  const t = await import('../map/toggles');
+  return { MapLayersProvider: t.MapLayersProvider, MapView: () => <div data-testid="map"><t.MapLayerControls /></div> };
+});
 
 import { App } from './App';
+import { TOGGLE_IDS } from '../map/layers';
 
 afterEach(() => {
   cleanup();
@@ -32,6 +36,16 @@ describe('<App/> dashboard', () => {
     expect(await screen.findByTestId('overview')).toBeTruthy();
     expect(screen.getByTestId('overview-simtime').textContent).toBe('Not provided by backend');
     for (const id of ['affected', 'disconnected', 'impassable', 'pending', 'evac']) expect(screen.getByTestId(`overview-count-${id}`)).toBeTruthy();
+  });
+
+  it('renders all 10 layer toggles on the map and they toggle', () => {
+    render(<App client={seeded()} />);
+    fireEvent.click(screen.getByTestId('nav-map'));
+    expect(TOGGLE_IDS).toHaveLength(10);
+    for (const id of TOGGLE_IDS) expect(screen.getByTestId(`layer-toggle-${id}`)).toBeTruthy();
+    const flood = screen.getByTestId('layer-toggle-flood') as HTMLInputElement;
+    fireEvent.click(flood);
+    expect(flood.checked).toBe(false);
   });
 
   it('switches sections and keeps the map mounted', async () => {

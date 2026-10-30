@@ -11,7 +11,7 @@ import { BASE_BOUNDS, baseLayerIds, loadBasemap, offlineStyle } from './basemap'
 import { selectionBounds } from './bounds';
 import { blockingByGroup, blockingIds, buildMarkers, type MarkerSpec } from './markers';
 import { observationsToGeoJSON, registerObservationIcons } from './observations';
-import { useMapLayers } from './toggles';
+import { MapLayerControls, useMapLayers } from './toggles';
 import { Legend } from './Legend';
 
 const CLICK_TOLERANCE_PX = 6;
@@ -258,6 +258,13 @@ export function MapView() {
         aria-label="Situation map"
         style={{ position: 'absolute', inset: 0 }}
       />
+      <details
+        open
+        style={{ position: 'absolute', top: 8, left: 8, zIndex: 2, maxWidth: 300, padding: '6px 10px', background: 'var(--setu-surface, #fff)', color: 'var(--setu-text, #111)', border: '1px solid var(--setu-border, #888)', borderRadius: 6, fontSize: 13 }}
+      >
+        <summary style={{ cursor: 'pointer', fontWeight: 600 }}>Layers</summary>
+        <MapLayerControls />
+      </details>
       <Legend />
     </div>
   );
