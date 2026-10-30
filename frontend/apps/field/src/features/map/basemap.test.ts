@@ -17,8 +17,8 @@ import { shelterCounts, shelterStatus } from './honesty.js';
 
 describe('shelter honesty', () => {
   it('only open===true is Open (reported)', () => {
-    expect(shelterStatus({ open: true }).label).toBe('Open (reported)');
-    expect(shelterStatus({ open: false })).toEqual({ status: 'pre-identified', label: 'Pre-identified · not confirmed' });
+    expect(shelterStatus({ open: true, capacity: 0, occupancy: 0 }).label).toBe('Open (reported)');
+    expect(shelterStatus({ open: false, capacity: 0, occupancy: 0 })).toEqual({ status: 'pre-identified', label: 'Pre-identified · not confirmed' });
   });
   it('never shows 0/0 as counts', () => {
     expect(shelterCounts({ open: false, capacity: 0, occupancy: 0 })).toBe('not published');

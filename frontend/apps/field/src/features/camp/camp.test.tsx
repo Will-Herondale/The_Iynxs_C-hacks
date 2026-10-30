@@ -25,7 +25,7 @@ const snapshot = {
   version: 3,
   generatedAt: '2026-10-30T10:00:00.000Z',
   settlements: { type: 'FeatureCollection', features: [] },
-  shelters: { type: 'FeatureCollection', features: [shelter('SH1', 'School', 200, 120, true), shelter('SH2', 'Hall', 50, 50, false)] },
+  shelters: { type: 'FeatureCollection', features: [shelter('SH1', 'School', 200, 120, true), shelter('SH2', 'Hall', 0, 0, false)] },
 } as unknown as ProjectionSnapshot;
 
 const row = (id: string, shelterId: string | undefined, status: string): QueueItem =>

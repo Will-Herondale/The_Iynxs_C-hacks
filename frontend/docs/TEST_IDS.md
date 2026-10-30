@@ -303,6 +303,6 @@ Existing `household-*`, `field-lat`/`field-lng`, `camp-*` ids are unchanged. `ho
 |---|---|---|
 | `data-class` | on layer toggles, legend entries, list items carrying a `DataClassTag` | `REAL\|SYNTHETIC\|EXPERIMENTAL` |
 | `data-route-state` | on routes in lists, panels and map legend | `calculated\|not-verified\|no-safe-route\|unreachable\|no-route-data\|refused` |
-| `data-shelter-status` | on shelter markers, rows and panels | `open-reported\|pre-identified` |
+| `data-shelter-status` | on shelter markers, rows and panels | `open-reported\|closed-reported\|pre-identified` (`closed-reported` = open:false with non-zero published counts) |
 
 Existing test-ids are unchanged. See `DATA_CLASSIFICATION.md`.
