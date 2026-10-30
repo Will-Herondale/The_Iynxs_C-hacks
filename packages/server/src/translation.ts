@@ -52,13 +52,16 @@ export function translateEvent(
   switch (event.type) {
     case 'flood_report': {
       const e = event as FloodReport;
+      const loc = locationToMicrodegrees(e.location);
       payload.type = 'obs.water';
       payload.point_id = e.areaId ?? `point-${e.clientEventId}`;
       payload.depth_dm = e.depthCm !== undefined ? Math.round(e.depthCm * 10) : 0;
-      payload.ref_kind = 'road_surface';
+      payload.ref_kind = 'bridge_deck';
       payload.confidence = 80;
       payload.area_id = e.areaId;
       payload.severity = e.severity;
+      payload.lat = loc.lat;
+      payload.lng = loc.lng;
       break;
     }
     case 'road_blockage': {
@@ -124,10 +127,22 @@ export function translateEvent(
     actor: { id: base.reporterId, role: 'volunteer' },
     subject: `${payload.type}:${payload.person_id || payload.edge_id || payload.point_id}`,
     at: toEpochMs(base.occurredAt),
-    payload,
+    payload: stripUndefined(payload),
   };
 
   return envInput;
+}
+
+/**
+ * Remove keys with undefined values from an object.
+ * Prevents validateNoFloats from rejecting undefined as an unsupported type.
+ */
+function stripUndefined(obj: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== undefined) result[k] = v;
+  }
+  return result;
 }
 
 /**

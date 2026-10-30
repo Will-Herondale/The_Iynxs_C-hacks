@@ -14,7 +14,7 @@ import { createServer, type Server } from 'node:http';
 import { EventLog } from './event-log';
 import { translateEvent } from './translation';
 import { projectSnapshot, type GeoArtifacts } from './projection';
-import { SYNTHETIC_ARTIFACTS } from './synthetic-artifacts';
+import { loadGeoArtifacts } from './geo-artifacts';
 import { totalOrder, type Envelope } from '../../core/src/index';
 import {
   type SubmitAck,
@@ -427,7 +427,7 @@ export async function startServer(
   port: number = PORT,
   geoArtifacts?: GeoArtifacts,
 ): Promise<Server> {
-  artifacts = geoArtifacts ?? SYNTHETIC_ARTIFACTS;
+  artifacts = geoArtifacts ?? (await loadGeoArtifacts());
   log = new EventLog(LOG_DIR);
   await log.load();
 

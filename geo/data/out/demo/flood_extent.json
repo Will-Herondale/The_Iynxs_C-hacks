@@ -1,0 +1,46 @@
+{
+  "type": "FeatureCollection",
+  "version": 1,
+  "generatedAt": "2026-10-30T14:03:31.074723+00:00",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "flood-sh21-auniati",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              94.159,
+              26.956
+            ],
+            [
+              94.165,
+              26.956
+            ],
+            [
+              94.165,
+              26.961
+            ],
+            [
+              94.159,
+              26.961
+            ],
+            [
+              94.159,
+              26.956
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "areaId": "area-sh21-auniati",
+        "depthCm": 50,
+        "severity": 3,
+        "waterLevelM": 85.3,
+        "method": "dem_below_level_synthetic",
+        "synthetic": true
+      }
+    }
+  ]
+}

@@ -22,6 +22,11 @@ import {
   projectFlood,
   type WaterObservation,
   type FloodPoint,
+  type RouteEdge,
+  type Passability,
+  type EdgePassability,
+  findFastestPath,
+  buildExpandedGraph,
 } from '../../core/src/index';
 import {
   projectNetwork,
@@ -37,6 +42,8 @@ export interface GeoArtifacts {
     name: string;
     geometry: { type: 'LineString'; coordinates: number[][] };
   }>;
+  /** Graph edges for routing, with real fromNode/toNode connectivity. */
+  routeEdges: RouteEdge[];
   settlements: Array<{
     settlementId: string;
     name: string;
@@ -61,7 +68,7 @@ export interface GeoArtifacts {
   routes: Array<{
     routeId: string;
     from: string; // settlementId
-    to: string; // settlementId
+    to: string; // shelterId
     geometry: { type: 'LineString'; coordinates: number[][] };
   }>;
 }
@@ -80,6 +87,8 @@ function extractWaterObservations(
       depth_dm: number;
       ref_kind: string;
       confidence: number;
+      lat?: number;
+      lng?: number;
     };
     obs.push({
       pointId: p.point_id,
@@ -95,9 +104,80 @@ function extractWaterObservations(
       origin: env.origin,
       seq: env.seq,
       suspectClock: false,
+      lat: p.lat,
+      lng: p.lng,
     });
   }
   return obs;
+}
+
+/**
+ * Infer road blockages from water observations at bridge deck points.
+ *
+ * When a volunteer reports water over a bridge deck (ref_kind === 'bridge_deck')
+ * with depthDm > 0, water is above the deck and the corresponding road edge
+ * should be treated as blocked. This links the flood observation to the road
+ * network so that a single field observation drives both inundation and
+ * passability decisions.
+ *
+ * Observations are matched to reference points by location proximity
+ * (within 50 m), since the observation point_id may not match the reference
+ * point's pointId.
+ *
+ * Returns synthetic road observations that are merged into the network
+ * projection alongside any explicit obs.road events.
+ */
+function extractBridgeBlockages(
+  waterObs: WaterObservation[],
+  refPoints: FloodPoint[],
+): Array<{
+  edgeId: string;
+  observedAt: number;
+  hlc: { l: number; c: number };
+  origin: string;
+  seq: number;
+  depthDm: number;
+  confidence: number;
+}> {
+  const blockages: Array<{
+    edgeId: string;
+    observedAt: number;
+    hlc: { l: number; c: number };
+    origin: string;
+    seq: number;
+    depthDm: number;
+    confidence: number;
+  }> = [];
+
+  // 50 m in degrees (approximate at 27° latitude)
+  const MATCH_THRESHOLD_DEG = 0.0005;
+
+  for (const obs of waterObs) {
+    if (obs.refKind !== 'bridge_deck' || obs.depthDm <= 0) continue;
+    if (obs.lat === undefined || obs.lng === undefined) continue;
+
+    const obsDeg = [obs.lng / 1_000_000, obs.lat / 1_000_000];
+
+    for (const refPoint of refPoints) {
+      if (!refPoint.edgeId) continue;
+      const refDeg = [refPoint.lng / 1_000_000, refPoint.lat / 1_000_000];
+      const d = Math.hypot(obsDeg[0] - refDeg[0], obsDeg[1] - refDeg[1]);
+      if (d <= MATCH_THRESHOLD_DEG) {
+        blockages.push({
+          edgeId: refPoint.edgeId,
+          observedAt: obs.observedAt,
+          hlc: obs.hlc,
+          origin: obs.origin,
+          seq: obs.seq,
+          depthDm: obs.depthDm,
+          confidence: obs.confidence,
+        });
+        break; // One blockage per observation
+      }
+    }
+  }
+
+  return blockages;
 }
 
 /**
@@ -232,15 +312,97 @@ function buildSettlements(
 
 /**
  * Build a GeoJSON FeatureCollection for routes.
+ *
+ * Uses the routing engine (findFastestPath on the time-expanded DAG) to
+ * compute genuine evacuation routes from each settlement to its nearest
+ * shelter, respecting current road passability. When no path exists, the
+ * route is marked 'unavailable' rather than returning fixture geometry.
+ *
+ * @param routes - Route definitions (from settlementId to shelterId)
+ * @param routeEdges - Graph edges with real node connectivity
+ * @param passByEdge - Per-edge passability from the network projection
+ * @param settlements - Settlement lookup by ID (for nodeId)
+ * @param shelters - Shelter lookup by ID (for nodeId)
+ * @param t0 - Departure epoch ms
  */
 function buildRoutes(
   routes: GeoArtifacts['routes'],
+  routeEdges: RouteEdge[],
+  passByEdge: Map<string, EdgePassability>,
+  settlementsById: Map<string, GeoArtifacts['settlements'][number]>,
+  sheltersById: Map<string, GeoArtifacts['shelters'][number]>,
+  t0: number,
 ): Route {
   const now = new Date().toISOString();
   const features: Route['features'] = [];
 
+  const horizonMs = 600000; // 10 minutes
+  const slotLengthMs = 60000; // 1 minute
+  const slotCount = Math.ceil(horizonMs / slotLengthMs);
+
+  // Build passability map: edgeId -> Passability[] (one entry per slot, open-ended)
+  const passByEdgeSlots = new Map<string, Passability[]>();
+  const edgeLengthM = new Map(routeEdges.map((e) => [e.edgeId, e.lengthM]));
+  for (const [edgeId, pass] of passByEdge) {
+    const lenM = edgeLengthM.get(edgeId) ?? 500;
+    const passable = pass.state !== 'blocked' && pass.state !== 'disputed';
+    const travelTimeS = Math.max(1, Math.round((pass.depthDm ?? 0) / 10 + lenM / 5));
+    const slotPass: Passability[] = [];
+    for (let s = 0; s < slotCount; s++) {
+      slotPass.push({
+        edgeId,
+        passable,
+        travelTimeS,
+        validFromSlot: s,
+        validUntilSlot: null,
+      });
+    }
+    passByEdgeSlots.set(edgeId, slotPass);
+  }
+
+  const graph = buildExpandedGraph(routeEdges, passByEdgeSlots, t0, horizonMs, slotLengthMs);
+
   let featureId = 0;
   for (const r of routes) {
+    const settlement = settlementsById.get(r.from);
+    const shelter = sheltersById.get(r.to);
+
+    if (!settlement || !shelter) {
+      features.push({
+        type: 'Feature',
+        id: `route-${featureId++}`,
+        geometry: r.geometry,
+        properties: {
+          routeId: r.routeId,
+          from: r.from,
+          to: r.to,
+          kind: 'evacuation',
+          status: 'unavailable',
+          etaMin: 0,
+          replacesRouteId: undefined,
+        },
+      });
+      continue;
+    }
+
+    const result = findFastestPath(
+      settlement.nodeId,
+      shelter.nodeId,
+      0, // srcSlot: depart at slot 0 (t0)
+      graph,
+    );
+
+    let status: Route['features'][number]['properties']['status'];
+    let etaMin: number;
+
+    if (result.path.length === 0 || result.etaS === 0) {
+      status = 'unavailable';
+      etaMin = 0;
+    } else {
+      status = 'active';
+      etaMin = Math.ceil(result.etaS / 60);
+    }
+
     features.push({
       type: 'Feature',
       id: `route-${featureId++}`,
@@ -250,8 +412,8 @@ function buildRoutes(
         from: r.from,
         to: r.to,
         kind: 'evacuation',
-        status: 'active',
-        etaMin: 30,
+        status,
+        etaMin,
         replacesRouteId: undefined,
       },
     });
@@ -348,6 +510,31 @@ export function projectSnapshot(
 
   const waterObs = extractWaterObservations(sortedEvents);
 
+  // Infer road blockages from water observations at bridge deck points
+  const bridgeBlockages = extractBridgeBlockages(
+    waterObs,
+    artifacts.floodReferencePoints,
+  );
+
+  // Create synthetic envelope-like records for bridge blockages so they flow
+  // through projectNetwork alongside any explicit obs.road events.
+  const blockageEnvelopes = bridgeBlockages.map((b) => ({
+    type: 'obs.road',
+    at: b.observedAt,
+    hlc: b.hlc,
+    origin: b.origin,
+    seq: b.seq,
+    payload: {
+      edge_id: b.edgeId,
+      state: 'blocked',
+      cause: 'water',
+      depth_dm: b.depthDm,
+      valid_from: b.observedAt,
+      valid_until: null,
+      confidence: b.confidence,
+    },
+  }));
+
   const floodProjection = projectFlood(
     [],
     waterObs,
@@ -359,19 +546,37 @@ export function projectSnapshot(
     edgeId: r.edgeId,
     class: 'residential',
   }));
+
+  // Merge real events with synthetic bridge blockage envelopes
+  const allEventsForNetwork = [
+    ...sortedEvents,
+    ...blockageEnvelopes,
+  ] as Envelope[];
   const networkProjection = projectNetwork(
-    sortedEvents,
+    allEventsForNetwork,
     roadEdges,
     asOf,
   );
 
   const cutOff = computeCutOff(artifacts.settlements, floodProjection);
 
+  const settlementsById = new Map(artifacts.settlements.map((s) => [s.settlementId, s]));
+  const sheltersById = new Map(artifacts.shelters.map((s) => [s.shelterId, s]));
+
+  const passByEdge = new Map(networkProjection.map((p) => [p.edgeId, p]));
+
   const flood = buildFloodExtent(floodProjection);
   const roads = buildRoadStatus(artifacts.roads, networkProjection);
   const settlements = buildSettlements(artifacts.settlements, cutOff);
   const shelters = buildShelters(artifacts.shelters);
-  const routes = buildRoutes(artifacts.routes);
+  const routes = buildRoutes(
+    artifacts.routes,
+    artifacts.routeEdges,
+    passByEdge,
+    settlementsById,
+    sheltersById,
+    Date.now(),
+  );
 
   const now = new Date(asOf).toISOString();
 

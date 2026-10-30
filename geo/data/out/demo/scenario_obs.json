@@ -1,0 +1,86 @@
+{
+  "scenario_id": "S1_obs_driven",
+  "name": "Submerged bridge \u2014 observation driven",
+  "seed": 20261030,
+  "synthetic": true,
+  "generatedAt": "2026-10-30T14:03:31.074723+00:00",
+  "note": "Authored demonstration scenario. Not a reconstruction of any real flood event. Water level is relative to the DEM/DSM surface, not MSL.",
+  "base_layers": {
+    "roads": "geo/data/out/geojson/roads.geojson",
+    "bridges": "geo/data/out/geojson/bridges.geojson",
+    "embankments": "geo/data/out/geojson/embankments.geojson",
+    "settlements": "data/out/demo/settlements.geojson",
+    "shelters": "data/out/demo/shelters.geojson",
+    "dem": "majuli_dem_30m_wgs84.tif",
+    "hand": "majuli_hand_30m_wgs84.tif"
+  },
+  "real_features": {
+    "bridge": {
+      "osm_id": 284824410,
+      "highway": "primary",
+      "ref": "SH21",
+      "length_m": 139.4,
+      "deck_elevation_m": 84.8
+    },
+    "settlement_cut_off": {
+      "osm_id": "10692764768",
+      "name": "Auniati",
+      "place": "village",
+      "elevation_m": 82.3
+    },
+    "shelter_nearest": {
+      "shelter_id": "MJ-SH-009",
+      "name": "Jengraimukh College",
+      "elevation_m": 85.2
+    }
+  },
+  "observation_event": {
+    "eventId": "evt-obs-001",
+    "clientEventId": "obs-2026-10-30-001",
+    "type": "flood_report",
+    "occurredAt": "2026-10-30T14:03:31.074723+00:00",
+    "reporterId": "volunteer-majuli-01",
+    "deviceId": "device-field-07",
+    "location": {
+      "lat": 26.9586,
+      "lng": 94.1622,
+      "accuracyM": 10
+    },
+    "note": "Water over bridge deck on SH21 near Auniati. Depth ~0.5 m above deck.",
+    "photoRefs": [],
+    "severity": 3,
+    "depthCm": 50,
+    "areaId": "area-sh21-auniati",
+    "synthetic": true
+  },
+  "perturbation": {
+    "type": "submerge_bridge",
+    "trigger": "flood_report",
+    "target": "284824410",
+    "water_level_m": 85.3,
+    "deck_elevation_m": 84.8,
+    "offset_m": 0.5,
+    "edge_state": {
+      "passable": false,
+      "reason": "submerged_bridge"
+    }
+  },
+  "expected_effects": [
+    "bridge edge absent from all returned routes",
+    "Auniati settlement marked cut_off",
+    "nearest reachable shelter for Auniati reassigned",
+    "evacuation route recalculated with longer eta"
+  ],
+  "assertions": [
+    "no route crosses the submerged bridge",
+    "cut_off settlement appears in hand-off list with reason",
+    "shelter open=false until confirmed by DDMA"
+  ],
+  "outputs": {
+    "road_status": "data/out/demo/road_status.json",
+    "settlement_status": "data/out/demo/settlement_status.json",
+    "shelter_status": "data/out/demo/shelter_status.json",
+    "flood_extent": "data/out/demo/flood_extent.json",
+    "route_status": "data/out/demo/route_status.json"
+  }
+}

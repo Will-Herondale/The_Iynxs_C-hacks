@@ -1,0 +1,37 @@
+{
+  "type": "FeatureCollection",
+  "version": 1,
+  "generatedAt": "2026-10-30T14:03:31.074723+00:00",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "road-sh21-bridge",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            94.161,
+            26.958
+          ],
+          [
+            94.1635,
+            26.9592
+          ]
+        ]
+      },
+      "properties": {
+        "roadId": "284824410",
+        "name": "SH21",
+        "status": "blocked",
+        "updatedAt": "2026-10-30T14:03:31.074723+00:00",
+        "sourceEventIds": [
+          "obs-2026-10-30-001"
+        ],
+        "blockReason": "submerged_bridge",
+        "waterLevelM": 85.3,
+        "deckElevationM": 84.8,
+        "synthetic": true
+      }
+    }
+  ]
+}

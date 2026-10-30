@@ -14,6 +14,8 @@ export interface FloodPoint {
   lat: number;     // microdegrees
   refElevDm: number;   // decimetres, DEM elevation at reference point
   drainElevDm: number; // decimetres, drainage cell elevation for this point
+  /** Optional road edge that should be blocked when water exceeds deck elevation. */
+  edgeId?: string;
 }
 
 export interface WaterObservation {
@@ -26,6 +28,9 @@ export interface WaterObservation {
   origin: string;
   seq: number;
   suspectClock: boolean;
+  /** Location of the observation, microdegrees, for matching to reference points. */
+  lat?: number;
+  lng?: number;
 }
 
 export interface InundationCell {
