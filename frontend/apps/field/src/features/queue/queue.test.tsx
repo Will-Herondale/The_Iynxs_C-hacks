@@ -76,3 +76,27 @@ describe('header widgets', () => {
     expect(fns.syncNow).toHaveBeenCalled();
   });
 });
+
+describe('status explanations', () => {
+  it('explains each status in the brief vocabulary', async () => {
+    const { statusExplanation } = await import('./QueueScreen.js');
+    expect(statusExplanation('queued', false)).toMatch(/^Saved on device/);
+    expect(statusExplanation('queued', true)).toMatch(/^Queued for sync/);
+    expect(statusExplanation('sending', true)).toMatch(/^Submitted/);
+    expect(statusExplanation('accepted', true)).toContain("we'll mark it Confirmed once it's in the shared record");
+    expect(statusExplanation('synced', true)).toMatch(/^Confirmed/);
+    expect(statusExplanation('conflict', true)).toMatch(/^Disputed/);
+    expect(statusExplanation('rejected', true)).toMatch(/^Rejected/);
+    expect(statusExplanation('failed', true)).toMatch(/^Retrying/);
+  });
+
+  it('renders the explanation per row and the renamed filters', () => {
+    state.sync = { online: false, syncing: false, pendingCount: 1 };
+    state.items = [mk('a', 'queued')];
+    render(<QueueScreen />);
+    expect(screen.getByTestId('queue-item-explain').textContent).toMatch(/^Saved on device/);
+    expect(screen.getByTestId('queue-filter-synced').textContent).toBe('Confirmed');
+    expect(screen.getByTestId('queue-filter-attention').textContent).toBe('Disputed / Rejected');
+    state.sync = { online: true, syncing: false, pendingCount: 0 };
+  });
+});
