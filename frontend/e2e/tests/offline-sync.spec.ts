@@ -105,7 +105,7 @@ test.describe('offline sync', () => {
     await expect(page.getByTestId('pending-count')).toHaveText('1');
   });
 
-  test('queued items survive a reload with the network actually down, and sync after reconnect', async ({ fieldPage: page }) => {
+  test('@pwa queued items survive a reload with the network actually down, and sync after reconnect', async ({ fieldPage: page }) => {
     const swReady = await waitForServiceWorker(page);
     test.skip(!swReady, 'no service worker registered; covered by the PWA test failure');
 
@@ -126,7 +126,7 @@ test.describe('offline sync', () => {
     await expect(page.getByTestId('pending-count')).toHaveText('0');
   });
 
-  test('PWA: the app shell loads offline after the first load', async ({ fieldPage: page }) => {
+  test('@pwa PWA: the app shell loads offline after the first load', async ({ fieldPage: page }) => {
     expect(await waitForServiceWorker(page), 'a service worker must be registered and ready after first load').toBe(true);
     // Make sure the page is controlled (a reload gives the SW control on first install).
     await page.reload();

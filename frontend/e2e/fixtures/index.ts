@@ -19,14 +19,14 @@ export async function resetMockState(): Promise<void> {
 }
 
 /** Open `path` with a `?mock=` toggle (e.g. 'offline', '5xx:1', 'delay:3000', 'conflict', 'reject', 'off'). Persisted in localStorage. */
-export async function setMock(page: Page, toggle: string, base = page.url().startsWith('http') ? new URL(page.url()).origin : FIELD_URL): Promise<void> {
-  await page.goto(`${base}/?mock=${encodeURIComponent(toggle).replace(/%2C/g, ',').replace(/%3A/g, ':')}`);
+export async function setMock(page: Page, toggle: string, base = page.url().startsWith('http') ? new URL(page.url()).origin : FIELD_URL, hash = ''): Promise<void> {
+  await page.goto(`${base}/?mock=${encodeURIComponent(toggle).replace(/%2C/g, ',').replace(/%3A/g, ':')}${hash}`);
 }
 
-/** Change the toggle without losing the page: set via URL then keep the queue (localStorage persists). */
+/** Change the toggle by reloading the current screen (hash route is kept; queue persists in storage). */
 export async function changeMock(page: Page, toggle: string): Promise<void> {
-  const origin = new URL(page.url()).origin;
-  await setMock(page, toggle, origin);
+  const { origin, hash } = new URL(page.url());
+  await setMock(page, toggle, origin, hash);
 }
 
 export async function goOffline(page: Page): Promise<void> {
@@ -69,10 +69,11 @@ type Fixtures = {
 };
 
 export const test = base.extend<Fixtures>({
-  fieldPage: async ({ context }, use) => {
+  fieldPage: async ({ context, baseURL }, use) => {
     await resetMockState();
     const page = await context.newPage();
-    await page.goto(`${FIELD_URL}/?mock=off`);
+    // baseURL is the dev server (5173) or, for the `pwa` project, the production preview build.
+    await page.goto(`${baseURL ?? FIELD_URL}/?mock=off`);
     await use(page);
   },
   commandPage: async ({ context }, use) => {

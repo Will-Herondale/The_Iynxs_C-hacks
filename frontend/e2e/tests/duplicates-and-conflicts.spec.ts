@@ -125,7 +125,8 @@ test.describe('rejections', () => {
     await expect(rejected.getByTestId('queue-edit')).toBeVisible();
     // form-error is visible either in the item or after opening the edit form
     await rejected.getByTestId('queue-edit').click();
-    await expect(fieldPage.getByTestId('form-error').first()).toBeVisible();
+    // soft: remaining flow (edit -> resubmit) is still verified even while the form-error finding is open
+    await expect.soft(fieldPage.getByTestId('form-error').first(), 'edit form should surface the server rejection as form-error').toBeVisible();
 
     await changeMock(fieldPage, 'off');
     await fieldPage.getByTestId('nav-report').click();
@@ -145,34 +146,33 @@ test.describe('status distinctness', () => {
     await submitRoadCleared(fieldPage, 'R7');
     await openQueue(fieldPage);
     await waitForQueueStatus(fieldPage, 0, 'synced');
-    const synced = queueItems(fieldPage).first();
-    // pending (slow apply keeps it in accepted/queued)
-    await changeMock(fieldPage, 'delay:8000,conflict');
-    await submitRoadBlockage(fieldPage, 'R7', 'full');
+    // pending: slow apply keeps the event in accepted/queued/sending
+    await changeMock(fieldPage, 'delay:8000');
+    await submitRoadBlockage(fieldPage, 'R3', 'full');
     await openQueue(fieldPage);
     const pending = fieldPage.locator('[data-testid="queue-item"][data-status="accepted"], [data-testid="queue-item"][data-status="queued"], [data-testid="queue-item"][data-status="sending"]').first();
     await expect(pending).toBeVisible({ timeout: 10_000 });
-    // conflict (will arrive on its own — conflict rule evaluates at submit)
+    const pendingSig = await sigOf(pending);
+    // conflict: R7 was cleared above, so blocking it again conflicts under the default rule
+    await changeMock(fieldPage, 'conflict');
+    await submitRoadBlockage(fieldPage, 'R7', 'full');
+    await openQueue(fieldPage);
     const conflict = fieldPage.locator('[data-testid="queue-item"][data-status="conflict"]').first();
     await expect(conflict).toBeVisible({ timeout: 20_000 });
 
-    const sig = async (item: ReturnType<Page['locator']>) => {
-      const badge = item.locator('[data-status], [role="status"], [class*="badge" i]').first();
-      return {
-        text: ((await badge.innerText().catch(() => '')) || (await item.innerText())).trim(),
-        cls: (await badge.getAttribute('class').catch(() => '')) ?? '',
-      };
-    };
-    const s = await sig(synced.or(fieldPage.locator('[data-testid="queue-item"][data-status="synced"]').first()));
-    const c = await sig(conflict);
+    const s = await sigOf(fieldPage.locator('[data-testid="queue-item"][data-status="synced"]').first());
+    const c = await sigOf(conflict);
     expect(s.text).not.toBe(c.text);
     expect(s.cls).not.toBe(c.cls);
-    if ((await pending.getAttribute('data-status')) !== 'conflict') {
-      const p = await sig(pending);
-      expect(p.text).not.toBe(s.text);
-      expect(p.text).not.toBe(c.text);
-    }
+    expect(pendingSig.text).not.toBe(s.text);
+    expect(pendingSig.text).not.toBe(c.text);
   });
 });
 
-void COMMAND_URL;
+async function sigOf(item: ReturnType<Page['locator']>) {
+  const badge = item.locator('[data-status], [role="status"], [class*="badge" i]').first();
+  return {
+    text: ((await badge.innerText().catch(() => '')) || (await item.innerText())).trim(),
+    cls: (await badge.getAttribute('class').catch(() => '')) ?? '',
+  };
+}
