@@ -37,3 +37,5 @@ confirmation / Confirmed / Disputed / Rejected / Retrying. Confirmed only once t
 ## Offline
 `vite-plugin-pwa` (Workbox generateSW) precaches the built shell; the service worker is registered in production
 builds only (`npm run build && npm run preview -w @setu/field`). Dev server has no service worker.
+
+Demo tip: the mock is fast, so "Submitted" may flash by. Use `?mock=latency:1500` (e.g. `http://localhost:5173/?mock=latency:1500`) to keep items in the real `sending` state for ~1.5 s. No artificial delay exists in app code.
