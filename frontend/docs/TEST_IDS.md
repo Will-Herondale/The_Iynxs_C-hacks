@@ -297,3 +297,12 @@ Existing `household-*`, `field-lat`/`field-lng`, `camp-*` ids are unchanged. `ho
 | `update-toast` / `update-reload` / `update-dismiss` | new-version toast and its actions | |
 | `storage-error` | banner for a failed local write (form data kept) | `data-kind=quota\|unavailable\|unknown` |
 | `queue-sync-now` | manual retry (existing id) | |
+
+## Data honesty (wave 9)
+| id / attribute | element | values |
+|---|---|---|
+| `data-class` | on layer toggles, legend entries, list items carrying a `DataClassTag` | `REAL\|SYNTHETIC\|EXPERIMENTAL` |
+| `data-route-state` | on routes in lists, panels and map legend | `calculated\|not-verified\|no-safe-route\|unreachable\|no-route-data\|refused` |
+| `data-shelter-status` | on shelter markers, rows and panels | `open-reported\|pre-identified` |
+
+Existing test-ids are unchanged. See `DATA_CLASSIFICATION.md`.
