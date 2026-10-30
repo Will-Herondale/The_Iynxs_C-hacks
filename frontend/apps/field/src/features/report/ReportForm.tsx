@@ -4,25 +4,40 @@ import { useForm } from 'react-hook-form';
 import type { Resolver } from 'react-hook-form';
 import { Button, Field, Panel } from '@setu/ui';
 import type { FieldEvent, ProjectionSnapshot } from '@setu/contract';
+import type { StyleSpecification, Map as MlMap } from 'maplibre-gl';
 import { enqueue, replace } from '../../sync/index.js';
 import type { QueueItem } from '../../sync/index.js';
 import { getDeviceId, getReporterId } from '../../app/identity.js';
 import {
-  EMPTY_REPORT, REPORT_KINDS, buildReportEvent, fieldKeyForPath, freshId, valuesFromEvent,
+  EMPTY_REPORT, buildReportEvent, fieldKeyForPath, freshId, toLocalInput, valuesFromEvent,
 } from './buildEvent.js';
 import type { ReportValues } from './buildEvent.js';
-import { roadOptions } from './roadOptions.js';
-import { DEFAULT_LOCATION, useGeolocation } from './location.js';
+import { BLOCKED_15, CATEGORIES, categoryDef } from './categories.js';
+import type { ReportCategory } from './categories.js';
+import { filterRoadOptions, roadOptions } from './roadOptions.js';
+import { describeLocation, useGeolocation } from './location.js';
+import { MapPicker } from './MapPicker.js';
+import './report.css';
 
-const CAUSES = ['submerged', 'debris', 'collapse', 'damage', 'other'];
+const CAUSES = ['debris', 'collapse', 'damage', 'other'];
 const SELECT = 'setu-field__control';
 
 export interface ReportScreenProps {
   /** Rejected queue item reopened for editing: the form prefills and resubmits via replace(). */
   editing?: QueueItem | null;
+  /** Fired when the volunteer leaves the "Saved locally" confirmation. */
   onDone?: () => void;
+  /** Fired right after the report is persisted locally, with its clientEventId. */
+  onSaved?: (clientEventId: string) => void;
+  /** Opens the report detail screen for a saved report. */
+  onOpenDetail?: (clientEventId: string) => void;
+  /** Preselects a category (e.g. from a Home shortcut). */
+  initialCategory?: ReportCategory;
   /** Cached projection snapshot: source of the road and bridge list (works offline). */
   snapshot?: ProjectionSnapshot | null;
+  /** Offline style for the compact map picker (`createOfflineStyle` from `@setu/geo`). */
+  createMapStyle?: () => StyleSpecification;
+  onMapReady?: (map: MlMap) => void;
   /** Test seam: override the queue writer (defaults to the local queue). */
   submit?: (event: FieldEvent, editing?: QueueItem | null) => Promise<unknown>;
 }
@@ -30,13 +45,21 @@ export interface ReportScreenProps {
 const defaultSubmit = (event: FieldEvent, editing?: QueueItem | null) =>
   editing ? replace(editing.clientEventId, event) : enqueue(event);
 
-export function ReportScreen({ editing, onDone, snapshot, submit = defaultSubmit }: ReportScreenProps) {
+const TYPE_OF: Record<ReportCategory, ReportValues['type']> = {
+  water_level: 'water_level', flooded_road: 'flood_report', blocked_road: 'road_blockage',
+  submerged_bridge: 'road_blockage', road_cleared: 'road_cleared', damaged_infrastructure: 'flood_report', other: 'flood_report',
+};
+
+export function ReportScreen({
+  editing, onDone, onSaved, onOpenDetail, initialCategory, snapshot, createMapStyle, onMapReady, submit = defaultSubmit,
+}: ReportScreenProps) {
   const identity = { reporterId: getReporterId(), deviceId: getDeviceId() };
   // One id per form "session": a double-submit re-enqueues the same id, which enqueue dedups.
   const idRef = useRef(freshId());
   const busy = useRef(false);
-  const [sent, setSent] = useState<string | null>(null);
+  const [saved, setSaved] = useState<{ id: string; label: string } | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
+  const [showMap, setShowMap] = useState(false);
 
   const resolver: Resolver<ReportValues> = async (values) => {
     const r = buildReportEvent(values, identity, idRef.current);
@@ -46,37 +69,61 @@ export function ReportScreen({ editing, onDone, snapshot, submit = defaultSubmit
     return { values: {}, errors };
   };
 
-  const { register, handleSubmit, watch, setValue, reset, formState } = useForm<ReportValues>({
-    defaultValues: editing ? valuesFromEvent(editing.event) : EMPTY_REPORT,
-    resolver,
-  });
-  const type = watch('type');
-  const roads = roadOptions(snapshot);
+  const initial: ReportValues = editing
+    ? valuesFromEvent(editing.event)
+    : initialCategory
+      ? { ...EMPTY_REPORT, category: initialCategory, type: TYPE_OF[initialCategory], observedAt: toLocalInput(new Date()) }
+      : { ...EMPTY_REPORT, observedAt: toLocalInput(new Date()) };
+  const { register, handleSubmit, watch, setValue, reset, formState } = useForm<ReportValues>({ defaultValues: initial, resolver });
+  const category = watch('category');
+  const def = categoryDef(category);
+  const lat = watch('lat');
+  const lng = watch('lng');
+  const source = watch('locationSource');
+  const accuracy = watch('accuracyM');
+  const hasLocation = lat.trim() !== '' && lng.trim() !== '' && !Number.isNaN(Number(lat)) && !Number.isNaN(Number(lng));
+  const roads = filterRoadOptions(roadOptions(snapshot), def.roadKind);
   const { errors, isSubmitting } = formState;
+
+  const setLocation = (p: { lat: number; lng: number; accuracyM?: number }, src: ReportValues['locationSource']) => {
+    setValue('lat', String(p.lat));
+    setValue('lng', String(p.lng));
+    setValue('accuracyM', p.accuracyM === undefined ? '' : String(p.accuracyM));
+    setValue('locationSource', src);
+  };
 
   const { gps, locate } = useGeolocation(
     (p) => {
       // Only prefill: never overwrite a location the user already typed or an edited item's.
-      if (!watch('lat') && !watch('lng')) {
-        setValue('lat', String(p.lat));
-        setValue('lng', String(p.lng));
-      }
+      if (!watch('lat') && !watch('lng')) setLocation(p, 'gps');
     },
     !editing,
   );
+
+  const pickCategory = (c: ReportCategory) => {
+    const d = categoryDef(c);
+    if (d.blocked) return;
+    setValue('category', c);
+    setValue('type', TYPE_OF[c]);
+    setValue('roadId', '');
+    if (c === 'submerged_bridge') { setValue('blockage', 'full'); setValue('cause', 'submerged'); }
+    else if (c === 'blocked_road') setValue('cause', '');
+  };
 
   const onValid = async (values: ReportValues) => {
     setFailure(null);
     try {
       const r = buildReportEvent(values, identity, idRef.current);
       if (!r.ok) return;
+      const id = r.event.clientEventId;
+      // enqueue() persists to IndexedDB before any network call; only then do we confirm.
       await submit(r.event, editing);
       idRef.current = freshId();
-      setSent(`Saved to the queue (${REPORT_KINDS.find((k) => k.type === values.type)?.label}). It syncs automatically.`);
-      reset({ ...EMPTY_REPORT, type: values.type, lat: values.lat, lng: values.lng });
-      onDone?.();
+      setSaved({ id, label: categoryDef(values.category).label });
+      reset({ ...EMPTY_REPORT, observedAt: toLocalInput(new Date()), category: values.category, type: values.type });
+      onSaved?.(id);
     } catch (e) {
-      setFailure(e instanceof Error ? e.message : 'Could not save the report');
+      setFailure(e instanceof Error ? e.message : 'Could not save the report. Nothing was lost: try again.');
     }
   };
 
@@ -94,64 +141,98 @@ export function ReportScreen({ editing, onDone, snapshot, submit = defaultSubmit
 
   const err = (k: keyof ReportValues) => errors[k]?.message;
   // Server-side validation errors of the rejected item being edited stay visible until it is resubmitted.
-  const serverErrors = (!sent && editing?.validationErrors) || [];
+  const serverErrors = (!saved && editing?.validationErrors) || [];
   const firstError = Object.values(errors)[0]?.message ?? failure ?? (serverErrors.length ? 'The server rejected this report:' : null);
+
+  if (saved) {
+    return (
+      <Panel title="Report saved">
+        <div className="report-saved" role="status" data-testid="report-saved" data-client-event-id={saved.id}>
+          <p><strong data-testid="report-saved-label">Saved locally</strong>: {saved.label}. It is stored on this device and will sync automatically.</p>
+          <div className="report-saved__actions">
+            {onOpenDetail && <Button variant="primary" data-testid="report-view-detail" onClick={() => onOpenDetail(saved.id)}>View report</Button>}
+            <Button data-testid="report-new-another" onClick={() => setSaved(null)}>New report</Button>
+            {onDone && <Button data-testid="report-done" onClick={onDone}>Done</Button>}
+          </div>
+        </div>
+      </Panel>
+    );
+  }
 
   return (
     <Panel title={editing ? 'Edit rejected report' : 'New report'}>
-      <form onSubmit={guardedSubmit} noValidate aria-label="Report form">
+      <form onSubmit={guardedSubmit} noValidate aria-label="Report form" className="report-form">
         <Button
           variant="primary" data-testid="quick-blocked"
-          onClick={() => { setValue('type', 'road_blockage'); setValue('blockage', 'full'); }}
+          onClick={() => pickCategory('blocked_road')}
         >
-          Report blocked road or bridge
+          Report blocked road
         </Button>
-        <div role="group" aria-label="Report type" className="report-types">
-          {REPORT_KINDS.map((k) => (
-            <label key={k.type}>
-              <input type="radio" value={k.type} data-testid={`report-type-${k.type}`} {...register('type')} /> {k.label}
-            </label>
-          ))}
+        <div role="radiogroup" aria-label="What are you reporting?" className="report-cats" data-testid="report-categories">
+          {CATEGORIES.map((c) => {
+            const checked = c.category === category;
+            const ids = c.eventType && !c.blocked
+              ? { 'data-testid': c.category === 'submerged_bridge' ? 'report-type-submerged_bridge' : `report-type-${c.eventType}` }
+              : { 'data-testid': `report-category-${c.category}` };
+            return (
+              <button
+                key={c.category} type="button" role="radio" className="report-cat"
+                aria-checked={checked} aria-disabled={c.blocked ? true : undefined}
+                data-category={c.category} {...ids}
+                onClick={() => pickCategory(c.category)}
+              >
+                <span className="report-cat__label">{checked ? '● ' : ''}{c.label}</span>
+                <span className="report-cat__hint">{c.hint}</span>
+                {c.blocked && <span className="report-cat__blocked">{c.blocked}</span>}
+              </button>
+            );
+          })}
         </div>
 
-        {(type === 'road_blockage' || type === 'road_cleared') && (
+        {(category === 'blocked_road' || category === 'submerged_bridge' || category === 'road_cleared') && (
           <div className="setu-field">
-            <label className="setu-field__label" htmlFor="f-roadId">Road or bridge</label>
+            <label className="setu-field__label" htmlFor="f-roadId">{category === 'blocked_road' ? 'Road' : category === 'submerged_bridge' ? 'Bridge or crossing' : 'Road or bridge'}</label>
             <select id="f-roadId" className={SELECT} data-testid="field-roadId" {...register('roadId')}>
-              <option value="">{type === 'road_cleared' ? 'Select road…' : 'Unknown (use location)'}</option>
+              <option value="">{category === 'road_cleared' ? 'Select road…' : 'Unknown (use location)'}</option>
               {roads.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
             </select>
             {err('roadId') && <span className="setu-field__error" role="alert">{err('roadId')}</span>}
+            {!snapshot && <span className="report-hint-disabled"> Demo list: no cached district data on this device yet.</span>}
           </div>
         )}
-        {type === 'road_blockage' && (
+        {(category === 'blocked_road' || category === 'submerged_bridge') && (
           <div className="setu-field">
-            <label className="setu-field__label" htmlFor="f-blockage">Blockage</label>
+            <label className="setu-field__label" htmlFor="f-blockage">How blocked</label>
             <select id="f-blockage" className={SELECT} data-testid="field-blockage" {...register('blockage')}>
-              <option value="full">full</option>
-              <option value="partial">partial</option>
+              <option value="full">Fully blocked (full)</option>
+              <option value="partial">Partly passable (partial)</option>
             </select>
           </div>
         )}
-        {type === 'road_blockage' && (
+        {category === 'blocked_road' && (
           <div className="setu-field">
-            <label className="setu-field__label" htmlFor="f-cause">Cause</label>
+            <label className="setu-field__label" htmlFor="f-cause">Obstruction type</label>
             <select id="f-cause" className={SELECT} data-testid="field-cause" {...register('cause')}>
               <option value="">Not sure</option>
               {CAUSES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
         )}
-        {type === 'flood_report' && (
+        {category === 'submerged_bridge' && <p data-testid="cause-fixed">Cause: <strong>submerged</strong></p>}
+        {category === 'flooded_road' && (
           <>
-            <Field label="Severity (1-5)" type="number" min={1} max={5} data-testid="field-severity" error={err('severity')} {...register('severity')} />
-            <Field label="Depth (cm)" type="number" min={0} data-testid="field-depthCm" error={err('depthCm')} {...register('depthCm')} />
-            <Field label="Area ID" data-testid="field-areaId" {...register('areaId')} />
+            <Field label="Severity (1 = minor, 5 = severe)" type="number" inputMode="numeric" min={1} max={5} data-testid="field-severity" error={err('severity')} {...register('severity')} />
+            <Field label="Water depth, cm (optional)" type="number" inputMode="decimal" min={0} data-testid="field-depthCm" error={err('depthCm')} {...register('depthCm')} />
+            <Field label="Area ID (optional)" data-testid="field-areaId" {...register('areaId')} />
           </>
         )}
-        {type === 'water_level' && (
+        {category === 'water_level' && (
           <>
-            <Field label="Level (cm)" type="number" data-testid="field-levelCm" error={err('levelCm')} {...register('levelCm')} />
+            <div className="report-unit">
+              <Field label="Water level (unit: cm)" type="number" inputMode="decimal" data-testid="field-levelCm" error={err('levelCm')} {...register('levelCm')} />
+              <span aria-hidden="true">cm</span>
+            </div>
+            <p className="report-hint-disabled" data-testid="estimate-hint">Estimated vs measured: not recorded yet. {BLOCKED_15}</p>
             <div className="setu-field">
               <label className="setu-field__label" htmlFor="f-trend">Trend</label>
               <select id="f-trend" className={SELECT} data-testid="field-trend" {...register('trend')}>
@@ -160,21 +241,45 @@ export function ReportScreen({ editing, onDone, snapshot, submit = defaultSubmit
                 <option value="falling">falling</option>
               </select>
             </div>
-            <Field label="Gauge ID" data-testid="field-gaugeId" {...register('gaugeId')} />
+            <Field label="Gauge ID (optional)" data-testid="field-gaugeId" {...register('gaugeId')} />
           </>
         )}
 
-        <fieldset>
+        <Field
+          label="When did you observe this?" type="datetime-local" data-testid="field-observedAt"
+          error={err('observedAt')} {...register('observedAt')}
+        />
+        <p className="report-hint-disabled">Defaults to now; change it if you saw this earlier.</p>
+
+        <fieldset className="report-location">
           <legend>Location</legend>
-          <Field label="Latitude" inputMode="decimal" data-testid="field-lat" error={err('lat')} {...register('lat')} />
-          <Field label="Longitude" inputMode="decimal" data-testid="field-lng" error={err('lng')} {...register('lng')} />
-          <p role="status">
-            {gps === 'locating' && 'Finding GPS…'}
-            {gps === 'ok' && 'Location from GPS (editable).'}
-            {gps === 'unavailable' && 'GPS unavailable: enter the location manually.'}{' '}
-            <Button onClick={locate}>Use GPS</Button>{' '}
-            <Button onClick={() => { setValue('lat', String(DEFAULT_LOCATION.lat)); setValue('lng', String(DEFAULT_LOCATION.lng)); }}>Use default area</Button>
+          <p data-testid="location-summary" role="status">
+            {hasLocation ? describeLocation(source, accuracy === '' ? undefined : Number(accuracy)) : describeLocation('unknown')}
+            {gps === 'locating' && ' (finding GPS…)'}
+            {gps === 'unavailable' && !hasLocation && ' (GPS unavailable)'}
           </p>
+          <div className="report-location__actions">
+            <Button data-testid="location-gps" onClick={locate}>Use GPS (optional)</Button>
+            <Button data-testid="location-map-toggle" onClick={() => setShowMap((s) => !s)} aria-expanded={showMap}>
+              {showMap ? 'Hide map' : 'Pick on map'}
+            </Button>
+          </div>
+          {showMap && (
+            <MapPicker
+              value={hasLocation ? { lat: Number(lat), lng: Number(lng) } : null}
+              onPick={(p) => setLocation(p, 'map')}
+              createStyle={createMapStyle}
+              onMapReady={onMapReady}
+            />
+          )}
+          <Field
+            label="Latitude" inputMode="decimal" data-testid="field-lat" error={err('lat')}
+            {...register('lat', { onChange: () => { setValue('locationSource', 'manual'); setValue('accuracyM', ''); } })}
+          />
+          <Field
+            label="Longitude" inputMode="decimal" data-testid="field-lng" error={err('lng')}
+            {...register('lng', { onChange: () => { setValue('locationSource', 'manual'); setValue('accuracyM', ''); } })}
+          />
         </fieldset>
 
         <div className="setu-field">
@@ -197,9 +302,8 @@ export function ReportScreen({ editing, onDone, snapshot, submit = defaultSubmit
             )}
           </div>
         )}
-        {sent && !firstError && <p role="status">{sent}</p>}
         <Button type="submit" variant="primary" data-testid="report-submit" disabled={isSubmitting}>
-          {editing ? 'Resubmit' : 'Submit report'}
+          {editing ? 'Resubmit' : 'Save report'}
         </Button>
       </form>
     </Panel>

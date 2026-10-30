@@ -22,3 +22,8 @@ export function roadOptions(snapshot?: ProjectionSnapshot | null): RoadOption[] 
     } as RoadOption;
   });
 }
+
+/** Restricts the list to roads or bridges; undefined keeps everything. */
+export function filterRoadOptions(options: RoadOption[], kind?: 'road' | 'bridge'): RoadOption[] {
+  return kind ? options.filter((o) => o.kind === kind) : options;
+}

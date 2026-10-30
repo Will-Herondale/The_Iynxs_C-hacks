@@ -1,13 +1,19 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-/** Default map centre (Guwahati) used when GPS is unavailable; the field stays editable. */
-export const DEFAULT_LOCATION = { lat: 26.1445, lng: 91.7362 };
+/** Majuli (demo district) centre: map starts here. It is a map viewport only, never submitted as a report location. */
+export const MAJULI_CENTER = { lat: 26.95, lng: 94.17 };
+/** @deprecated kept for imports; use MAJULI_CENTER. */
+export const DEFAULT_LOCATION = MAJULI_CENTER;
 
 export type GpsState = 'idle' | 'locating' | 'ok' | 'unavailable';
 
+export interface GpsFix { lat: number; lng: number; accuracyM?: number }
+
 /** Asks navigator.geolocation once on mount (and on demand) and reports the fix; never blocks the form. */
-export function useGeolocation(onFix: (pos: { lat: number; lng: number; accuracyM?: number }) => void, auto = true) {
+export function useGeolocation(onFix: (pos: GpsFix) => void, auto = true) {
   const [state, setState] = useState<GpsState>('idle');
+  const cb = useRef(onFix);
+  cb.current = onFix;
   const locate = useCallback(() => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
       setState('unavailable');
@@ -16,7 +22,7 @@ export function useGeolocation(onFix: (pos: { lat: number; lng: number; accuracy
     setState('locating');
     navigator.geolocation.getCurrentPosition(
       (p) => {
-        onFix({ lat: +p.coords.latitude.toFixed(6), lng: +p.coords.longitude.toFixed(6), accuracyM: p.coords.accuracy });
+        cb.current({ lat: +p.coords.latitude.toFixed(6), lng: +p.coords.longitude.toFixed(6), accuracyM: Math.round(p.coords.accuracy) });
         setState('ok');
       },
       () => setState('unavailable'),
@@ -27,4 +33,12 @@ export function useGeolocation(onFix: (pos: { lat: number; lng: number; accuracy
     if (auto) locate();
   }, [auto, locate]);
   return { gps: state, locate };
+}
+
+/** One visible line describing how trustworthy the chosen location is. */
+export function describeLocation(source: 'gps' | 'map' | 'manual' | 'unknown', accuracyM?: number): string {
+  if (source === 'gps') return accuracyM === undefined ? 'GPS (accuracy not reported)' : `GPS, accurate to about ±${Math.round(accuracyM)} m`;
+  if (source === 'map') return 'Manually placed on the map';
+  if (source === 'manual') return 'Manually placed (typed coordinates)';
+  return 'Unknown: choose a point on the map, use GPS, or type coordinates';
 }
