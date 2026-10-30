@@ -14,7 +14,7 @@ export function PendingCount() {
   const { pendingCount } = useSyncState();
   return (
     <span className="queue-pending" title="Reports not yet confirmed as synced">
-      Pending: <strong data-testid="pending-count">{pendingCount}</strong>
+      Waiting to sync: <strong data-testid="pending-count">{pendingCount}</strong>
     </span>
   );
 }

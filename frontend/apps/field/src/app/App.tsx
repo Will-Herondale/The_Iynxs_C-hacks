@@ -4,6 +4,7 @@ import type { QueueItem } from '../sync/index.js';
 import { ReportScreen } from '../features/report/index.js';
 import { HouseholdScreen } from '../features/household/index.js';
 import { CampScreen } from '../features/camp/index.js';
+import { useCachedProjections } from '../offline/index.js';
 import { OfflineBanner } from './OfflineBanner.js';
 import { QueueScreen, OnlineStatus, PendingCount, LastSynced, SyncNowButton } from '../features/queue/index.js';
 import { useRoute } from './route.js';
@@ -19,6 +20,7 @@ const NAV: { route: Route; label: string; testId: string }[] = [
 export function App() {
   const [route, go] = useRoute();
   // A rejected queue item reopened for editing; the matching form prefills from it.
+  const { snapshot } = useCachedProjections();
   const [editing, setEditing] = useState<QueueItem | null>(null);
 
   const onEdit = (item: QueueItem) => {
@@ -61,7 +63,7 @@ export function App() {
 
   const main =
     route === 'report' ? (
-      <ReportScreen editing={editing?.type !== 'household_registration' ? editing : null} onDone={done} />
+      <ReportScreen snapshot={snapshot} editing={editing?.type !== 'household_registration' ? editing : null} onDone={done} />
     ) : route === 'household' ? (
       <HouseholdScreen editing={editing?.type === 'household_registration' ? editing : null} onDone={done} />
     ) : route === 'camp' ? (
