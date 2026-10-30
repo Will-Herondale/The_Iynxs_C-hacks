@@ -1,4 +1,5 @@
-import { expect, test, type BrowserContext, type Page } from '@playwright/test';
+import { type BrowserContext, type Page } from '@playwright/test';
+import { expect, test } from '../fixtures';
 
 // Ported from apps/field/scripts/pwa-e2e.mjs. Runs in the `pwa` project (vite preview build).
 const BRIDGE = process.env.SMOKE_BRIDGE ?? '284824410';
