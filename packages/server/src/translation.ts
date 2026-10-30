@@ -54,8 +54,9 @@ export function translateEvent(
       const e = event as FloodReport;
       const loc = locationToMicrodegrees(e.location);
       payload.type = 'obs.water';
+      payload.client_event_id = e.clientEventId;
       payload.point_id = e.areaId ?? `point-${e.clientEventId}`;
-      payload.depth_dm = e.depthCm !== undefined ? Math.round(e.depthCm * 10) : 0;
+      payload.depth_dm = e.depthCm !== undefined ? Math.round(e.depthCm / 10) : 0;
       payload.ref_kind = 'bridge_deck';
       payload.confidence = 80;
       if (e.areaId !== undefined) payload.area_id = e.areaId;
@@ -66,7 +67,9 @@ export function translateEvent(
     }
     case 'road_blockage': {
       const e = event as RoadBlockage;
+      const loc = locationToMicrodegrees(e.location);
       payload.type = 'obs.road';
+      payload.client_event_id = e.clientEventId;
       payload.edge_id = e.roadId ?? `edge-${e.clientEventId}`;
       payload.state = e.blockage === 'full' ? 'blocked' : 'partial';
       payload.cause = 'water';
@@ -75,11 +78,15 @@ export function translateEvent(
       payload.valid_until = null;
       payload.confidence = 80;
       payload.passable_by = e.passableBy;
+      payload.lat = loc.lat;
+      payload.lng = loc.lng;
       break;
     }
     case 'road_cleared': {
       const e = event as RoadCleared;
+      const loc = locationToMicrodegrees(e.location);
       payload.type = 'obs.road';
+      payload.client_event_id = e.clientEventId;
       payload.edge_id = e.roadId;
       payload.state = 'open';
       payload.cause = 'water';
@@ -87,22 +94,30 @@ export function translateEvent(
       payload.valid_from = toEpochMs(e.occurredAt);
       payload.valid_until = null;
       payload.confidence = 100;
+      payload.lat = loc.lat;
+      payload.lng = loc.lng;
       break;
     }
     case 'water_level': {
       const e = event as WaterLevel;
+      const loc = locationToMicrodegrees(e.location);
       payload.type = 'obs.water';
+      payload.client_event_id = e.clientEventId;
       payload.point_id = e.gaugeId ?? `gauge-${e.clientEventId}`;
       payload.depth_dm = Math.round(e.levelCm * 10);
       payload.ref_kind = 'gauge_zero';
       payload.confidence = 60;
       payload.trend = e.trend;
+      payload.lat = loc.lat;
+      payload.lng = loc.lng;
       // OQ-03: raw gauge levelCm requires datum calibration before inundation use
       break;
     }
     case 'household_registration': {
       const e = event as HouseholdRegistration;
+      const loc = locationToMicrodegrees(e.location);
       payload.type = 'person.register';
+      payload.client_event_id = e.clientEventId;
       payload.person_id = e.householdId;
       payload.names = [{ script: 'latn', text: e.headName }];
       payload.age_band = '18-59';
@@ -112,6 +127,8 @@ export function translateEvent(
       payload.household_id = e.householdId;
       payload.reporter_confidence = 90;
       payload.needs = e.needs;
+      payload.lat = loc.lat;
+      payload.lng = loc.lng;
       break;
     }
     default:

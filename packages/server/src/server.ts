@@ -261,7 +261,7 @@ function handleProjections(
   const since = sinceVersion ? Number(sinceVersion) : 0;
 
   const events = log.getAllEvents().sort(totalOrder);
-  const snapshot = projectSnapshot(events, artifacts, Date.now());
+  const snapshot = projectSnapshot(events, artifacts, Date.now(), projectionVersion);
 
   if (since > 0 && snapshot.version <= since) {
     res.writeHead(304, { 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' });
@@ -280,7 +280,12 @@ function handleProjections(
  */
 function translateEnvelopeToWire(env: Envelope): FieldEvent {
   const p = env.payload as Record<string, unknown>;
-  const clientEventId = eventIdToClientEventId.get(env.id) ?? env.id;
+  // Prefer client_event_id stored in payload (new events); fall back to the
+  // eventId→clientEventId map (old events created before this fix).
+  const clientEventId =
+    (typeof p.client_event_id === 'string' ? p.client_event_id : undefined) ??
+    eventIdToClientEventId.get(env.id) ??
+    env.id;
 
   const base: Record<string, unknown> = {
     clientEventId,
