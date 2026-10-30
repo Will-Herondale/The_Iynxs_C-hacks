@@ -22,3 +22,50 @@ export {
   type VersionVector,
 } from './sync/version-vector.js';
 export { type SyncRequest, type SyncResponse, type SyncState, syncStateEmpty } from './sync/types.js';
+
+export {
+  type EdgePassability,
+  type RoadObservation,
+  type RoadState,
+  projectNetwork,
+  selectRoadState,
+} from './project/network.js';
+export {
+  type FloodPoint,
+  type WaterObservation,
+  type InundationCell,
+  type FloodProjection,
+  projectFlood,
+  selectWaterObservation,
+  computeHydraulicDepth,
+} from './project/flood.js';
+export {
+  type PersonName,
+  type PersonRecord,
+  type MatchProposal,
+  type PersonCluster,
+  type PeopleProjection,
+  projectPeople,
+  normalizeName,
+  phoneticKey,
+} from './project/people.js';
+export {
+  type RouteEdge,
+  type Passability,
+  type ExpandedNode,
+  type ExpandedArc,
+  type RouteResult,
+  buildExpandedGraph,
+  earliestArrivalFrom,
+  findFastestPath,
+} from './route/dag.js';
+export {
+  type LatestDepartureResult,
+  latestSafeDeparture,
+  type Slot,
+} from './route/latest-departure.js';
+export {
+  type SettlementReachability,
+  type CutoffResult,
+  projectReachability,
+} from './route/cutoff.js';
