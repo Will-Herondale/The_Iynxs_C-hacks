@@ -1,3 +1,4 @@
+import { PassabilityLegend } from '@setu/ui';
 import { COLORS } from './layers';
 
 type Swatch = 'line' | 'dashed' | 'dot' | 'halo' | 'area' | 'uncertain' | 'cross';
@@ -73,6 +74,7 @@ export function Legend() {
       }}
     >
       <summary style={{ cursor: 'pointer', fontWeight: 600 }}>Legend</summary>
+      <PassabilityLegend />
       {ROWS.map((g) => (
         <div key={g.title} style={{ marginTop: 6 }}>
           <div style={{ fontWeight: 600 }}>{g.title}</div>

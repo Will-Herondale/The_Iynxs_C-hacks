@@ -2,7 +2,7 @@ import type { ProjectionSnapshot } from '@setu/contract';
 import { Badge, EmptyState, Panel } from '@setu/ui';
 import { useSelection } from '../app';
 import { useProjections } from '../data';
-import { DeadlineBadge } from './fallbacks';
+import { DeadlineBadge } from '@setu/ui';
 import { evacDeadlines } from './model';
 
 export function EvacDeadlinesView({ snapshot, now }: { snapshot?: ProjectionSnapshot; now?: Date }) {
@@ -28,9 +28,7 @@ export function EvacDeadlinesView({ snapshot, now }: { snapshot?: ProjectionSnap
                       </Badge>{' '}
                     </span>
                   )}
-                  <span data-testid={`deadline-${p.settlementId}`} data-deadline={p.evacuationDeadline}>
-                    <DeadlineBadge deadline={p.evacuationDeadline!} {...(now ? { now } : {})} />
-                  </span>
+                  <DeadlineBadge data-testid={`deadline-${p.settlementId}`} deadline={p.evacuationDeadline!} {...(now ? { now } : {})} />
                 </span>
               </li>
             ))}

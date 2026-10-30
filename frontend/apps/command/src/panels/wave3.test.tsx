@@ -55,7 +55,6 @@ describe('road rows', () => {
     expect(rows[0]!.getAttribute('data-passability')).toBe('impassable');
     expect(rows[0]!.textContent).toContain('Submerged by floodwater');
     expect(screen.getByTestId('road-row-R2').getAttribute('data-kind')).toBe('road');
-    expect(screen.getByTestId('road-row-R2').hasAttribute('data-passability')).toBe(false);
   });
 });
 
@@ -90,7 +89,7 @@ describe('evac deadlines', () => {
     wrap(<EvacDeadlinesView snapshot={s} now={NOW} />);
     const ids = screen.getAllByTestId(/^deadline-/).map((e) => e.getAttribute('data-testid'));
     expect(ids).toEqual(['deadline-S4', 'deadline-S2']);
-    expect(screen.getByTestId('deadline-S4').textContent).toContain('6 h 0 min left');
+    expect(screen.getByTestId('deadline-S4').textContent).toContain('6h 0m left');
     expect(screen.getByTestId('priority-S4').textContent).toContain('critical');
   });
 

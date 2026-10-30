@@ -1,6 +1,6 @@
 import type { ProjectionSnapshot, SettlementProps } from '@setu/contract';
 import { useSelection } from '../app';
-import { Explanation } from './fallbacks';
+import { Explanation } from '@setu/ui';
 import { featureKindOf } from './model';
 
 type Explained = NonNullable<SettlementProps['cutOffReason']>;
@@ -25,7 +25,9 @@ export function ExplainBlock({ testId, title, reason, snapshot }: {
   ];
   return (
     <div data-testid={testId}>
-      <Explanation title={title} summary={reason.summary} items={items} />
+      <Explanation title={title} summary={reason.summary}>
+        {items.length > 0 && <ul className="setu-explain__items">{items.map((it, i) => <li key={i}>{it}</li>)}</ul>}
+      </Explanation>
     </div>
   );
 }

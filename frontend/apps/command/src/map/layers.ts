@@ -1,5 +1,6 @@
 import type { ExpressionSpecification, LayerSpecification } from 'maplibre-gl';
 import type { ProjectionSnapshot } from '@setu/contract';
+import { SETU_MAP_COLORS } from '@setu/ui';
 import type { FeatureKind } from '../app';
 import type { LayerName } from '../app';
 
@@ -72,11 +73,7 @@ export function featureToSelection(
   return group && typeof id === 'string' ? { kind: LAYER_KIND[group], id } : undefined;
 }
 
-/**
- * Local fallback for @setu/ui SETU_MAP_COLORS (Team Scenario). Swap to the shared constant once merged.
- * flooded = blue, blocked = red, safe = green, uncertain = amber.
- */
-export const SETU_MAP_COLORS = { flooded: '#1e88e5', blocked: '#c62828', safe: '#2e7d32', uncertain: '#f9a825' } as const;
+export { SETU_MAP_COLORS };
 
 export const COLORS = {
   roadOpen: SETU_MAP_COLORS.safe,
