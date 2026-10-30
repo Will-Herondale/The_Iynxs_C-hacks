@@ -140,6 +140,28 @@ At least one flood polygon in the seed has `confidence=uncertain`.
 | `overview-recent` / `overview-event` | recent events list / one event | `data-event-id` |
 | `context-close` | closes the docked context panel (`feature-panel`) | |
 
+## Command v3 — Live Map, panels, Settlements, Routes (HELPERS 1–2)
+| id | element | attributes |
+|---|---|---|
+| `map` | map container (stays mounted; hidden on non-map sections) | |
+| `layer-toggle-<terrain\|rivers\|roads\|settlements\|shelters\|flood\|blocked\|cutoff\|observations\|routes>` | independent layer checkboxes | `checked` / `aria-checked` |
+| `map-layer-controls` | layer toggle group | |
+| `map-legend`, `map-legend-synthetic`, `map-legend-flood-caveat` | legend; SYNTHETIC tag and the DEM-threshold caveat | |
+| `feature-panel` | docked context panel (road/bridge, settlement, route, shelter, flood area, report) | `data-feature-kind`, `data-feature-id` |
+| `feature-panel-empty`, `feature-panel-report` | no selection / selected report | |
+| `not-provided-<field>` | "Not provided by backend (#15)" placeholder (travel time, depth, validity period, latest safe departure, first failing segment) | |
+| `road-reason-<roadId>`, `road-flood-confidence` | road reason / flood confidence | |
+| `flood-synthetic-note`, `flood-caveat` | GEO_PROVENANCE synthetic note / "DEM-threshold approximation — not a validated hydraulic simulation" | |
+| `blocking-link-<id>`, `link-<kind>-<id>`, `source-event-link`, `provenance-<featureId>` | navigation links inside the panel | |
+| `settlements-section`, `settlements-table`, `settlements-search`, `settlements-count`, `settlements-sort-<name\|accessibility\|segment\|deadline\|priority\|status>` | Settlements table controls | |
+| `settlement-row-<settlementId>` | settlement row; click selects + highlights on map | `data-accessibility`, `data-status` |
+| `segment-<settlementId>`, `priority-<settlementId>`, `na-<field>` | critical segment / priority / "—" (not in contract #15) cells | |
+| `routes-section`, `routes-filter-origin`, `routes-filter-destination`, `routes-count`, `routes-source-note` | Routes & Evacuation | |
+| `route-row-<routeId>` | route row | `data-status` = active\|recalculated\|unavailable |
+| `route-select-<routeId>`, `route-eta-<routeId>`, `route-replaces-<routeId>`, `route-alternative-<routeId>` | route actions / fields | |
+| `explain-refusal-<routeId>`, `refusal-missing-<routeId>` | why refused / refusal not provided | |
+| `no-safe-route-<settlementId>` | every route for the settlement is unavailable | |
+
 ## Command v3 — Reports & Events + Audit (HELPER 3)
 | id | element | attributes |
 |---|---|---|
