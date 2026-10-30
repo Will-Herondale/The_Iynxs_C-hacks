@@ -108,7 +108,7 @@ export function AuditView({ onShowFeature }: AuditViewProps) {
         ) : (
           <div data-testid="audit-scroll" onScroll={win.onScroll} style={{ maxHeight: 480, overflowY: 'auto' }}>
             <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '0.9em', tableLayout: 'fixed' }}>
-              <thead style={{ position: 'sticky', top: 0, background: 'Canvas' }}>
+              <thead style={{ position: 'sticky', top: 0, background: 'var(--setu-surface-2)', color: 'var(--setu-text)' }}>
                 <tr>
                   {['Event ID', 'Type', 'Origin (reporter / device)', 'Observed', 'Received', 'Processing status', 'Affected entities'].map((h) => (
                     <th key={h} scope="col" style={cell}>{h}</th>
