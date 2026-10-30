@@ -64,17 +64,17 @@ function Mark({ color, swatch }: { color: string; swatch: Swatch }) {
 
 export function Legend() {
   return (
-    <details
+    <div
       data-testid="map-legend"
-      open
       style={{
         position: 'absolute', left: 8, bottom: 24, zIndex: 2, maxWidth: 240, padding: '6px 10px',
         background: 'rgba(255,255,255,0.94)', color: '#111', borderRadius: 6, fontSize: 12,
         boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
       }}
     >
-      <summary style={{ cursor: 'pointer', fontWeight: 600 }}>Legend</summary>
       <PassabilityLegend />
+      <details>
+      <summary style={{ cursor: 'pointer', fontWeight: 600, marginTop: 4 }}>More symbols</summary>
       {ROWS.map((g) => (
         <div key={g.title} style={{ marginTop: 6 }}>
           <div style={{ fontWeight: 600 }}>{g.title}</div>
@@ -86,6 +86,7 @@ export function Legend() {
           ))}
         </div>
       ))}
-    </details>
+      </details>
+    </div>
   );
 }
