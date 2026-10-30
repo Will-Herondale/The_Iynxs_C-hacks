@@ -1,0 +1,45 @@
+{
+  "district": "Majuli, Assam",
+  "crs": "EPSG:4326",
+  "cell_size_m": 30.0,
+  "n_rows": 2520,
+  "n_cols": 2160,
+  "bbox": {
+    "left": 94.0,
+    "bottom": 26.5,
+    "right": 94.6,
+    "top": 27.2
+  },
+  "elevation": {
+    "min_m": 74.36083984375,
+    "max_m": 1285.7274169921875,
+    "mean_m": 119.98668670654297,
+    "p50_m": 89.83551025390625
+  },
+  "hand": {
+    "min_dm": 0,
+    "max_dm": 65535,
+    "mean_dm": 1021.5813403880071,
+    "unit": "decimetres"
+  },
+  "stream_threshold_cells": 5556,
+  "stream_threshold_km2": 5.0004,
+  "n_stream_cells": 68673,
+  "n_reaches": 40879,
+  "data_sources": {
+    "dem": "Copernicus GLO-30 DEM (anonymous AWS S3 download)",
+    "tiles": [
+      "N26E093",
+      "N26E094",
+      "N27E093",
+      "N27E094"
+    ]
+  },
+  "notes": [
+    "DEM is a DSM (includes vegetation, buildings, embankments)",
+    "Water-body zero cells repaired via neighbour averaging",
+    "HAND computed using pyflwdir D8 flow direction",
+    "Vertical datum: EGM2008 orthometric (Copernicus GLO-30)",
+    "No gauge calibration - observations should be local depth over reference point"
+  ]
+}

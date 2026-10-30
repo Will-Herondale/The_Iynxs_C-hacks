@@ -170,7 +170,8 @@ print(f"pyflwdir shape: {flwdir.shape}")
 print(f"Number of cells: {flwdir.size}")
 
 # Flow accumulation
-acc = flwdir.accuflux()
+ones = np.ones(dem_repaired.shape, dtype=np.float32)
+acc = flwdir.accuflux(ones)
 print(f"Accumulation max: {np.nanmax(acc):.0f} cells")
 
 # Save accumulation raster
@@ -252,7 +253,7 @@ print("Saved hand.bin")
 
 # Save drainage elevation (for inundation calculations)
 # Drainage elevation = elevation of the downstream cell for each cell
-drain_elev = dem_repaired.flatten()[receiver]
+drain_elev = dem_repaired.flatten()[receiver].reshape(dem_repaired.shape)
 drain_elev_dm = (drain_elev * 10).astype(np.int16)  # decimetres
 drain_elev_dm[drain_elev_dm < -20000] = -20000  # Clamp
 
@@ -269,8 +270,8 @@ with rasterio.open('data/majuli/hand/drain_elev.bin', 'w', **{
 print("Saved drain_elev.bin")
 
 # Save D8 receiver index
-receiver_int = receiver.astype(np.int32)
-receiver_int[receiver < 0] = -1
+receiver_int = receiver.astype(np.int32).reshape(dem_repaired.shape)
+receiver_int_flat = receiver.astype(np.int32); receiver_int = receiver_int_flat.reshape(dem_repaired.shape); receiver_int[receiver_int_flat.reshape(dem_repaired.shape) < 0] = -1
 with rasterio.open('data/majuli/hand/recv.bin', 'w', **{
     'driver': 'GTiff',
     'height': dem_repaired.shape[0],
