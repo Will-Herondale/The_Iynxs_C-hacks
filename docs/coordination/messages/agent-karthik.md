@@ -6,43 +6,45 @@ Use this file to post round-trip notes from Karthik's geographic data, GIS proce
 
 | Item | Value |
 |---|---|
-| Branch | (none yet — waiting on artifacts) |
-| Working directory | `data/`, `tests/e2e/`, `docs/presentation/` |
+| Branch | `coordination/integration-handoff` (new, created for backend↔frontend work) |
+| Working directory | `data/majuli/`, `docs/research/`, `tests/e2e/` |
 
 ## Work completed
 
-- Majuli geodata audit complete — see `docs/05-geo-and-inundation.md`.
-- Copernicus GLO-30 DEM tiles verified downloadable anonymously from AWS `copernicus-dem-30m` bucket:
-  - N26E093, N26E094, N27E093, N27E094 (~43–45 MB each, ~177 MB total).
-- Land elevation in district window: p5=80.5m, p50=86.0m, p95=95.6m; 18% of cells are exactly 0m (water bodies).
-- Vertical datum: EGM2008 orthometric (per Copernicus lineage) — Assam geoid undulation ~−60m order (UNVERIFIED — needs confirmation).
-- Data gaps identified: village points with lat/lon, geocoded shelter list, ferry timetables, embankment lines, gauge-zero calibration table.
+- Read all coordination docs: agent-status, ownership, integration-contract, open-questions, decisions, README
+- Read district-selection-audit.md and docs/05-geo-and-inundation.md
+- Created directory structure: `data/majuli/{dem,hand,roads,settlements,shelters,flood-reference,fixtures,metadata}`
+- Verified pyflwdir 0.5.12 installed successfully
+- Verified Copernicus GLO-30 DEM tiles downloadable (200 response confirmed)
+- Started downloading 4 DEM tiles (N26E093, N26E094, N27E093, N27E094) — download in progress
+- Overpass OSM extract verified downloadable (~110 MB)
 
-## Pending work (Karthik owns these)
+## Pending work
 
-| Task | Depends | Output | Est. |
-|---|---|---|---|
-| T3: DEM → HAND artifact pipeline | — | `data/artifacts/hand.bin`, `drain_elev.bin`, `reach_id.bin`, manifest | 4 h |
-| T4: OSM → road graph + settlements + shelters | — | `data/artifacts/graph.json`, `settlements.json`, `shelters.json` | 4 h |
-| T20: Dry-run rehearsal (all three) | all demo work | rehearsed demo | 2 h |
-| T22: README, limits section, datum caveat slide | demo complete | honest limitations documented | 2 h |
+- Wait for DEM download to complete, then inspect tiles (CRS, bounds, nodata, water-body zeros)
+- Build HAND pipeline (pyflwdir breach + D8 + accumulation + HAND) or document fallback
+- Download OSM road network for Majuli
+- Prepare settlement features (clearly synthetic if no georeferenced coordinates)
+- Prepare shelter features (clearly synthetic if no machine-readable list)
+- Create deterministic flood-response scenario fixture
+- Write data provenance metadata
+- Write docs/research/majuli-gis-delivery.md
+- Update this message and agent-status.md
+- Commit on dedicated branch
 
-## What Karthik needs to deliver
+## What Karthik needs from other agents
 
-1. **Village points with lat/lon** — no official geocoded village directory exists; synthesize centroids from DataMeet Census boundaries (Assam availability unverified) or OSM place nodes.
-2. **Geocoded shelter/camp list** — digitize from ASDMA flood report / district disaster management plan PDFs (machine-readability unverified).
-3. **Ferry time-varying edges** — Nimati–Kamalabari crossing; no public timetable found.
-4. **Embankment lines** — digitize from high-resolution imagery; burn into DEM as barriers before HAND.
-5. **Gauge-zero calibration table** — CWC gauge zero elevations (Survey of India MSL) for Neamatighat / Dhansiri confluence. Needed to resolve OQ-03 (datum rule).
-6. **Geo artifacts** — hand.bin, drain_elev.bin, reach_id.bin, graph.json, settlements.json, shelters.json committed under `data/artifacts/`.
+- **Backend (OpenCode):** Confirm expected artifact schema for hand.bin, drain_elev.bin, reach_id.bin, graph.json, settlements.json, shelters.json. Backend flood projection reads hand.bin + drain_elev.bin per planning doc 05.
+- **Frontend (Darsh):** Confirm expected GeoJSON structure for road/settlement/shelter features so artifacts match frontend rendering contract.
 
-## For OpenCode backend agent
+## What Darsh's frontend agent needs to know
 
-- `packages/geo/build.py` will produce the artifacts above; backend flood projection reads `hand.bin` + `drain_elev.bin`.
-- Python-only artifact generation — no Python at runtime.
-- Artifact schema: `manifest.json` with bbox, CRS, cell size, accumulation threshold A_T, nominal channel depth, hashes.
+- Majuli DEM tiles verified downloadable; download in progress
+- Geo artifacts will land under `data/majuli/` (not yet `data/fixtures/` — district confirmation pending)
+- Frontend keeps Guwahati seed scenario until Majuli artifacts integrate (per D-06 decision)
+- All geocoded coordinates will be clearly labelled as synthetic where no verified source exists
 
-## For Darsh's frontend agent
+## Key dates
 
-- Seed scenario is Guwahati (hand-drawn, scripted). Frontend keeps its own fixture until Majuli artifacts integrate.
-- Majuli artifacts will land under `data/fixtures/` when ready.
+- Today: 2026-10-30 (14-hour GIS delivery window started)
+- District: Majuli (provisional per D-01, pending technical lead confirmation via OQ-02)

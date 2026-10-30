@@ -1,7 +1,7 @@
-export { ulid, ulidTimestamp, ulidIsValid, type UlidOptions } from './ulid';
-export { hlcNow, hlcUpdate, hlcCompare, hlcInitial, type HLC, type HLCState } from './hlc';
-export { canonicalJson, validateNoFloats, type HashableEnvelope } from './canonical';
-export { contentHash } from './content-hash';
+export { ulid, ulidTimestamp, ulidIsValid, type UlidOptions } from './event/ulid';
+export { hlcNow, hlcUpdate, hlcCompare, hlcInitial, type HLC, type HLCState } from './event/hlc';
+export { canonicalJson, validateNoFloats } from './event/canonical';
+export { contentHash } from './event/content-hash';
 export {
   type Envelope,
   type EnvelopeInput,
@@ -10,7 +10,7 @@ export {
   envelopeEqual,
   happensBefore,
   totalOrder,
-} from './envelope';
+} from './event/envelope';
 export {
   vvEmpty,
   vvGet,

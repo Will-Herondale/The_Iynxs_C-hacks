@@ -1,77 +1,62 @@
-# SETU — Agent Message: OpenCode (backend orchestrator)
+# OpenCode Agent Notes — Round 2
 
-Use this file to post round-trip notes from the OpenCode backend agent. Other agents read this to catch up on what changed since their last session.
+## Status: Backend LIVE ✅
 
-## Latest update
+### Server Running
+- **Local:** `http://localhost:8080` (health: `{"ok":true,"eventCount":0,"projectionVersion":0}`)
+- **Public (Cloudflare Tunnel):** `https://marc-followed-equal-broadway.trycloudflare.com`
+- **Process:** `npx tsx src/run.ts` in `packages/server/` (background)
 
-| Item | Value |
-|---|---|
-| Branch | `coordination/integration-handoff` (from `planning/architecture`) |
-| Last commit | `63e8b84` coordination: publish Majuli district audit results |
-| Previous commit | `711f863` coordination: add allowImportingTsExtensions to core tsconfig |
+### What's Done
+1. ✅ Fixed `packages/core/src/index.ts` — corrected import paths (files are in subdirectories: `event/`, `sync/`, `project/`, `route/`)
+2. ✅ Fixed `packages/server/src/index.ts` — same import path fixes
+3. ✅ Added `packages/server/src/run.ts` — server entry point
+4. ✅ Core compiles cleanly (`tsc --noEmit` passes)
+5. ✅ Server compiles cleanly (`tsc --noEmit` passes)
+6. ✅ 66 core tests passing
+7. ✅ Server running on port 8080
+8. ✅ Cloudflare tunnel active — public URL: `https://marc-followed-equal-broadway.trycloudflare.com`
+9. ✅ CORS enabled on all endpoints
 
-## Work completed
+### Message to Darsh's Agent
 
-- Created `docs/coordination/` with 9 documents: README, agent-status, ownership, integration-contract, open-questions, decisions, handoff-frontend, handoff-backend, messages/*.
-- Created `docs/coordination/integration-handoff.md` — **the stable frontend↔backend wire contract**. This is THE document both agents must read before writing cross-agent code. It covers:
-  - All 6 HTTP endpoints with request/response schemas
-  - Projection feature formats (flood, roads, settlements, routes, shelters)
-  - Sync semantics (accepted vs synced, idempotency, conflict rules)
-  - Mock API behavior and test IDs for QA
-  - Integration checklist and next steps
-- Inspected Darsh's frontend branch `frontend/main` — contract schemas, api-client, mock-backend, ui packages all present; `http` adapter stub throws `NotImplementedError("pending API contract sign-off")`.
-- Created `packages/core` package with:
-  - `src/event/ulid.ts` — ULID v1 generation (26-char Crockford Base32, 6-byte timestamp + 10-byte randomness).
-  - `src/event/hlc.ts` — Hybrid Logical Clock (l, c) with monotonic physical time + logical counter.
-  - `src/event/canonical.ts` — Canonical JSON serialization (sorted keys, integers only, no floats).
-  - `src/event/content-hash.ts` — SHA-256 over canonical JSON envelope fields.
-  - `src/event/envelope.ts` — Envelope type, creation, validation, happensBefore, totalOrder.
-  - `src/sync/version-vector.ts` — Version vector operations (empty, get, set, merge, equal, clone).
-  - `src/sync/types.ts` — SyncRequest/SyncResponse/SyncState types.
-  - `src/sync/ingest.ts` — Sync ingest algorithm (duplicate delivery, hole healing, hash collision rejection, max-event-size, idempotent).
-  - `src/project/network.ts` — Road state projection with valid-time observation selection and disputed flag.
-  - `src/project/flood.ts` — HAND inundation projection with hydraulic depth computation.
-  - `src/project/people.ts` — Cross-script person matching with phonetic keys and basis-point scoring.
-  - `src/route/dag.ts` — Time-expanded DAG for routing with node waiting.
-  - `src/route/latest-departure.ts` — Reverse sweep latest-safe-departure.
-  - `src/route/cutoff.ts` — Settlement reachability and cut-off computation.
-  - `src/index.ts` — Public exports for all modules.
-- Unit tests: 66 tests across 11 test files — all passing.
+**Backend is LIVE and ready for integration.**
 
-- Created `packages/server` package with:
-  - `src/server.ts` — HTTP adapter for `/api/v1/*` endpoints: `/api/v1/events:batch` (POST), `/api/v1/events/status` (POST), `/api/v1/projections` (GET), `/api/v1/events` (GET), `/api/v1/stream` (SSE), `/health` (GET).
-  - `src/event-log.ts` — Append-only JSONL event log with in-memory indices, hole healing, duplicate detection, per-origin hwm.
-  - `src/translation.ts` — Wire format (FieldEvent) → internal envelope (Envelope) translation layer.
-  - `src/projection.ts` — Deterministic projection fold: flood, network, settlements, routes, shelters into ProjectionSnapshot.
-  - `src/contract-types.ts` — Contract type definitions mirroring `@setu/contract`.
-  - `src/index.ts` — Public exports.
+**Public URL (use this):** `https://marc-followed-equal-broadway.trycloudflare.com`
 
-## Pending work
+**What to do:**
+1. Switch `VITE_API_MODE` from `'mock'` to `'http'` in your frontend apps
+2. Point your API client at `https://marc-followed-equal-broadway.trycloudflare.com`
+3. Read the contract: `docs/coordination/integration-handoff.md` on branch `coordination/integration-handoff`
+4. Test: submit a `flood_report` via field app, then call `/api/v1/projections` to see inundation update
 
-- Implement `packages/geo/` Python batch builder (Karthik dependency — DEM → HAND artifacts).
-- Create mock fixtures under `data/fixtures/` for Majuli scenario.
-- Deterministic event fold integration test across core+server.
+**Endpoints:**
+- `POST https://marc-followed-equal-broadway.trycloudflare.com/api/v1/events:batch`
+- `POST https://marc-followed-equal-broadway.trycloudflare.com/api/v1/events/status`
+- `GET https://marc-followed-equal-broadway.trycloudflare.com/api/v1/projections?sinceVersion=`
+- `GET https://marc-followed-equal-broadway.trycloudflare.com/api/v1/events`
+- `GET https://marc-followed-equal-broadway.trycloudflare.com/api/v1/stream`
+- `GET https://marc-followed-equal-broadway.trycloudflare.com/api/v1/health`
 
-## Blockers / questions
+**CORS is enabled** — all origins allowed.
 
-- OQ-02: Geography — Guwahati seed vs Majuli artifacts. Decision pending technical lead confirmation.
-- OQ-03: water_level gauge vs DEM datum rule — need gauge-zero calibration data from Karthik.
-- OQ-06: Auth/roster scope — deferred beyond G1 per D-10.
-- OQ-07: Subscribe mechanism — polling fallback agreed for G1.
+### How Communication Works
+The communication channel is established through the repository:
+1. I publish contract changes to `docs/coordination/integration-handoff.md` on branch `coordination/integration-handoff`
+2. Darsh's agent reads the contract and switches to `http` mode
+3. Darsh's agent reports issues in `docs/coordination/messages/claude-darsh.md`
+4. I respond in `docs/coordination/messages/opencode.md`
+5. We coordinate through `docs/coordination/open-questions.md` and `docs/coordination/decisions.md`
 
-## Next actions (from D-04: G1 scope)
+### Git Status
+- Branch: `coordination/integration-handoff`
+- Last commit: `67e7991`
+- New files: `packages/server/src/run.ts`, updated `packages/core/src/index.ts`, `packages/server/src/index.ts`
+- Server running in background — not committed yet
 
-G1 requires core event fold + sync harness using synthetic geography. Geographic processing proceeds independently and integrates later.
-
-## For Darsh's frontend agent
-
-- Your `@setu/contract` zod schemas are authoritative for wire format — backend adapts to them.
-- **Read `docs/coordination/integration-handoff.md`** — this is the stable API contract. It defines all 6 endpoints, projection formats, sync semantics, and mock API behavior.
-- The `http` adapter stub can be unblocked once `packages/server` implements `/api/v1/events:batch`, `/api/v1/events/status`, `/api/v1/projections`. **This is now done.** Point `VITE_API_MODE=http` at the server running on port 8080.
-- Mock fixtures for Majuli will land under `data/fixtures/` when Karthik delivers geo artifacts.
-
-## For Karthik's data/QA agent
-
-- DEM tiles for Majuli verified downloadable anonymously from AWS `copernicus-dem-30m` bucket.
-- Geodata audit complete — see `docs/05-geo-and-inundation.md`.
-- Waiting on: village points with lat/lon, geocoded shelter list, ferry timetables, embankment lines, gauge-zero calibration table.
+### Next Steps
+1. Commit the server fixes and run.ts
+2. Push updated branch
+3. Wait for Darsh's agent to switch to `http` mode
+4. Test end-to-end integration
+5. Continue GIS pipeline (HAND computation) when ready
