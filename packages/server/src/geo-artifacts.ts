@@ -149,7 +149,16 @@ async function loadRoadsAndRoutes(): Promise<{
       path.join(ARTIFACT_ROOT, 'road_graph.geojson')
     );
 
-    roads = gj.features.map((f) => {
+    // Deduplicate by osm_id: bridges can appear in both roads and bridges layers
+    const seenOsmIds = new Set<string>();
+    const uniqueFeatures = gj.features.filter((f) => {
+      const osmId = String(f.properties['osm_id'] ?? f.properties['roadId'] ?? '');
+      if (seenOsmIds.has(osmId)) return false;
+      seenOsmIds.add(osmId);
+      return true;
+    });
+
+    roads = uniqueFeatures.map((f) => {
       const props = f.properties;
       const osmId = String(props['osm_id'] ?? props['roadId'] ?? '');
       const name = String(props['name'] ?? props['ref'] ?? 'Unnamed road');
@@ -165,7 +174,7 @@ async function loadRoadsAndRoutes(): Promise<{
       };
     });
 
-    const built = buildRouteEdges(gj.features);
+    const built = buildRouteEdges(uniqueFeatures);
     routeEdges = built.edges;
     nodeCoords = built.nodeCoords;
   } catch {
@@ -410,6 +419,7 @@ export async function loadGeoArtifacts(): Promise<GeoArtifacts> {
     return {
       edgeId: e.edgeId,
       name: e.edgeId.includes('bridge') ? 'Demo Bridge Road' : 'Demo Access Road',
+      synthetic: true,
       geometry: {
         type: 'LineString' as const,
         coordinates: [

@@ -41,6 +41,7 @@ export interface GeoArtifacts {
     edgeId: string;
     name: string;
     geometry: { type: 'LineString'; coordinates: number[][] };
+    synthetic?: boolean;
   }>;
   /** Graph edges for routing, with real fromNode/toNode connectivity. */
   routeEdges: RouteEdge[];
@@ -217,6 +218,7 @@ function buildFloodExtent(
         areaId: `cell-${cell.cx}-${cell.cy}`,
         depthCm,
         severity,
+        synthetic: cell.synthetic ?? false,
       },
     });
   }
@@ -260,6 +262,7 @@ function buildRoadStatus(
         status,
         updatedAt: now,
         sourceEventIds: pass ? pass.sourceEventIds : [],
+        synthetic: (road as { synthetic?: boolean }).synthetic ?? false,
       },
     });
   }
@@ -298,6 +301,7 @@ function buildSettlements(
         accessibility: cutOff.has(s.settlementId) ? 'cut_off' : 'accessible',
         households: s.households,
         needs: s.needs,
+        synthetic: (s as { synthetic?: boolean }).synthetic ?? false,
       },
     });
   }
@@ -380,6 +384,8 @@ function buildRoutes(
           status: 'unavailable',
           etaMin: 0,
           replacesRouteId: undefined,
+          synthetic: (r as { synthetic?: boolean }).synthetic ?? false,
+          reason: 'Settlement or shelter not in road network',
         },
       });
       continue;
@@ -394,10 +400,25 @@ function buildRoutes(
 
     let status: Route['features'][number]['properties']['status'];
     let etaMin: number;
+    let reason: string | undefined;
 
     if (result.path.length === 0 || result.etaS === 0) {
       status = 'unavailable';
       etaMin = 0;
+      // Determine why no path exists
+      const settlementNode = settlement.nodeId;
+      const shelterNode = shelter.nodeId;
+      const settlementHasEdges = routeEdges.some(
+        (e) => e.fromNode === settlementNode || e.toNode === settlementNode,
+      );
+      const shelterHasEdges = routeEdges.some(
+        (e) => e.fromNode === shelterNode || e.toNode === shelterNode,
+      );
+      if (!settlementHasEdges || !shelterHasEdges) {
+        reason = 'No connected path between settlement and shelter';
+      } else {
+        reason = 'No route available — all roads blocked';
+      }
     } else {
       status = 'active';
       etaMin = Math.ceil(result.etaS / 60);
@@ -415,6 +436,8 @@ function buildRoutes(
         status,
         etaMin,
         replacesRouteId: undefined,
+        synthetic: (r as { synthetic?: boolean }).synthetic ?? false,
+        ...(reason ? { reason } : {}),
       },
     });
   }
@@ -449,6 +472,7 @@ function buildShelters(shelters: GeoArtifacts['shelters']): Shelter {
         capacity: s.capacity,
         occupancy: s.occupancy,
         open: s.open,
+        synthetic: (s as { synthetic?: boolean }).synthetic ?? false,
       },
     });
   }
@@ -505,6 +529,7 @@ export function projectSnapshot(
   events: Envelope[],
   artifacts: GeoArtifacts,
   asOf: number,
+  version: number = 1,
 ): ProjectionSnapshot {
   const sortedEvents = [...events].sort(totalOrder);
 
@@ -542,6 +567,28 @@ export function projectSnapshot(
     asOf,
   );
 
+  // If projectFlood returned no wet cells but we have an active water
+  // observation with depth > 0, create a synthetic flood cell at the
+  // observation location. This ensures the demo shows inundation when a
+  // volunteer reports water over a bridge deck, even without a full HAND
+  // grid loaded into the projection function.
+  let floodCells = floodProjection.cells;
+  if (floodCells.length === 0 && waterObs.length > 0) {
+    const activeObs = waterObs[waterObs.length - 1];
+    if (activeObs.depthDm > 0 && activeObs.lat !== undefined && activeObs.lng !== undefined) {
+      floodCells = [
+        {
+          cx: activeObs.lng,
+          cy: activeObs.lat,
+          wet: true,
+          depthDm: activeObs.depthDm,
+          handDm: 0,
+          synthetic: true,
+        },
+      ];
+    }
+  }
+
   const roadEdges = artifacts.roads.map((r) => ({
     edgeId: r.edgeId,
     class: 'residential',
@@ -558,14 +605,17 @@ export function projectSnapshot(
     asOf,
   );
 
-  const cutOff = computeCutOff(artifacts.settlements, floodProjection);
+  const cutOff = computeCutOff(artifacts.settlements, {
+    ...floodProjection,
+    cells: floodCells,
+  });
 
   const settlementsById = new Map(artifacts.settlements.map((s) => [s.settlementId, s]));
   const sheltersById = new Map(artifacts.shelters.map((s) => [s.shelterId, s]));
 
   const passByEdge = new Map(networkProjection.map((p) => [p.edgeId, p]));
 
-  const flood = buildFloodExtent(floodProjection);
+  const flood = buildFloodExtent({ ...floodProjection, cells: floodCells });
   const roads = buildRoadStatus(artifacts.roads, networkProjection);
   const settlements = buildSettlements(artifacts.settlements, cutOff);
   const shelters = buildShelters(artifacts.shelters);
@@ -581,7 +631,7 @@ export function projectSnapshot(
   const now = new Date(asOf).toISOString();
 
   return {
-    version: 1,
+    version,
     generatedAt: now,
     flood,
     roads,

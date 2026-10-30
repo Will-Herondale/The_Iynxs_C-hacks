@@ -1,0 +1,816 @@
+{
+ "version": 1,
+ "generatedAt": "2026-06-01T06:00:00.000Z",
+ "flood": {
+  "type": "FeatureCollection",
+  "version": 1,
+  "generatedAt": "2026-06-01T06:00:00.000Z",
+  "features": [
+   {
+    "type": "Feature",
+    "id": "A1",
+    "geometry": {
+     "type": "Polygon",
+     "coordinates": [
+      [
+       [
+        91.7105,
+        26.161
+       ],
+       [
+        91.729,
+        26.165
+       ],
+       [
+        91.742,
+        26.16
+       ],
+       [
+        91.739,
+        26.152
+       ],
+       [
+        91.724,
+        26.149
+       ],
+       [
+        91.712,
+        26.153
+       ],
+       [
+        91.7105,
+        26.161
+       ]
+      ]
+     ]
+    },
+    "properties": {
+     "areaId": "A1",
+     "depthCm": 60,
+     "severity": 3,
+     "confidence": "observed"
+    }
+   },
+   {
+    "type": "Feature",
+    "id": "A2",
+    "geometry": {
+     "type": "Polygon",
+     "coordinates": [
+      [
+       [
+        91.695,
+        26.104
+       ],
+       [
+        91.71,
+        26.107
+       ],
+       [
+        91.716,
+        26.1
+       ],
+       [
+        91.709,
+        26.094
+       ],
+       [
+        91.697,
+        26.095
+       ],
+       [
+        91.695,
+        26.104
+       ]
+      ]
+     ]
+    },
+    "properties": {
+     "areaId": "A2",
+     "depthCm": 35,
+     "severity": 2,
+     "confidence": "modelled"
+    }
+   },
+   {
+    "type": "Feature",
+    "id": "A3",
+    "geometry": {
+     "type": "Polygon",
+     "coordinates": [
+      [
+       [
+        91.76,
+        26.106
+       ],
+       [
+        91.77,
+        26.109
+       ],
+       [
+        91.774,
+        26.104
+       ],
+       [
+        91.765,
+        26.1
+       ],
+       [
+        91.76,
+        26.106
+       ]
+      ]
+     ]
+    },
+    "properties": {
+     "areaId": "A3",
+     "depthCm": 15,
+     "severity": 1,
+     "confidence": "uncertain"
+    }
+   }
+  ]
+ },
+ "roads": {
+  "type": "FeatureCollection",
+  "version": 1,
+  "generatedAt": "2026-06-01T06:00:00.000Z",
+  "features": [
+   {
+    "type": "Feature",
+    "id": "R1",
+    "geometry": {
+     "type": "LineString",
+     "coordinates": [
+      [
+       91.756,
+       26.17
+      ],
+      [
+       91.764,
+       26.156
+      ],
+      [
+       91.772,
+       26.143
+      ],
+      [
+       91.78,
+       26.13
+      ],
+      [
+       91.788,
+       26.118
+      ]
+     ]
+    },
+    "properties": {
+     "roadId": "R1",
+     "name": "Guwahati-Shillong (GS) Road",
+     "kind": "road",
+     "passability": "passable",
+     "status": "open",
+     "updatedAt": "2026-06-01T06:00:00.000Z",
+     "sourceEventIds": []
+    }
+   },
+   {
+    "type": "Feature",
+    "id": "R2",
+    "geometry": {
+     "type": "LineString",
+     "coordinates": [
+      [
+       91.756,
+       26.17
+      ],
+      [
+       91.748,
+       26.1665
+      ],
+      [
+       91.738,
+       26.163
+      ],
+      [
+       91.729,
+       26.165
+      ]
+     ]
+    },
+    "properties": {
+     "roadId": "R2",
+     "name": "RG Baruah Road",
+     "kind": "road",
+     "passability": "passable",
+     "status": "open",
+     "updatedAt": "2026-06-01T06:00:00.000Z",
+     "sourceEventIds": []
+    }
+   },
+   {
+    "type": "Feature",
+    "id": "R3",
+    "geometry": {
+     "type": "LineString",
+     "coordinates": [
+      [
+       91.772,
+       26.143
+      ],
+      [
+       91.76,
+       26.1385
+      ],
+      [
+       91.75,
+       26.133
+      ],
+      [
+       91.742,
+       26.126
+      ]
+     ]
+    },
+    "properties": {
+     "roadId": "R3",
+     "name": "Lokhra Road",
+     "kind": "road",
+     "passability": "passable",
+     "status": "open",
+     "updatedAt": "2026-06-01T06:00:00.000Z",
+     "sourceEventIds": []
+    }
+   },
+   {
+    "type": "Feature",
+    "id": "R4",
+    "geometry": {
+     "type": "LineString",
+     "coordinates": [
+      [
+       91.729,
+       26.165
+      ],
+      [
+       91.724,
+       26.158
+      ],
+      [
+       91.72,
+       26.15
+      ],
+      [
+       91.716,
+       26.142
+      ]
+     ]
+    },
+    "properties": {
+     "roadId": "R4",
+     "name": "Bharalu Embankment Road",
+     "kind": "road",
+     "passability": "passable",
+     "status": "open",
+     "updatedAt": "2026-06-01T06:00:00.000Z",
+     "sourceEventIds": []
+    }
+   },
+   {
+    "type": "Feature",
+    "id": "R5",
+    "geometry": {
+     "type": "LineString",
+     "coordinates": [
+      [
+       91.764,
+       26.156
+      ],
+      [
+       91.754,
+       26.154
+      ],
+      [
+       91.744,
+       26.15
+      ],
+      [
+       91.733,
+       26.145
+      ]
+     ]
+    },
+    "properties": {
+     "roadId": "R5",
+     "name": "Zoo Road",
+     "kind": "road",
+     "passability": "passable",
+     "status": "open",
+     "updatedAt": "2026-06-01T06:00:00.000Z",
+     "sourceEventIds": []
+    }
+   },
+   {
+    "type": "Feature",
+    "id": "R6",
+    "geometry": {
+     "type": "LineString",
+     "coordinates": [
+      [
+       91.788,
+       26.118
+      ],
+      [
+       91.796,
+       26.125
+      ],
+      [
+       91.8,
+       26.134
+      ]
+     ]
+    },
+    "properties": {
+     "roadId": "R6",
+     "name": "Rukminigaon Link Road",
+     "kind": "road",
+     "passability": "passable",
+     "status": "open",
+     "updatedAt": "2026-06-01T06:00:00.000Z",
+     "sourceEventIds": []
+    }
+   },
+   {
+    "type": "Feature",
+    "id": "R7",
+    "geometry": {
+     "type": "LineString",
+     "coordinates": [
+      [
+       91.78,
+       26.13
+      ],
+      [
+       91.77,
+       26.125
+      ],
+      [
+       91.76,
+       26.12
+      ],
+      [
+       91.748,
+       26.117
+      ]
+     ]
+    },
+    "properties": {
+     "roadId": "R7",
+     "name": "Beltola-Basistha Road",
+     "kind": "road",
+     "passability": "passable",
+     "status": "open",
+     "updatedAt": "2026-06-01T06:00:00.000Z",
+     "sourceEventIds": []
+    }
+   },
+   {
+    "type": "Feature",
+    "id": "R8",
+    "geometry": {
+     "type": "LineString",
+     "coordinates": [
+      [
+       91.78,
+       26.13
+      ],
+      [
+       91.775,
+       26.118
+      ],
+      [
+       91.765,
+       26.11
+      ],
+      [
+       91.754,
+       26.105
+      ],
+      [
+       91.748,
+       26.117
+      ]
+     ]
+    },
+    "properties": {
+     "roadId": "R8",
+     "name": "Beltola Tiniali Bypass",
+     "kind": "road",
+     "passability": "passable",
+     "status": "open",
+     "updatedAt": "2026-06-01T06:00:00.000Z",
+     "sourceEventIds": []
+    }
+   },
+   {
+    "type": "Feature",
+    "id": "R9",
+    "geometry": {
+     "type": "LineString",
+     "coordinates": [
+      [
+       91.733,
+       26.145
+      ],
+      [
+       91.74,
+       26.134
+      ],
+      [
+       91.742,
+       26.126
+      ],
+      [
+       91.748,
+       26.117
+      ]
+     ]
+    },
+    "properties": {
+     "roadId": "R9",
+     "name": "Kahilipara Main Road",
+     "kind": "road",
+     "passability": "passable",
+     "status": "open",
+     "updatedAt": "2026-06-01T06:00:00.000Z",
+     "sourceEventIds": []
+    }
+   },
+   {
+    "type": "Feature",
+    "id": "R10",
+    "geometry": {
+     "type": "LineString",
+     "coordinates": [
+      [
+       91.716,
+       26.142
+      ],
+      [
+       91.71,
+       26.133
+      ],
+      [
+       91.704,
+       26.125
+      ],
+      [
+       91.7,
+       26.116
+      ]
+     ]
+    },
+    "properties": {
+     "roadId": "R10",
+     "name": "Garchuk-Maligaon Road",
+     "kind": "road",
+     "passability": "passable",
+     "status": "open",
+     "updatedAt": "2026-06-01T06:00:00.000Z",
+     "sourceEventIds": []
+    }
+   },
+   {
+    "type": "Feature",
+    "id": "B1",
+    "geometry": {
+     "type": "LineString",
+     "coordinates": [
+      [
+       91.7984,
+       26.13
+      ],
+      [
+       91.7975,
+       26.1285
+      ]
+     ]
+    },
+    "properties": {
+     "roadId": "B1",
+     "name": "Bharalu Bridge",
+     "kind": "bridge",
+     "passability": "passable",
+     "status": "open",
+     "updatedAt": "2026-06-01T06:00:00.000Z",
+     "sourceEventIds": []
+    }
+   }
+  ]
+ },
+ "settlements": {
+  "type": "FeatureCollection",
+  "version": 1,
+  "generatedAt": "2026-06-01T06:00:00.000Z",
+  "features": [
+   {
+    "type": "Feature",
+    "id": "S1",
+    "geometry": {
+     "type": "Point",
+     "coordinates": [
+      91.721,
+      26.162
+     ]
+    },
+    "properties": {
+     "settlementId": "S1",
+     "name": "Bharalumukh",
+     "population": 4200,
+     "accessibility": "accessible",
+     "households": 960,
+     "needs": [
+      "drinking_water",
+      "boats"
+     ]
+    }
+   },
+   {
+    "type": "Feature",
+    "id": "S2",
+    "geometry": {
+     "type": "Point",
+     "coordinates": [
+      91.7545,
+      26.169
+     ]
+    },
+    "properties": {
+     "settlementId": "S2",
+     "name": "Silpukhuri",
+     "population": 3100,
+     "accessibility": "accessible",
+     "households": 720,
+     "needs": [
+      "medical"
+     ]
+    }
+   },
+   {
+    "type": "Feature",
+    "id": "S3",
+    "geometry": {
+     "type": "Point",
+     "coordinates": [
+      91.769,
+      26.1245
+     ]
+    },
+    "properties": {
+     "settlementId": "S3",
+     "name": "Beltola",
+     "population": 5200,
+     "accessibility": "accessible",
+     "households": 1180,
+     "needs": [
+      "food",
+      "drinking_water"
+     ]
+    }
+   },
+   {
+    "type": "Feature",
+    "id": "S4",
+    "geometry": {
+     "type": "Point",
+     "coordinates": [
+      91.799,
+      26.132
+     ]
+    },
+    "properties": {
+     "settlementId": "S4",
+     "name": "Hatigaon",
+     "population": 3600,
+     "accessibility": "accessible",
+     "households": 810,
+     "needs": [
+      "food"
+     ],
+     "evacuationPriority": "high"
+    }
+   },
+   {
+    "type": "Feature",
+    "id": "S5",
+    "geometry": {
+     "type": "Point",
+     "coordinates": [
+      91.7405,
+      26.1335
+     ]
+    },
+    "properties": {
+     "settlementId": "S5",
+     "name": "Kahilipara",
+     "population": 2800,
+     "accessibility": "accessible",
+     "households": 640,
+     "needs": [
+      "medical",
+      "boats"
+     ]
+    }
+   },
+   {
+    "type": "Feature",
+    "id": "S6",
+    "geometry": {
+     "type": "Point",
+     "coordinates": [
+      91.7005,
+      26.117
+     ]
+    },
+    "properties": {
+     "settlementId": "S6",
+     "name": "Garchuk",
+     "population": 2400,
+     "accessibility": "accessible",
+     "households": 540,
+     "needs": [
+      "drinking_water",
+      "shelter"
+     ]
+    }
+   }
+  ]
+ },
+ "routes": {
+  "type": "FeatureCollection",
+  "version": 1,
+  "generatedAt": "2026-06-01T06:00:00.000Z",
+  "features": [
+   {
+    "type": "Feature",
+    "id": "EVAC-1",
+    "geometry": {
+     "type": "LineString",
+     "coordinates": [
+      [
+       91.721,
+       26.162
+      ],
+      [
+       91.729,
+       26.165
+      ],
+      [
+       91.738,
+       26.163
+      ],
+      [
+       91.748,
+       26.1665
+      ]
+     ]
+    },
+    "properties": {
+     "routeId": "EVAC-1",
+     "from": "S1",
+     "to": "SH1",
+     "kind": "evacuation",
+     "status": "active",
+     "etaMin": 22
+    }
+   },
+   {
+    "type": "Feature",
+    "id": "EVAC-2",
+    "geometry": {
+     "type": "LineString",
+     "coordinates": [
+      [
+       91.769,
+       26.1245
+      ],
+      [
+       91.76,
+       26.12
+      ],
+      [
+       91.748,
+       26.117
+      ]
+     ]
+    },
+    "properties": {
+     "routeId": "EVAC-2",
+     "from": "S3",
+     "to": "SH2",
+     "kind": "evacuation",
+     "status": "active",
+     "etaMin": 18
+    }
+   },
+   {
+    "type": "Feature",
+    "id": "EVAC-3",
+    "geometry": {
+     "type": "LineString",
+     "coordinates": [
+      [
+       91.799,
+       26.132
+      ],
+      [
+       91.7984,
+       26.13
+      ],
+      [
+       91.7975,
+       26.1285
+      ],
+      [
+       91.7968,
+       26.1268
+      ],
+      [
+       91.796,
+       26.125
+      ]
+     ]
+    },
+    "properties": {
+     "routeId": "EVAC-3",
+     "from": "S4",
+     "to": "SH3",
+     "kind": "evacuation",
+     "status": "active",
+     "etaMin": 9
+    }
+   }
+  ]
+ },
+ "shelters": {
+  "type": "FeatureCollection",
+  "version": 1,
+  "generatedAt": "2026-06-01T06:00:00.000Z",
+  "features": [
+   {
+    "type": "Feature",
+    "id": "SH1",
+    "geometry": {
+     "type": "Point",
+     "coordinates": [
+      91.748,
+      26.1665
+     ]
+    },
+    "properties": {
+     "shelterId": "SH1",
+     "name": "Latasil Govt. Higher Secondary School",
+     "capacity": 600,
+     "occupancy": 40,
+     "open": true
+    }
+   },
+   {
+    "type": "Feature",
+    "id": "SH2",
+    "geometry": {
+     "type": "Point",
+     "coordinates": [
+      91.748,
+      26.117
+     ]
+    },
+    "properties": {
+     "shelterId": "SH2",
+     "name": "Basistha Community Hall",
+     "capacity": 450,
+     "occupancy": 25,
+     "open": true
+    }
+   },
+   {
+    "type": "Feature",
+    "id": "SH3",
+    "geometry": {
+     "type": "Point",
+     "coordinates": [
+      91.796,
+      26.125
+     ]
+    },
+    "properties": {
+     "shelterId": "SH3",
+     "name": "Hatigaon Higher Secondary School",
+     "capacity": 700,
+     "occupancy": 60,
+     "open": true
+    }
+   }
+  ]
+ }
+}

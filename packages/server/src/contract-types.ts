@@ -171,6 +171,7 @@ export interface FloodProps {
   areaId: string;
   depthCm: number;
   severity: number;
+  synthetic?: boolean;
 }
 
 export type RoadStatusValue = 'open' | 'partial' | 'blocked' | 'unknown' | 'disputed';
@@ -181,6 +182,7 @@ export interface RoadProps {
   status: RoadStatusValue;
   updatedAt: string;
   sourceEventIds: string[];
+  synthetic?: boolean;
 }
 
 export type Accessibility = 'accessible' | 'limited' | 'cut_off';
@@ -192,6 +194,7 @@ export interface SettlementProps {
   accessibility: Accessibility;
   households: number;
   needs: string[];
+  synthetic?: boolean;
 }
 
 export type RouteKind = 'evacuation' | 'supply';
@@ -206,6 +209,9 @@ export interface RouteProps {
   status: RouteStatus;
   etaMin: number;
   replacesRouteId?: string;
+  synthetic?: boolean;
+  /** Human-readable reason when route is unavailable or recalculated. */
+  reason?: string;
 }
 
 export interface ShelterProps {
@@ -214,6 +220,7 @@ export interface ShelterProps {
   capacity: number;
   occupancy: number;
   open: boolean;
+  synthetic?: boolean;
 }
 
 export type FloodExtent = FeatureCollection<PolygonGeom, FloodProps>;

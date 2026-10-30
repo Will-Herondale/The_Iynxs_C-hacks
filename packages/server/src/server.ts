@@ -15,7 +15,7 @@ import { EventLog } from './event-log';
 import { translateEvent } from './translation';
 import { projectSnapshot, type GeoArtifacts } from './projection';
 import { loadGeoArtifacts } from './geo-artifacts';
-import { totalOrder, type Envelope } from '../../core/src/index';
+import { type Envelope } from '../../core/src/index';
 import {
   type SubmitAck,
   type EventStatus,
@@ -30,6 +30,7 @@ const MAX_EVENTS_PER_BATCH = 500;
 let log: EventLog | null = null;
 let artifacts: GeoArtifacts | null = null;
 let clientEventMappings = new Map<string, string>(); // clientEventId → eventId
+let eventIdToClientEventId = new Map<string, string>(); // eventId → clientEventId
 let projectionVersion = 0;
 let sseClients = new Set<(data: string) => void>();
 
@@ -169,6 +170,7 @@ async function handleEventsBatch(
 
     // Record mapping
     clientEventMappings.set(event.clientEventId, appended.id);
+    eventIdToClientEventId.set(appended.id, event.clientEventId);
 
     // The event is accepted; it will be applied to projections on next read
     // acceptedAtVersion = version AFTER apply (we assign at apply time)
@@ -258,8 +260,11 @@ function handleProjections(
   const sinceVersion = url.searchParams.get('sinceVersion');
   const since = sinceVersion ? Number(sinceVersion) : 0;
 
-  const events = log.getAllEvents().sort(totalOrder);
-  const snapshot = projectSnapshot(events, artifacts, Date.now());
+  const events = [...log.getAllEvents()]
+    .map((env, index) => ({ env, index }))
+    .sort((a, b) => b.env.at - a.env.at || b.index - a.index)
+    .map(({ env }) => env);
+  const snapshot = projectSnapshot(events, artifacts, Date.now(), projectionVersion);
 
   if (since > 0 && snapshot.version <= since) {
     res.writeHead(304, { 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' });
@@ -268,6 +273,80 @@ function handleProjections(
   }
 
   sendJson(res, 200, snapshot);
+}
+
+/** UUID v4 regex — clientEventId must be a valid UUID per the wire contract. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isValidUuid(id: unknown): id is string {
+  return typeof id === 'string' && UUID_RE.test(id);
+}
+
+/**
+ * Translate an internal envelope back to wire format (FieldEvent) for the
+ * event list endpoint. The internal envelope stores obs.water/obs.road types
+ * with integer payloads; the wire format uses flood_report/road_blockage etc.
+ * with float-friendly fields.
+ *
+ * Returns null when the event cannot be translated to a valid wire-format
+ * FieldEvent (e.g. no recoverable clientEventId — pre-fix events stored
+ * before client_event_id was added to the payload). Callers must filter out
+ * null results.
+ */
+function translateEnvelopeToWire(env: Envelope): { event: FieldEvent; eventId: string } | null {
+  const p = env.payload as Record<string, unknown>;
+  // Prefer client_event_id stored in payload (new events); fall back to the
+  // eventId→clientEventId map (old events created before this fix).
+  const clientEventId =
+    (typeof p.client_event_id === 'string' ? p.client_event_id : undefined) ??
+    eventIdToClientEventId.get(env.id);
+
+  if (!isValidUuid(clientEventId)) return null;
+
+  const base: Record<string, unknown> = {
+    clientEventId,
+    type: env.type,
+    occurredAt: new Date(env.at).toISOString(),
+    reporterId: env.actor.id,
+    deviceId: env.origin,
+    location: {
+      lat: (typeof p.lat === 'number' ? p.lat : 0) / 1_000_000,
+      lng: (typeof p.lng === 'number' ? p.lng : 0) / 1_000_000,
+    },
+  };
+
+  switch (env.type) {
+    case 'obs.water': {
+      return {
+        eventId: env.id,
+        event: {
+          ...base,
+          type: 'flood_report',
+          severity: typeof p.severity === 'number' ? p.severity : 3,
+          ...(typeof p.depth_dm === 'number'
+            ? { depthCm: Math.round(p.depth_dm / 10) }
+            : {}),
+          ...(typeof p.area_id === 'string' ? { areaId: p.area_id } : {}),
+        } as unknown as FieldEvent,
+      };
+    }
+    case 'obs.road': {
+      return {
+        eventId: env.id,
+        event: {
+          ...base,
+          type: p.state === 'open' ? 'road_cleared' : 'road_blockage',
+          ...(typeof p.edge_id === 'string' ? { roadId: p.edge_id } : {}),
+          blockage: p.state === 'blocked' ? 'full' : 'partial',
+        } as unknown as FieldEvent,
+      };
+    }
+    default:
+      return {
+        eventId: env.id,
+        event: base as unknown as FieldEvent,
+      };
+    }
 }
 
 async function handleListEvents(
@@ -284,7 +363,19 @@ async function handleListEvents(
   const limit = Number(url.searchParams.get('limit') || '50');
   const type = url.searchParams.get('type');
 
-  const events = log.getAllEvents().sort(totalOrder);
+  const events = [...log.getAllEvents()]
+    .map((env, index) => ({ env, index }))
+    .sort((a, b) => b.env.at - a.env.at || b.index - a.index)
+    .map(({ env }) => env);
+
+  // Wire format type → internal envelope type mapping
+  const wireToInternalType: Record<string, string> = {
+    flood_report: 'obs.water',
+    water_level: 'obs.water',
+    road_blockage: 'obs.road',
+    road_cleared: 'obs.road',
+    household_registration: 'person.register',
+  };
 
   let filtered = events;
   if (sinceVersion) {
@@ -292,17 +383,31 @@ async function handleListEvents(
     filtered = filtered.filter((e) => e.hlc.l > since);
   }
   if (type) {
-    filtered = filtered.filter((e) => e.type === type);
+    const internalType = wireToInternalType[type];
+    if (internalType) {
+      filtered = filtered.filter((e) => e.type === internalType);
+    }
   }
   filtered = filtered.slice(0, limit);
 
-  const records = filtered.map((env) => ({
-    eventId: env.id,
-    event: env.payload,
-    serverState: 'applied' as const,
-    receivedAt: new Date(env.at).toISOString(),
-    appliedAtVersion: projectionVersion,
-  }));
+  const records = filtered
+    .map((env) => {
+      const translated = translateEnvelopeToWire(env);
+      if (!translated) return null;
+      return {
+        eventId: env.id,
+        event: translated.event,
+        serverState: 'applied' as const,
+        receivedAt: new Date(env.at).toISOString(),
+        appliedAtVersion: projectionVersion,
+      };
+    })
+    .filter((r): r is NonNullable<typeof r> => r !== null);
+
+  console.error(`DEBUG handleListEvents: totalEvents=${events.length}, filtered=${filtered.length}, records=${records.length}, typeFilter=${type}`);
+  for (const env of filtered.slice(0, 5)) {
+    console.error(`  event id=${env.id} type=${env.type} payload.keys=${Object.keys(env.payload || {}).join(',')} client_event_id=${(env.payload as Record<string, unknown>).client_event_id}`);
+  }
 
   sendJson(res, 200, { events: records });
 }

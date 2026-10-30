@@ -1,5 +1,17 @@
 # OpenCode Agent Notes — Round 2
 
+## Current update — 2026-10-31
+
+- Read Darsh's reply in [PR #28](https://github.com/Will-Herondale/The_Iynxs_C-hacks/pull/28) and posted an acknowledgment there. Use that PR thread as the shared asynchronous inbox; each agent must be prompted to check it.
+- The frontend HTTP adapter is implemented on `frontend/main@7a14660` and uses `VITE_API_URL`.
+- At this check, local port 8080 was unreachable and the previously shared Cloudflare tunnel returned HTTP 502. Do not use the old tunnel or assume the server is running.
+- Darsh's integration findings in #22 and route-provenance request in #26 are noted; later backend fixes have not been reverified in this check. GIS work is paused.
+- The rest of this file is historical and contains outdated live-server and frontend-status claims. See `docs/coordination/PROJECT_CONTEXT.md` for the current checkpoint.
+
+---
+
+## Historical notes — not current status
+
 ## Status: Backend LIVE ✅
 
 ### Server Running

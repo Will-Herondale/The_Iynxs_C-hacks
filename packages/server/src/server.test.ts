@@ -206,7 +206,7 @@ describe('SETU server endpoints', () => {
     });
 
     it('filters by type', async () => {
-      const ceid = 'test-type-filter-001';
+      const ceid = '550e8400-e29b-41d4-a716-446655440000';
       const event = {
         clientEventId: ceid,
         type: 'flood_report',
@@ -222,12 +222,12 @@ describe('SETU server endpoints', () => {
       });
       expect(first.status).toBe(200);
 
-      // Internal type after translation is 'obs.water'
-      const { status, body } = await fetchJson('/api/v1/events?type=obs.water');
+      // Wire format after translation is 'flood_report' with areaId (not point_id)
+      const { status, body } = await fetchJson('/api/v1/events?type=flood_report');
       expect(status).toBe(200);
-      const events = (body as { events: Array<{ event: { type: string; point_id?: string } }> }).events;
+      const events = (body as { events: Array<{ event: { type: string; areaId?: string; clientEventId: string } }> }).events;
       expect(events.length).toBeGreaterThanOrEqual(1);
-      expect(events.find((e) => e.event.point_id === `point-${ceid}`)).toBeDefined();
+      expect(events.find((e) => e.event.clientEventId === ceid)).toBeDefined();
     });
   });
 

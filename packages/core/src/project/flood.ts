@@ -39,6 +39,7 @@ export interface InundationCell {
   wet: boolean;
   depthDm: number;      // decimetres, 0 if not wet
   handDm: number;       // decimetres, HAND value for this cell
+  synthetic?: boolean;  // true for synthetic demo cells
 }
 
 export interface FloodProjection {
