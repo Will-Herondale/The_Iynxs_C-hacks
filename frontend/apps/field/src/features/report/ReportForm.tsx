@@ -3,7 +3,7 @@ import type { FormEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import type { Resolver } from 'react-hook-form';
 import { Button, Field, Panel } from '@setu/ui';
-import type { FieldEvent } from '@setu/contract';
+import type { FieldEvent, ProjectionSnapshot } from '@setu/contract';
 import { enqueue, replace } from '../../sync/index.js';
 import type { QueueItem } from '../../sync/index.js';
 import { getDeviceId, getReporterId } from '../../app/identity.js';
@@ -11,15 +11,18 @@ import {
   EMPTY_REPORT, REPORT_KINDS, buildReportEvent, fieldKeyForPath, freshId, valuesFromEvent,
 } from './buildEvent.js';
 import type { ReportValues } from './buildEvent.js';
+import { roadOptions } from './roadOptions.js';
 import { DEFAULT_LOCATION, useGeolocation } from './location.js';
 
-const ROADS = Array.from({ length: 10 }, (_, i) => `R${i + 1}`);
+const CAUSES = ['submerged', 'debris', 'collapse', 'damage', 'other'];
 const SELECT = 'setu-field__control';
 
 export interface ReportScreenProps {
   /** Rejected queue item reopened for editing: the form prefills and resubmits via replace(). */
   editing?: QueueItem | null;
   onDone?: () => void;
+  /** Cached projection snapshot: source of the road and bridge list (works offline). */
+  snapshot?: ProjectionSnapshot | null;
   /** Test seam: override the queue writer (defaults to the local queue). */
   submit?: (event: FieldEvent, editing?: QueueItem | null) => Promise<unknown>;
 }
@@ -27,7 +30,7 @@ export interface ReportScreenProps {
 const defaultSubmit = (event: FieldEvent, editing?: QueueItem | null) =>
   editing ? replace(editing.clientEventId, event) : enqueue(event);
 
-export function ReportScreen({ editing, onDone, submit = defaultSubmit }: ReportScreenProps) {
+export function ReportScreen({ editing, onDone, snapshot, submit = defaultSubmit }: ReportScreenProps) {
   const identity = { reporterId: getReporterId(), deviceId: getDeviceId() };
   // One id per form "session": a double-submit re-enqueues the same id, which enqueue dedups.
   const idRef = useRef(freshId());
@@ -48,6 +51,7 @@ export function ReportScreen({ editing, onDone, submit = defaultSubmit }: Report
     resolver,
   });
   const type = watch('type');
+  const roads = roadOptions(snapshot);
   const { errors, isSubmitting } = formState;
 
   const { gps, locate } = useGeolocation(
@@ -94,6 +98,12 @@ export function ReportScreen({ editing, onDone, submit = defaultSubmit }: Report
   return (
     <Panel title={editing ? 'Edit rejected report' : 'New report'}>
       <form onSubmit={guardedSubmit} noValidate aria-label="Report form">
+        <Button
+          variant="primary" data-testid="quick-blocked"
+          onClick={() => { setValue('type', 'road_blockage'); setValue('blockage', 'full'); }}
+        >
+          Report blocked road or bridge
+        </Button>
         <div role="group" aria-label="Report type" className="report-types">
           {REPORT_KINDS.map((k) => (
             <label key={k.type}>
@@ -104,10 +114,10 @@ export function ReportScreen({ editing, onDone, submit = defaultSubmit }: Report
 
         {(type === 'road_blockage' || type === 'road_cleared') && (
           <div className="setu-field">
-            <label className="setu-field__label" htmlFor="f-roadId">Road</label>
+            <label className="setu-field__label" htmlFor="f-roadId">Road or bridge</label>
             <select id="f-roadId" className={SELECT} data-testid="field-roadId" {...register('roadId')}>
               <option value="">{type === 'road_cleared' ? 'Select road…' : 'Unknown (use location)'}</option>
-              {ROADS.map((r) => <option key={r} value={r}>{r}</option>)}
+              {roads.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
             </select>
             {err('roadId') && <span className="setu-field__error" role="alert">{err('roadId')}</span>}
           </div>
@@ -118,6 +128,15 @@ export function ReportScreen({ editing, onDone, submit = defaultSubmit }: Report
             <select id="f-blockage" className={SELECT} data-testid="field-blockage" {...register('blockage')}>
               <option value="full">full</option>
               <option value="partial">partial</option>
+            </select>
+          </div>
+        )}
+        {type === 'road_blockage' && (
+          <div className="setu-field">
+            <label className="setu-field__label" htmlFor="f-cause">Cause</label>
+            <select id="f-cause" className={SELECT} data-testid="field-cause" {...register('cause')}>
+              <option value="">Not sure</option>
+              {CAUSES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
         )}

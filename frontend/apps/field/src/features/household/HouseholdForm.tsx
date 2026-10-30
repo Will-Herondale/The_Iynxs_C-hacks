@@ -39,6 +39,7 @@ export function buildHouseholdEvent(
   id: { reporterId: string; deviceId: string },
   clientEventId: string,
   householdId: string,
+  shelterId?: string,
 ) {
   const raw = {
     clientEventId,
@@ -49,6 +50,7 @@ export function buildHouseholdEvent(
     note: v.note.trim() || undefined,
     type: 'household_registration',
     householdId,
+    ...(shelterId ? { shelterId } : {}),
     headName: v.headName.trim(),
     members: num(v.members),
     vulnerable: { elderly: v.elderly, children: v.children, disabled: v.disabled, medical: v.medical },
@@ -73,12 +75,17 @@ export interface HouseholdScreenProps {
   editing?: QueueItem | null;
   onDone?: () => void;
   submit?: (event: FieldEvent, editing?: QueueItem | null) => Promise<unknown>;
+  /** Camp mode: registers the household at this shelter. */
+  shelterId?: string;
+  /** Camp mode: replaces the panel title and form test id. */
+  title?: string;
+  formTestId?: string;
 }
 
 const defaultSubmit = (event: FieldEvent, editing?: QueueItem | null) =>
   editing ? replace(editing.clientEventId, event) : enqueue(event);
 
-export function HouseholdScreen({ editing, onDone, submit = defaultSubmit }: HouseholdScreenProps) {
+export function HouseholdScreen({ editing, onDone, submit = defaultSubmit, shelterId, title, formTestId }: HouseholdScreenProps) {
   const identity = { reporterId: getReporterId(), deviceId: getDeviceId() };
   const editEvent = editing?.event.type === 'household_registration' ? editing.event : undefined;
   const idRef = useRef(newClientEventId());
@@ -88,7 +95,7 @@ export function HouseholdScreen({ editing, onDone, submit = defaultSubmit }: Hou
   const [failure, setFailure] = useState<string | null>(null);
 
   const resolver: Resolver<HouseholdValues> = async (values) => {
-    const r = buildHouseholdEvent(values, identity, idRef.current, householdRef.current);
+    const r = buildHouseholdEvent(values, identity, idRef.current, householdRef.current, shelterId ?? editEvent?.shelterId);
     if (r.ok) return { values, errors: {} };
     const errors: Record<string, { type: string; message: string }> = {};
     for (const e of r.errors) errors[keyFor(e.path)] ??= { type: 'validate', message: e.message };
@@ -111,7 +118,7 @@ export function HouseholdScreen({ editing, onDone, submit = defaultSubmit }: Hou
   const onValid = async (values: HouseholdValues) => {
     setFailure(null);
     try {
-      const r = buildHouseholdEvent(values, identity, idRef.current, householdRef.current);
+      const r = buildHouseholdEvent(values, identity, idRef.current, householdRef.current, shelterId ?? editEvent?.shelterId);
       if (!r.ok) return;
       await submit(r.event, editing);
       idRef.current = newClientEventId();
@@ -139,8 +146,8 @@ export function HouseholdScreen({ editing, onDone, submit = defaultSubmit }: Hou
   const firstError = Object.values(errors)[0]?.message ?? failure;
 
   return (
-    <Panel title={editing ? 'Edit rejected household' : 'Register household'}>
-      <form onSubmit={guardedSubmit} noValidate aria-label="Household registration form">
+    <Panel title={title ?? (editing ? 'Edit rejected household' : 'Register household')}>
+      <form onSubmit={guardedSubmit} noValidate data-testid={formTestId} aria-label="Household registration form">
         <Field label="Head of household" data-testid="household-headName" error={err('headName')} {...register('headName')} />
         <Field label="Members" type="number" min={1} data-testid="household-members" error={err('members')} {...register('members')} />
         <div className="setu-field">

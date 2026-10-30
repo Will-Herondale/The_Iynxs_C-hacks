@@ -13,6 +13,7 @@ export interface ReportValues {
   type: ReportKind;
   roadId: string;
   blockage: string;
+  cause: string;
   severity: string;
   depthCm: string;
   areaId: string;
@@ -26,7 +27,7 @@ export interface ReportValues {
 }
 
 export const EMPTY_REPORT: ReportValues = {
-  type: 'flood_report', roadId: '', blockage: 'full', severity: '3', depthCm: '', areaId: '',
+  type: 'flood_report', roadId: '', blockage: 'full', cause: '', severity: '3', depthCm: '', areaId: '',
   levelCm: '', trend: 'rising', gaugeId: '', lat: '', lng: '', note: '', photoName: '',
 };
 
@@ -55,7 +56,7 @@ export function buildReportEvent(v: ReportValues, id: Identity, clientEventId: s
       raw = { ...common, type: v.type, severity: num(v.severity), depthCm: num(v.depthCm), areaId: str(v.areaId) };
       break;
     case 'road_blockage':
-      raw = { ...common, type: v.type, roadId: str(v.roadId), blockage: v.blockage };
+      raw = { ...common, type: v.type, roadId: str(v.roadId), blockage: v.blockage, cause: str(v.cause) };
       break;
     case 'road_cleared':
       raw = { ...common, type: v.type, roadId: str(v.roadId) };
@@ -76,7 +77,7 @@ export function valuesFromEvent(e: FieldEvent): ReportValues {
     case 'flood_report':
       return { ...v, type: e.type, severity: String(e.severity), depthCm: e.depthCm?.toString() ?? '', areaId: e.areaId ?? '' };
     case 'road_blockage':
-      return { ...v, type: e.type, roadId: e.roadId ?? '', blockage: e.blockage };
+      return { ...v, type: e.type, roadId: e.roadId ?? '', blockage: e.blockage, cause: e.cause ?? '' };
     case 'road_cleared':
       return { ...v, type: e.type, roadId: e.roadId };
     case 'water_level':
