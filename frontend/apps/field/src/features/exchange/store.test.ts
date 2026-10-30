@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { newClientEventId, type FieldEvent } from '@setu/contract';
 import { db } from '../../sync/db';
 import { enqueue } from '../../sync/queue';
-import { collectExportable, importEvents, readExchangeSummary, recordExport } from './store';
+import { collectExportable, importEvents, type ImportResult, readExchangeSummary, recordExport } from './store';
 
 const ev = (): FieldEvent =>
   ({
@@ -42,7 +42,7 @@ describe('exchange store', () => {
   it('reports duplicates and never overwrites an existing local item', async () => {
     const e = ev();
     await enqueue(e);
-    const [r] = await importEvents([e, e]).then((x) => x);
+    const [r] = (await importEvents([e])) as [ImportResult];
     expect(r.result).toBe('duplicate');
     expect((await db.queue.get(e.clientEventId))?.origin).toBeUndefined();
     expect(await db.queue.count()).toBe(1);
@@ -53,7 +53,7 @@ describe('exchange store', () => {
     const bad = { ...ev(), type: 'nope' } as unknown as FieldEvent;
     const res = await importEvents([bad, good]);
     expect(res.map((r) => r.result)).toEqual(['rejected', 'accepted']);
-    expect(res[0].errors?.length).toBeGreaterThan(0);
+    expect(res[0]?.errors?.length).toBeGreaterThan(0);
     expect(await db.queue.get(good.clientEventId)).toBeTruthy();
   });
 
