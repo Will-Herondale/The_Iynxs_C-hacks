@@ -16,6 +16,9 @@ export interface MapCanvasProps {
   onOpenReport: (clientEventId: string) => void;
 }
 
+/** Shelter names appear at or above this zoom; below it only the compact marker is drawn. */
+export const SHELTER_NAME_ZOOM = 11.5;
+
 function el(tag: string, cls: string, text?: string): HTMLElement {
   const e = document.createElement(tag);
   e.className = cls;
@@ -30,6 +33,7 @@ function reportElement(m: ReportMarker, open: (id: string) => void): HTMLElement
   b.dataset.testid = `map-report-${m.clientEventId}`;
   b.dataset.state = m.state;
   b.dataset.origin = m.origin;
+  b.classList.add(`map-report--origin-${m.origin}`);
   const origin = originLabel(m.origin, m.accepted);
   b.setAttribute('aria-label', `${origin}, ${m.title}: ${m.statusLabel}.${m.origin === 'local' ? ' Open report details.' : ''}`);
   b.append(
@@ -74,7 +78,12 @@ export function MapCanvas({ snapshot, reports, position, onOpenReport }: MapCanv
     }
     if (snap) {
       for (const sh of projectionView(snap).shelters) {
-        const n = el('div', `map-shelter map-shelter--${sh.status}`, `${sh.status === 'open-reported' ? '⌂' : '◌'} ${sh.name}`);
+        // Compact marker (glyph only) by default; the name shows when zoomed in, or always for demo (synthetic) shelters.
+        // 23 full names at district zoom overlapped into an unreadable pile on a phone.
+        const n = el('div', `map-shelter map-shelter--${sh.status}${sh.synthetic ? ' map-shelter--always-named' : ''}`);
+        n.append(el('span', 'map-shelter__glyph', sh.status === 'open-reported' ? '⌂' : '◌'));
+        n.append(el('span', 'map-shelter__name', ` ${sh.name}`));
+        n.setAttribute('aria-label', `${sh.name}: ${sh.label}`);
         n.dataset.testid = `map-shelter-${sh.id}`;
         n.dataset.shelterStatus = sh.status;
         n.title = `${sh.label}; capacity ${sh.counts}`;
@@ -109,6 +118,10 @@ export function MapCanvas({ snapshot, reports, position, onOpenReport }: MapCanv
       return; // no WebGL: the textual map data below remains
     }
     mapRef.current = map;
+    // Zoomed out (district view): hide shelter names; zoomed in: show them.
+    const syncZoomClass = () => host.current?.classList.toggle('map-canvas--zoomed-out', map.getZoom() < SHELTER_NAME_ZOOM);
+    map.on('zoom', syncZoomClass);
+    syncZoomClass();
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
     map.on('load', () => {
       void addBaseLayers(map as never).catch(() => undefined); // bundled GeoJSON, works offline

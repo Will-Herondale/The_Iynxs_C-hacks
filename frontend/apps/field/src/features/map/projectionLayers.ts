@@ -25,7 +25,7 @@ export interface ProjectionView {
   version: number;
   generatedAt: string;
   blockedRoads: { id: string; name: string; status: RoadProps['status']; kind: 'road' | 'bridge'; reason?: string }[];
-  shelters: { id: string; name: string; status: string; label: string; counts: string; lng: number; lat: number }[];
+  shelters: { id: string; name: string; status: string; label: string; counts: string; synthetic?: boolean; lng: number; lat: number }[];
   flood: { id: string; label: string; depthCm: number; observed: boolean }[];
   cutOff: { id: string; name: string; accessibility: SettlementProps['accessibility']; reason?: string; lat: number; lng: number }[];
 }
@@ -52,6 +52,7 @@ export function projectionView(s: ProjectionSnapshot): ProjectionView {
         status: st.status,
         label: st.label,
         counts: shelterCounts(f.properties),
+        ...(f.properties.synthetic ? { synthetic: true } : {}),
         lng: f.geometry.coordinates[0] ?? 0,
         lat: f.geometry.coordinates[1] ?? 0,
       };

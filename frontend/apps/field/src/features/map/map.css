@@ -19,3 +19,12 @@
 .map-shelter { padding: 2px 6px; border-radius: 999px; background: #fff; font-size: 12px; }
 .map-shelter--pre-identified { border: 2px dashed #546e7a; color: #37474f; background: transparent; }
 .map-shelter--open-reported { border: 2px solid #2e7d32; color: #1b5e20; }
+
+/* Declutter: at district zoom show only the shelter glyph; names return when zoomed in, or always for demo (synthetic) shelters. */
+.map-canvas--zoomed-out .map-shelter .map-shelter__name { display: none; }
+.map-canvas--zoomed-out .map-shelter--always-named .map-shelter__name { display: inline; }
+.map-canvas--zoomed-out .map-shelter { padding: 3px 5px; }
+.map-shelter__glyph { font-weight: 700; }
+
+/* Server-received (District) report labels are long; at district zoom keep just the glyphs. Your own (Local) reports stay labelled. */
+.map-canvas--zoomed-out .map-report--origin-remote .map-report__label { display: none; }

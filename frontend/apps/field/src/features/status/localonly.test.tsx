@@ -46,3 +46,26 @@ describe('LocalOnlyNotice', () => {
     expect(screen.getByTestId('local-only-notice').getAttribute('data-reason')).toBe('backend-unreachable');
   });
 });
+
+import { PROBE_FAILURES_TO_DECLARE, recordProbe, resetProbeState } from './connectivity.js';
+import { useBackendReachable } from './connectivity.js';
+
+describe('probe debounce', () => {
+  function Reach() { return <output data-testid="reach">{String(useBackendReachable())}</output>; }
+
+  it('one failed or slow probe does not flip the app to unreachable; consecutive failures do; success recovers at once', () => {
+    resetProbeState();
+    render(<Reach />);
+    expect(screen.getByTestId('reach').textContent).toBe('true');
+    expect(PROBE_FAILURES_TO_DECLARE).toBe(2);
+    act(() => recordProbe(false));
+    expect(screen.getByTestId('reach').textContent).toBe('true');   // one miss: still reachable
+    act(() => recordProbe(false));
+    expect(screen.getByTestId('reach').textContent).toBe('false');  // two in a row: unreachable
+    act(() => recordProbe(true));
+    expect(screen.getByTestId('reach').textContent).toBe('true');   // success: recovers immediately
+    act(() => recordProbe(false));
+    expect(screen.getByTestId('reach').textContent).toBe('true');   // the failure count was reset by the success
+    resetProbeState();
+  });
+});

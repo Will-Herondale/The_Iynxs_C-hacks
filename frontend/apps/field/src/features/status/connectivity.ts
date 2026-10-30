@@ -10,7 +10,9 @@ export function deriveConnectivity(i: { online: boolean; syncing: boolean; backe
 
 /** The server's health endpoint is `GET /health` (not under /api/v1). */
 export const HEALTH_PATH = '/health';
-export const PROBE_TIMEOUT_MS = 4000;
+export const PROBE_TIMEOUT_MS = 8000; // tunnels and cold servers can take several seconds
+export const PROBE_RETRY_MS = 5000; // after a failure, probe again soon instead of waiting a full interval
+export const PROBE_FAILURES_TO_DECLARE = 2; // one slow or dropped probe must not flip the whole app to 'unreachable'
 export const PROBE_INTERVAL_MS = 30_000;
 
 /**
@@ -50,4 +52,40 @@ export function useBackendReachable(): boolean {
     () => reachable,
     () => true,
   );
+}
+
+
+let consecutiveFailures = 0;
+/** Fold one probe result in: success is reported at once; 'unreachable' only after PROBE_FAILURES_TO_DECLARE failures in a row. */
+export function recordProbe(ok: boolean): void {
+  if (ok) { consecutiveFailures = 0; reportBackendResult(true); return; }
+  consecutiveFailures += 1;
+  if (consecutiveFailures >= PROBE_FAILURES_TO_DECLARE) reportBackendResult(false);
+}
+export function resetProbeState(): void { consecutiveFailures = 0; }
+
+let users = 0;
+let timer: ReturnType<typeof setTimeout> | undefined;
+let stopped = true;
+
+/**
+ * One shared probe loop for the whole app (several status components can mount at once).
+ * Returns a release function; the loop stops when the last user releases it.
+ */
+export function acquireProbe(baseUrl: string, fetchImpl: typeof fetch = fetch): () => void {
+  users += 1;
+  if (users === 1) {
+    stopped = false;
+    const tick = async () => {
+      const ok = await probeBackend(fetchImpl, PROBE_TIMEOUT_MS, baseUrl);
+      if (stopped) return;
+      recordProbe(ok);
+      timer = setTimeout(() => void tick(), ok ? PROBE_INTERVAL_MS : PROBE_RETRY_MS);
+    };
+    void tick();
+  }
+  return () => {
+    users -= 1;
+    if (users <= 0) { users = 0; stopped = true; if (timer) clearTimeout(timer); timer = undefined; }
+  };
 }

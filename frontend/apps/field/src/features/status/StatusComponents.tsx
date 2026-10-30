@@ -2,11 +2,8 @@ import { useEffect } from 'react';
 import { Badge } from '@setu/ui';
 import { useQueue, useSyncState } from '../../sync/index.js';
 import {
-  PROBE_INTERVAL_MS,
-  PROBE_TIMEOUT_MS,
+  acquireProbe,
   deriveConnectivity,
-  probeBackend,
-  reportBackendResult,
   useBackendReachable,
   type ConnectivityState,
 } from './connectivity.js';
@@ -30,17 +27,7 @@ const PROBE_ENABLED = true;
 function useBackendProbe(enabled: boolean, online: boolean): void {
   useEffect(() => {
     if (!enabled || !online) return;
-    let cancelled = false;
-    const run = async () => {
-      const ok = await probeBackend(fetch, PROBE_TIMEOUT_MS, API_BASE_URL);
-      if (!cancelled) reportBackendResult(ok);
-    };
-    void run();
-    const t = setInterval(() => void run(), PROBE_INTERVAL_MS);
-    return () => {
-      cancelled = true;
-      clearInterval(t);
-    };
+    return acquireProbe(API_BASE_URL);
   }, [enabled, online]);
 }
 

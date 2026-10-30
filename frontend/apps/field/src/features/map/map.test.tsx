@@ -22,6 +22,7 @@ vi.mock('maplibre-gl', () => {
     addSource() {}
     addLayer() {}
     getSource() { return { setData() {} }; }
+    getZoom() { return 8; }
     remove() {}
   }
   return { default: { Map: MapMock, Marker, NavigationControl: class {} } };
@@ -101,6 +102,25 @@ describe('MapScreen', () => {
     expect(screen.getByTestId('map-offline-note').textContent).toContain('Offline');
     expect(screen.getByText('No projection saved on this device yet')).toBeTruthy();
     expect(screen.getByTestId('map-canvas')).toBeTruthy();
+  });
+
+  it('declutters shelter labels at district zoom: glyph only, names hidden, except demo (synthetic) shelters', async () => {
+    const s = structuredClone(snap);
+    s.shelters.features[0]!.properties.synthetic = true;
+    state.snapshot = s;
+    state.items = [];
+    render(<MapScreen onOpenReport={vi.fn()} />);
+    await vi.waitFor(() => expect(document.querySelectorAll('[data-testid^="map-shelter-"]:not([data-testid="map-shelter-list"])').length).toBeGreaterThan(0));
+    // The mock map reports zoom 8 (< SHELTER_NAME_ZOOM): zoomed-out class on the canvas.
+    expect(screen.getByTestId('map-canvas').classList.contains('map-canvas--zoomed-out')).toBe(true);
+    const markers = [...document.querySelectorAll<HTMLElement>('[data-testid^="map-shelter-"]:not([data-testid="map-shelter-list"])')];
+    for (const m of markers) {
+      expect(m.querySelector('.map-shelter__glyph')).not.toBeNull();
+      expect(m.querySelector('.map-shelter__name')).not.toBeNull(); // present in the DOM for screen readers/zoom-in; hidden by CSS when zoomed out
+      expect(m.getAttribute('aria-label')).toContain(':');
+    }
+    expect(markers[0]!.classList.contains('map-shelter--always-named')).toBe(true);
+    expect(markers.slice(1).every((m) => !m.classList.contains('map-shelter--always-named'))).toBe(true);
   });
 
   it('shows cached projection lists and distinct pending vs accepted reports; tap opens detail', async () => {
