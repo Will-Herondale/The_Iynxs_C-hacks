@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { ProjectionSnapshot } from '@setu/contract';
-import { Badge, EmptyState, Panel, SyncStatusBadge } from '@setu/ui';
-import { HouseholdScreen } from '../household/index.js';
+import { Badge, Button, EmptyState, Panel, SyncStatusBadge } from '@setu/ui';
+import { HouseholdScreen, DuplicateReviewPlaceholder, campSummary, householdsFromQueue } from '../household/index.js';
+import '../household/household.css';
 import { useQueue } from '../../sync/index.js';
 import type { QueueItem } from '../../sync/index.js';
 
@@ -29,6 +30,7 @@ export interface CampViewProps {
   online: boolean;
   /** Overridable for tests; defaults to the live local queue. */
   items?: QueueItem[];
+  onOpenReport?: (clientEventId: string) => void;
 }
 
 const time = (ms: number) => new Date(ms).toLocaleString();
@@ -38,23 +40,20 @@ export function campHouseholds(items: QueueItem[], shelterId: string): QueueItem
 }
 
 function CampInfo({ shelter, asOf, online }: { shelter: ProjectionSnapshot['shelters']['features'][number]['properties']; asOf?: string; online: boolean }) {
-  const free = Math.max(0, shelter.capacity - shelter.occupancy);
   return (
     <Panel title={shelter.name}>
       <div data-testid="camp-info" data-shelter-id={shelter.shelterId}>
         <p>
           <Badge tone={shelter.open ? 'success' : 'danger'}>{shelter.open ? 'Open' : 'Closed'}</Badge>
         </p>
-        <p>
-          Occupancy: <strong>{shelter.occupancy}</strong> of <strong>{shelter.capacity}</strong> ({free} places free)
-        </p>
+        <p data-testid="camp-capacity">Capacity and occupancy: <strong>not published</strong> (no source data yet; capacity is not managed here).</p>
         {asOf && !online && <p role="note">Data as of {asOf}. You are offline, so this may be out of date.</p>}
       </div>
     </Panel>
   );
 }
 
-export function CampView({ snapshot, cachedAt, online, items }: CampViewProps) {
+export function CampView({ snapshot, cachedAt, online, items, onOpenReport }: CampViewProps) {
   const shelters = snapshot?.shelters.features.map((f) => f.properties) ?? [];
   const [camp, setCamp] = useState(readCamp);
   const live = useQueue();
@@ -66,6 +65,7 @@ export function CampView({ snapshot, cachedAt, online, items }: CampViewProps) {
 
   const chosen = shelters.find((s) => s.shelterId === camp);
   const rows = camp ? campHouseholds(queue, camp) : [];
+  const summary = campSummary(householdsFromQueue(queue), camp || undefined);
   const asOf = cachedAt !== undefined ? time(cachedAt) : snapshot ? time(Date.parse(snapshot.generatedAt)) : undefined;
 
   return (
@@ -84,7 +84,16 @@ export function CampView({ snapshot, cachedAt, online, items }: CampViewProps) {
       {chosen && <CampInfo shelter={chosen} asOf={asOf} online={online} />}
       {camp ? (
         <>
-          <HouseholdScreen shelterId={camp} title={`Register household at ${chosen?.name ?? camp}`} formTestId="camp-household-form" />
+          <Panel title="Camp summary (registered from this device)">
+            <dl className="camp-summary" data-testid="camp-summary">
+              <div><dt>Registered households</dt><dd data-testid="camp-summary-households">{summary.households}</dd></div>
+              <div><dt>Registered people</dt><dd data-testid="camp-summary-people">{summary.people}</dd></div>
+              <div><dt>Pending (not yet accepted)</dt><dd data-testid="camp-summary-pending">{summary.pending}</dd></div>
+              <div><dt>Awaiting review (conflict)</dt><dd data-testid="camp-summary-review">{summary.awaitingReview}</dd></div>
+            </dl>
+            {summary.rejected > 0 && <p role="status" data-testid="camp-summary-rejected">{summary.rejected} rejected: open Households to edit and resubmit.</p>}
+          </Panel>
+          <HouseholdScreen snapshot={snapshot} shelterId={camp} title={`Register household at ${chosen?.name ?? camp}`} formTestId="camp-household-form" />
           <Panel title="Registered at this camp from this device">
             {rows.length === 0 && <EmptyState title="No households yet" />}
             {(
@@ -95,12 +104,14 @@ export function CampView({ snapshot, cachedAt, online, items }: CampViewProps) {
                     <li key={i.clientEventId} data-testid="camp-household-row" data-client-event-id={i.clientEventId} data-status={i.status}>
                       <strong>{h?.headName}</strong> · {h?.members} {h?.members === 1 ? 'person' : 'people'}{' '}
                       <SyncStatusBadge status={i.status} {...{ online }} />
+                      {onOpenReport && <> <Button onClick={() => onOpenReport(i.clientEventId)} data-testid="camp-open-report">View report</Button></>}
                     </li>
                   );
                 })}
               </ul>
             )}
           </Panel>
+          <DuplicateReviewPlaceholder />
         </>
       ) : (
         <EmptyState title="Choose a camp to register households" />

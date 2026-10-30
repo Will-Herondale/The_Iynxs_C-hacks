@@ -24,6 +24,7 @@ const shelter = (id: string, name: string, capacity: number, occupancy: number, 
 const snapshot = {
   version: 3,
   generatedAt: '2026-10-30T10:00:00.000Z',
+  settlements: { type: 'FeatureCollection', features: [] },
   shelters: { type: 'FeatureCollection', features: [shelter('SH1', 'School', 200, 120, true), shelter('SH2', 'Hall', 50, 50, false)] },
 } as unknown as ProjectionSnapshot;
 
@@ -51,8 +52,7 @@ describe('CampView', () => {
     fireEvent.change(select, { target: { value: 'SH1' } });
     const info = screen.getByTestId('camp-info');
     expect(info.getAttribute('data-shelter-id')).toBe('SH1');
-    expect(info.textContent).toContain('120');
-    expect(info.textContent).toContain('200');
+    expect(info.textContent).toContain('not published');
     expect(info.textContent).toContain('Open');
     expect(info.textContent).not.toContain('Data as of');
     expect(window.localStorage.getItem(CAMP_KEY)).toBe('SH1');
@@ -94,5 +94,22 @@ describe('CampView', () => {
     expect(rows.map((r) => r.getAttribute('data-status'))).toEqual(['queued', 'synced']);
     expect(within(rows[0]!).getByText(/Head a/)).toBeTruthy();
     expect(screen.getByTestId('camp-household-list')).toBeTruthy();
+  });
+
+  it('summarises the camp: households, people, pending, awaiting review; no capacity numbers', () => {
+    window.localStorage.setItem(CAMP_KEY, 'SH1');
+    state.items = [row('a', 'SH1', 'queued'), row('b', 'SH1', 'conflict'), row('c', 'SH1', 'synced'), row('d', 'SH2', 'queued')].map((r, i) => {
+      const it = r as unknown as { event: Record<string, unknown> };
+      it.event.householdId = `h${i}`;
+      return r;
+    });
+    render(<CampView snapshot={snapshot} online />);
+    expect(screen.getByTestId('camp-summary-households').textContent).toBe('3');
+    expect(screen.getByTestId('camp-summary-people').textContent).toBe('9');
+    expect(screen.getByTestId('camp-summary-pending').textContent).toBe('1');
+    expect(screen.getByTestId('camp-summary-review').textContent).toBe('1');
+    expect(screen.getByTestId('camp-capacity').textContent).toContain('not published');
+    expect(screen.getByTestId('camp-info').textContent).not.toMatch(/120|200/);
+    expect(screen.getByTestId('household-duplicates-blocked').textContent).toContain('#15');
   });
 });

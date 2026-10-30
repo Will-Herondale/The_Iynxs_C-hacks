@@ -117,3 +117,55 @@ A `road_blockage` with `roadId=B1`, `blockage=full`, `cause=submerged` (bridge "
 - EVAC-3 becomes `unavailable` with a `refusal` explaining that B1 is impassable.
 
 At least one flood polygon in the seed has `confidence=uncertain`.
+
+## Field v3 (wave 5)
+
+Owned by Team Field v3 (`apps/field`). Routes are hash routes: `#/home` (default) `#/report` `#/map` `#/households` `#/sync`, plus
+`#/report/<clientEventId>` (report detail), `#/households/new` (opens the registration form), `#/camp`. Old hashes `#/household` → households, `#/queue` → sync.
+**Migrated ids:** `nav-household` → `nav-households`, `nav-queue` → `nav-sync`. `nav-report` and `nav-camp` are unchanged (`nav-camp` is a header link).
+Status labels follow the 7-label spec vocabulary (Saved locally / Waiting to sync / Synchronising / Accepted / Requires review / Rejected / Failed — retry available).
+
+### Shell and Home (lead)
+| id | element | attributes |
+|---|---|---|
+| `nav-home` `nav-report` `nav-map` `nav-households` `nav-sync` | bottom tab bar (mobile) / top nav | `aria-current="page"` when active |
+| `home-screen` | Home section | |
+| `home-district` | district name (`Majuli (demo)` fixture unless provided) | |
+| `home-district-fixture` | "demo fixture" note, shown while the district is not from data | |
+| `home-connectivity` | online/offline + last synced | `data-online` |
+| `home-new-report` | big New Report link (`#/report`) | |
+| `home-register-household` | Register household link (`#/households/new`) | |
+| `home-count-pending` / `home-count-synced` / `home-count-attention` | counters from the local queue (attention = conflict, rejected, failed) | `data-attention` |
+| `home-recent` / `home-recent-item` / `home-recent-empty` | last 5 items; each links to `#/report/<id>` | |
+| `home-sync-now` | manual sync | |
+
+### Report workflow and detail (Helper 1)
+
+### Map tab (Helper 2)
+
+### Sync screen (Helper 2)
+
+### Households and camp (Helper 3)
+
+### Field v3 — Households & camp (Helper 3)
+| id | element | attributes |
+|---|---|---|
+| `households-screen` | Households tab root | |
+| `households-register` / `households-cancel` | open / close the registration form | |
+| `households-saved` | "Saved locally" confirmation after registering | |
+| `households-search` | search box (name, village, camp; local households only) | |
+| `households-list` / `household-row` | list / one household | row: `data-household-id`, `data-client-event-id`, `data-status` |
+| `households-no-match` | no search result message | |
+| `household-history-toggle` / `household-history` / `household-history-item` | registration history (events + statuses) | item: `data-client-event-id`, `data-status` |
+| `household-open-detail` / `household-open-report` | open report detail (needs `onOpenReport`) | |
+| `household-edit` | edit and resubmit a rejected household | |
+| `household-id` | locally generated `householdId` (form) | |
+| `household-shelterId` | current camp select (form; hidden in camp mode) | |
+| `household-places-missing` | no cached village list | |
+| `household-member-names-blocked` / `household-member-names-blocked-summary` | "Blocked: #15" note | |
+| `household-duplicates-blocked` | duplicate review placeholder (BLOCKED #15) | |
+| `camp-summary`, `camp-summary-households` / `-people` / `-pending` / `-review` / `-rejected` | camp summary counts | |
+| `camp-capacity` | "not published" capacity/occupancy note | |
+| `camp-open-report` | open report detail from a camp row | |
+
+Existing `household-*`, `field-lat`/`field-lng`, `camp-*` ids are unchanged. `household-settlementId` now lists cached settlements (`Name (osm_id)`); the form takes a `snapshot` prop. Lead integration: `<HouseholdsScreen snapshot onOpenReport startRegistering />` and `<CampScreen onOpenReport />`.
