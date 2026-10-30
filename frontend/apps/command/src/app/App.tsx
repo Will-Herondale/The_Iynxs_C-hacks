@@ -6,6 +6,7 @@ import { ViewProvider } from './view';
 import { SituationSummary } from './SituationSummary';
 import { Header } from './Header';
 import { Workspace } from './slots';
+import { ChangesProvider } from './changes';
 
 export function App({ client }: { client?: ApiClient } = {}) {
   return (
@@ -13,11 +14,13 @@ export function App({ client }: { client?: ApiClient } = {}) {
       <SelectionProvider>
         <ViewProvider>
           <LayerProvider>
-            <div className="cmd-root">
-              <Header />
-              <SituationSummary />
-              <Workspace />
-            </div>
+            <ChangesProvider>
+              <div className="cmd-root">
+                <Header />
+                <SituationSummary />
+                <Workspace />
+              </div>
+            </ChangesProvider>
           </LayerProvider>
         </ViewProvider>
       </SelectionProvider>

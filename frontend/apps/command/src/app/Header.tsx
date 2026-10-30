@@ -9,21 +9,13 @@ const CONN: Record<ConnectionState, { tone: 'success' | 'warning' | 'danger'; ic
 };
 
 export function Header() {
-  const { snapshot, version, connection } = useProjections();
-  const cutOff = snapshot?.settlements.features.filter((f) => f.properties.accessibility === 'cut_off').length;
-  const blocked = snapshot?.roads.features.filter((f) => f.properties.status === 'blocked').length;
-  const active = snapshot?.routes.features.filter((f) => f.properties.status !== 'unavailable').length;
+  const { version, connection } = useProjections();
   const c = CONN[connection];
   return (
     <div className="cmd-header">
       <h1 className="cmd-title">SETU Command Centre</h1>
-      <dl className="cmd-stats">
-        <div><dt>Cut-off settlements</dt><dd data-testid="stat-cut-off">{cutOff ?? '–'}</dd></div>
-        <div><dt>Blocked roads</dt><dd data-testid="stat-blocked-roads">{blocked ?? '–'}</dd></div>
-        <div><dt>Active routes</dt><dd data-testid="stat-active-routes">{active ?? '–'}</dd></div>
-      </dl>
       <ViewSwitch />
-      <span className="cmd-version">v{version ?? '–'}</span>
+      <span className="cmd-version" title="Projection version">v{version ?? '–'}</span>
       <span data-testid="connection-status" data-state={connection} role="status">
         <Badge tone={c.tone} icon={c.icon}>{c.label}</Badge>
       </span>
