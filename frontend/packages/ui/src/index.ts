@@ -1,7 +1,7 @@
 export { StatusBadge, SyncStatusBadge, SYNC_STATUS_META, OFFLINE_QUEUED_META, syncStatusMeta } from './StatusBadge.js';
 export type { SyncStatusMeta, StatusBadgeProps } from './StatusBadge.js';
-export { SeverityLabel, EventCard, ObservationCard, SyntheticTag, OfflineBanner, SyncStatusSummary, LoadingState, ErrorState, ERROR_KINDS } from './content.js';
-export type { SeverityLevel, EventCardProps, ObservationKind, ObservationCardProps, SyncStatusSummaryProps, ErrorKind, ErrorStateProps } from './content.js';
+export { SeverityLabel, EventCard, ObservationCard, SyntheticTag, DataClassTag, DATA_CLASS_META, OfflineBanner, SyncStatusSummary, LoadingState, ErrorState, ERROR_KINDS } from './content.js';
+export type { DataClassName, SeverityLevel, EventCardProps, ObservationKind, ObservationCardProps, SyncStatusSummaryProps, ErrorKind, ErrorStateProps } from './content.js';
 export { OnlineIndicator, AppShell, Panel, Button, Field, Badge, EmptyState } from './components.js';
 export type { AppShellProps, ButtonProps, FieldProps, BadgeTone } from './components.js';
 export { Explanation, DeadlineBadge, PassabilityLegend, SETU_MAP_COLORS, formatTimeRemaining } from './insight.js';
