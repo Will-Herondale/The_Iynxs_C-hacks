@@ -37,6 +37,8 @@ describe('QueueScreen', () => {
     fireEvent.click(screen.getByTestId('queue-edit'));
     expect(onEdit).toHaveBeenCalled();
     fireEvent.click(screen.getAllByTestId('queue-discard')[0]!);
+    expect(fns.discard).not.toHaveBeenCalled(); // never silent
+    fireEvent.click(screen.getByRole('button', { name: 'Discard report' }));
     expect(fns.discard).toHaveBeenCalledWith('a');
     expect(rows[2]!.querySelector('[data-testid=queue-discard]')).toBeNull();
   });
@@ -50,6 +52,40 @@ describe('QueueScreen', () => {
     await waitFor(() => expect((screen.getByTestId('conflict-accept-server') as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(screen.getByTestId('conflict-accept-server'));
     expect(fns.resolveConflict).toHaveBeenCalledWith('x', 'accept-server');
+  });
+
+  it('cancelling the discard dialog keeps the report', () => {
+    state.items = [mk('a', 'failed')];
+    render(<QueueScreen />);
+    fireEvent.click(screen.getByTestId('queue-discard'));
+    fireEvent.click(screen.getByRole('button', { name: 'Keep report' }));
+    expect(fns.discard).not.toHaveBeenCalled();
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('shows grouped counts, connectivity and detail links', () => {
+    state.sync = { online: false, syncing: false, pendingCount: 2, lastSyncedAt: Date.UTC(2026, 0, 1) };
+    state.items = [mk('a', 'queued'), mk('b', 'queued'), mk('c', 'sending'), mk('d', 'synced'), mk('e', 'conflict'), mk('f', 'failed')];
+    render(<QueueScreen />);
+    const count = (k: string) => screen.getByTestId(`sync-count-${k}`).textContent;
+    expect(count('queued')).toBe('2');
+    expect(screen.getByTestId('sync-summary').textContent).toContain('Saved locally');
+    expect(count('synchronising')).toBe('1');
+    expect(count('synced')).toBe('1');
+    expect(count('conflict')).toBe('1');
+    expect(count('failed')).toBe('1');
+    expect(screen.getByTestId('sync-connectivity').getAttribute('data-online')).toBe('false');
+    expect(screen.getByTestId('sync-last-success').getAttribute('data-ts')).toBe('2026-01-01T00:00:00.000Z');
+    expect(screen.getAllByTestId('queue-detail-link')[0]!.getAttribute('href')).toBe('#/report/a');
+    expect((screen.getByTestId('queue-sync-now') as HTMLButtonElement).disabled).toBe(true);
+    state.sync = { online: true, syncing: false, pendingCount: 0 };
+  });
+
+  it('manual sync calls syncNow when online', () => {
+    state.items = [];
+    render(<QueueScreen />);
+    fireEvent.click(screen.getByTestId('queue-sync-now'));
+    expect(fns.syncNow).toHaveBeenCalled();
   });
 
   it('filters by status', () => {
@@ -80,23 +116,23 @@ describe('header widgets', () => {
 describe('status explanations', () => {
   it('explains each status in the brief vocabulary', async () => {
     const { statusExplanation } = await import('./QueueScreen.js');
-    expect(statusExplanation('queued', false)).toMatch(/^Saved on device/);
-    expect(statusExplanation('queued', true)).toMatch(/^Queued for sync/);
-    expect(statusExplanation('sending', true)).toMatch(/^Submitted/);
-    expect(statusExplanation('accepted', true)).toContain("we'll mark it Confirmed once it's in the shared record");
-    expect(statusExplanation('synced', true)).toMatch(/^Confirmed/);
-    expect(statusExplanation('conflict', true)).toMatch(/^Disputed/);
+    expect(statusExplanation('queued', false)).toMatch(/^Saved locally/);
+    expect(statusExplanation('queued', true)).toMatch(/^Waiting to sync/);
+    expect(statusExplanation('sending', true)).toMatch(/^Synchronising/);
+    expect(statusExplanation('accepted', true)).toMatch(/^Synchronising/);
+    expect(statusExplanation('synced', true)).toMatch(/^Accepted/);
+    expect(statusExplanation('conflict', true)).toMatch(/^Requires review/);
     expect(statusExplanation('rejected', true)).toMatch(/^Rejected/);
-    expect(statusExplanation('failed', true)).toMatch(/^Retrying/);
+    expect(statusExplanation('failed', true)).toMatch(/^Failed — retry available/);
   });
 
   it('renders the explanation per row and the renamed filters', () => {
     state.sync = { online: false, syncing: false, pendingCount: 1 };
     state.items = [mk('a', 'queued')];
     render(<QueueScreen />);
-    expect(screen.getByTestId('queue-item-explain').textContent).toMatch(/^Saved on device/);
-    expect(screen.getByTestId('queue-filter-synced').textContent).toBe('Confirmed');
-    expect(screen.getByTestId('queue-filter-attention').textContent).toBe('Disputed / Rejected');
+    expect(screen.getByTestId('queue-item-explain').textContent).toMatch(/^Saved locally/);
+    expect(screen.getByTestId('queue-filter-synced').textContent).toBe('Accepted');
+    expect(screen.getByTestId('queue-filter-attention').textContent).toBe('Needs attention');
     state.sync = { online: true, syncing: false, pendingCount: 0 };
   });
 });

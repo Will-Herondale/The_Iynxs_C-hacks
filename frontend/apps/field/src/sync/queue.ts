@@ -62,10 +62,13 @@ async function supersede(id: string, next: FieldEvent): Promise<QueueItem> {
     event: valid,
     status: 'queued',
     attempts: 0,
+    supersedes: id,
     createdAt: now,
     updatedAt: now,
   };
-  await db.transaction('rw', db.queue, async () => {
+  await db.transaction('rw', db.queue, db.archive, async () => {
+    const orig = await db.queue.get(id);
+    if (orig) await db.archive.put({ ...orig, supersededBy: valid.clientEventId, archivedAt: now });
     await db.queue.delete(id);
     await db.queue.put(created);
   });

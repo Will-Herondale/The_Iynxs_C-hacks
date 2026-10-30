@@ -8,6 +8,7 @@ import { ApiProvider, createAppApi } from './app/api.js';
 import { App } from './app/App.js';
 import { startSyncEngine } from './sync/index.js';
 
+document.documentElement.dataset.theme = 'field';
 const api = createAppApi();
 startSyncEngine(api);
 if (import.meta.env.PROD) registerSW({ immediate: true });
