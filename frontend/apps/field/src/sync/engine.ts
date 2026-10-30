@@ -11,7 +11,7 @@ import { db, LAST_SYNCED_KEY, type QueueItem } from './db';
 
 export const BATCH_SIZE = 20;
 
-export type EngineOptions = { now?: () => number; rand?: () => number };
+export type EngineOptions = { now?: () => number; rand?: () => number; force?: boolean };
 
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -27,8 +27,9 @@ export async function recoverSending(): Promise<void> {
 }
 
 /** Items waiting to be sent whose backoff has elapsed. Failed items without nextAttemptAt (non-retryable) never auto-retry. */
-export async function dueItems(now: number): Promise<QueueItem[]> {
+export async function dueItems(now: number, force = false): Promise<QueueItem[]> {
   const rows = await db.queue.where('status').anyOf('queued', 'failed').sortBy('createdAt');
+  if (force) return rows; // manual "Sync now": ignore backoff, include non-retryable failures
   return rows.filter((it) => (it.status === 'queued' && (it.nextAttemptAt === undefined || it.nextAttemptAt <= now)) || (it.nextAttemptAt !== undefined && it.nextAttemptAt <= now));
 }
 
@@ -146,8 +147,8 @@ export async function confirmAccepted(api: ApiClient, opts: EngineOptions = {}):
 
 /** One full pass: send due items in batches of <= 20, then confirm accepted ones. */
 export async function runPass(api: ApiClient, options: EngineOptions = {}): Promise<void> {
-  const opts = { now: options.now ?? Date.now, rand: options.rand ?? Math.random };
-  const due = await dueItems(opts.now());
+  const opts = { now: options.now ?? Date.now, rand: options.rand ?? Math.random, force: options.force ?? false };
+  const due = await dueItems(opts.now(), options.force);
   for (let i = 0; i < due.length; i += BATCH_SIZE) {
     const ok = await sendBatch(api, due.slice(i, i + BATCH_SIZE), opts);
     if (!ok) break; // transport is down; don't hammer with further batches

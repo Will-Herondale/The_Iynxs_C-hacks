@@ -277,3 +277,23 @@ Uses `@setu/ui` `SyncStatusSummary` (`sync-summary`, `sync-count-queued|synchron
 | `camp-open-report` | open report detail from a camp row | |
 
 Existing `household-*`, `field-lat`/`field-lng`, `camp-*` ids are unchanged. `household-settlementId` now lists cached settlements (`Name (osm_id)`); the form takes a `snapshot` prop. Lead integration: `<HouseholdsScreen snapshot onOpenReport startRegistering />` and `<CampScreen onOpenReport />`.
+
+## Offline PWA (wave 7)
+
+### Status and staleness (Helper 3)
+| id | element | attributes |
+|---|---|---|
+| `connectivity-status` | the one connectivity indicator (header, Home, Sync) | `data-state=online\|offline\|backend-unreachable\|syncing` |
+| `connectivity-pending` / `connectivity-failed` | pending and failed counts | `data-count` |
+| `last-synced` | last successful sync (IST + relative); Sync screen and header | `data-ts` |
+| `data-as-of` | "operational data as of …" from `cachedAt` | `data-ts` |
+| `stale-warning` | stale-data banner on Home, Map, Camp and Command header | `data-level=amber\|red` (amber > 15 min, red > 60 min) |
+| `origin-badge` | Local / Remote label with distinct shape on markers and lists | `data-origin=local\|remote` |
+
+### Install, update, storage (Helpers 1 and 2)
+| id | element | attributes |
+|---|---|---|
+| `install-app` | install button (hidden if installed or no prompt) | |
+| `update-toast` / `update-reload` / `update-dismiss` | new-version toast and its actions | |
+| `storage-error` | banner for a failed local write (form data kept) | `data-kind=quota\|unavailable\|unknown` |
+| `queue-sync-now` | manual retry (existing id) | |

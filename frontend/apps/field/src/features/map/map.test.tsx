@@ -33,6 +33,7 @@ vi.mock('../../sync/index.js', () => ({
 }));
 vi.mock('../../offline/index.js', () => ({
   useCachedProjections: () => ({ snapshot: state.snapshot, cachedAt: 1, stale: true }),
+  useRemoteEvents: () => [],
 }));
 
 import { MapScreen } from './MapScreen.js';

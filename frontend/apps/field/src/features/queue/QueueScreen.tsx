@@ -3,6 +3,7 @@ import type { ClientSyncStatus } from '@setu/contract';
 import { Badge, Button, ConfirmDialog, EmptyState, Panel, SyncStatusBadge, SyncStatusSummary } from '@setu/ui';
 import { discard, resolveConflict, retry, syncNow, useQueue, useSyncState } from '../../sync/index.js';
 import type { QueueItem } from '../../sync/index.js';
+import { OriginBadge } from '../status/index.js';
 import './queue.css';
 import { countByStatus, specStatusLabel } from './statusVocab.js';
 
@@ -105,6 +106,7 @@ function QueueRow({ item, online, onEdit, onAskDiscard, detailHref }: RowProps) 
       className={`queue-item queue-item--${item.status}`}
     >
       <div className="queue-item__head">
+        <OriginBadge origin="local" accepted={item.status === 'synced'} />
         <SyncStatusBadge status={item.status} {...{ online }} />
         <strong>{TYPE_LABEL[item.type] ?? item.type}</strong>
         {where && <Badge>{where}</Badge>}

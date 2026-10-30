@@ -9,8 +9,11 @@ import { MapScreen } from '../features/map/index.js';
 import { HomeScreen } from '../features/home/index.js';
 import { useCachedProjections } from '../offline/index.js';
 import { OfflineBanner } from './OfflineBanner.js';
+import { StorageBanner } from './StorageBanner.js';
 import { ApiStatus } from './ApiStatus.js';
-import { QueueScreen, OnlineStatus, PendingCount, LastSynced, SyncNowButton } from '../features/queue/index.js';
+import { InstallButton, UpdateToast } from '../pwa/index.js';
+import { QueueScreen, SyncNowButton } from '../features/queue/index.js';
+import { ConnectivityStatus, LastSyncedLine } from '../features/status/index.js';
 import { useRoute } from './route.js';
 import type { RouteName } from './route.js';
 
@@ -25,7 +28,7 @@ const NAV: { route: RouteName; label: string; icon: string; testId: string }[] =
 export function App() {
   const [route, go] = useRoute();
   // A rejected queue item reopened for editing; the matching form prefills from it.
-  const { snapshot } = useCachedProjections();
+  const { snapshot, cachedAt } = useCachedProjections();
   const [editing, setEditing] = useState<QueueItem | null>(null);
 
   const openReport = (id: string) => go(`report/${id}`);
@@ -41,9 +44,9 @@ export function App() {
   const header = (
     <div className="field-header">
       <strong className="field-header__title">SETU Field</strong>
-      <OnlineStatus />
-      <PendingCount />
-      <LastSynced />
+      <ConnectivityStatus />
+      <InstallButton />
+      <LastSyncedLine />
       <SyncNowButton />
       <a href="#/camp" data-testid="nav-camp" className="field-header__link" aria-current={route.name === 'camp' ? 'page' : undefined}>
         Camp
@@ -104,7 +107,7 @@ export function App() {
       main = <QueueScreen onEdit={onEdit} />;
       break;
     default:
-      main = <HomeScreen />;
+      main = <HomeScreen cachedAt={cachedAt} />;
   }
 
   return (
@@ -114,8 +117,10 @@ export function App() {
       main={
         <>
           <OfflineBanner />
+          <StorageBanner />
           <ApiStatus />
           {main}
+          <UpdateToast />
         </>
       }
     />

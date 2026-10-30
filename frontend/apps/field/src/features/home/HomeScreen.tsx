@@ -1,6 +1,7 @@
 import { Button } from '@setu/ui';
 import { SyncStatusBadge } from '@setu/ui';
 import type { QueueItem } from '../../sync/index.js';
+import { DataAsOf, OriginBadge, StaleWarning } from '../status/index.js';
 import { syncNow, useQueue, useSyncState } from '../../sync/index.js';
 
 export const EVENT_TYPE_LABEL: Record<string, string> = {
@@ -33,7 +34,7 @@ export function homeCounts(items: Pick<QueueItem, 'status'>[]): HomeCounts {
 
 const fmt = (ms: number) => new Date(ms).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour12: false });
 
-export function HomeScreen({ district }: { district?: string }) {
+export function HomeScreen({ district, cachedAt }: { district?: string; cachedAt?: number }) {
   const { online, syncing, lastSyncedAt } = useSyncState();
   const items = useQueue();
   const counts = homeCounts(items);
@@ -57,6 +58,9 @@ export function HomeScreen({ district }: { district?: string }) {
         {' · Last synced: '}
         {lastSyncedAt ? fmt(lastSyncedAt) + ' IST' : 'never'}
       </p>
+
+      <StaleWarning cachedAt={cachedAt} />
+      <p className="home__asof"><DataAsOf cachedAt={cachedAt} /></p>
 
       <div className="home__actions">
         <a className="home__big home__big--primary" href="#/report" data-testid="home-new-report">
@@ -92,6 +96,7 @@ export function HomeScreen({ district }: { district?: string }) {
                   <strong>{EVENT_TYPE_LABEL[i.type] ?? i.type}</strong>
                   <time dateTime={new Date(i.createdAt).toISOString()}>{fmt(i.createdAt)}</time>
                 </span>
+                <OriginBadge origin="local" accepted={i.status === 'synced'} />
                 <SyncStatusBadge status={i.status} online={online} />
               </a>
             </li>

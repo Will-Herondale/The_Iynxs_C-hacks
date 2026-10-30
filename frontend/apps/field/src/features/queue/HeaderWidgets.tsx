@@ -1,4 +1,5 @@
 import { Button, OnlineIndicator } from '@setu/ui';
+import { LastSyncedLine } from '../status/index.js';
 import { syncNow, useSyncState } from '../../sync/index.js';
 
 export function OnlineStatus() {
@@ -19,18 +20,7 @@ export function PendingCount() {
   );
 }
 
-export function LastSynced() {
-  const { lastSyncedAt } = useSyncState();
-  const iso = lastSyncedAt ? new Date(lastSyncedAt).toISOString() : '';
-  return (
-    <span className="queue-last-synced">
-      Last synced:{' '}
-      <time data-testid="last-synced" data-ts={iso} dateTime={iso || undefined}>
-        {lastSyncedAt ? new Date(lastSyncedAt).toLocaleTimeString() : 'never'}
-      </time>
-    </span>
-  );
-}
+export const LastSynced = LastSyncedLine;
 
 export function SyncNowButton() {
   const { syncing, online } = useSyncState();
@@ -38,7 +28,7 @@ export function SyncNowButton() {
     <Button
       data-testid="sync-now"
       onClick={() => {
-        void syncNow();
+        void syncNow({ force: true });
       }}
       disabled={syncing || !online}
       aria-busy={syncing}

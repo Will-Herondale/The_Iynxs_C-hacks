@@ -4,12 +4,14 @@ import type { ApiClient, ClientSyncStatus } from '@setu/contract';
 import { confirmAccepted, recoverSending, runPass } from './engine';
 import { db, LAST_SYNCED_KEY, type ArchivedItem, type QueueItem } from './db';
 import { setKick } from './queue';
+import { requestPersistence } from '../offline/storage';
 
 export type { QueueItem, ArchivedItem } from './db';
 export { enqueue, retry, discard, resolveConflict, replace } from './queue';
 export { backoffMs } from './backoff';
 
 const POLL_MS = 15_000;
+export const SYNC_TAG = 'setu-sync';
 
 type Snapshot = { online: boolean; syncing: boolean };
 let snap: Snapshot = { online: typeof navigator === 'undefined' ? true : navigator.onLine, syncing: false };
@@ -34,13 +36,14 @@ async function withLock(fn: () => Promise<void>): Promise<void> {
   }
 }
 
-export async function syncNow(): Promise<void> {
+/** `force` = user pressed "Sync now": ignore backoff and retry non-retryable failures too. */
+export async function syncNow(opts: { force?: boolean } = {}): Promise<void> {
   const api = activeApi;
   if (!api || running || !snap.online) return;
   running = true;
   setSnap({ syncing: true });
   try {
-    await withLock(() => runPass(api));
+    await withLock(() => runPass(api, { force: opts.force }));
   } catch {
     // runPass handles API errors; a Dexie failure must not kill the loop.
   } finally {
@@ -49,8 +52,23 @@ export async function syncNow(): Promise<void> {
   }
 }
 
+/** Best-effort Background Sync: lets the SW wake us (message `{type:'sync'}`) when connectivity returns. */
+export async function registerBackgroundSync(): Promise<boolean> {
+  try {
+    const reg = await navigator.serviceWorker?.ready;
+    const sync = (reg as (ServiceWorkerRegistration & { sync?: { register(tag: string): Promise<void> } }) | undefined)?.sync;
+    if (!sync) return false;
+    await sync.register(SYNC_TAG);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function startSyncEngine(api: ApiClient): () => void {
   activeApi = api;
+  void requestPersistence();
+  void registerBackgroundSync();
   setKick(() => void syncNow());
   setSnap({ online: navigator.onLine });
 
@@ -63,9 +81,15 @@ export function startSyncEngine(api: ApiClient): () => void {
       .modify((it) => {
         if (it.nextAttemptAt !== undefined) it.nextAttemptAt = Date.now();
       })
-      .then(syncNow);
+      .then(() => syncNow());
   };
   const onOffline = () => setSnap({ online: false });
+  const onVisible = () => {
+    if (document.visibilityState !== 'visible') return;
+    setSnap({ online: navigator.onLine });
+    void syncNow();
+  };
+  document.addEventListener('visibilitychange', onVisible);
   const onSwMessage = (e: MessageEvent) => {
     if ((e.data as { type?: string } | null)?.type === 'sync') void syncNow();
   };
@@ -77,13 +101,14 @@ export function startSyncEngine(api: ApiClient): () => void {
   const unsub = api.subscribe(() => {
     if (snap.online) void confirmAccepted(api);
   });
-  void recoverSending().then(syncNow);
+  void recoverSending().then(() => syncNow());
 
   return () => {
     clearInterval(timer);
     unsub();
     window.removeEventListener('online', onOnline);
     window.removeEventListener('offline', onOffline);
+    document.removeEventListener('visibilitychange', onVisible);
     navigator.serviceWorker?.removeEventListener('message', onSwMessage);
     setKick(() => {});
     if (activeApi === api) activeApi = null;

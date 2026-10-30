@@ -3,15 +3,17 @@ import { createRoot } from 'react-dom/client';
 import '@setu/ui/tokens.css';
 import '@setu/ui/components.css';
 import './app/app.css';
-import { registerSW } from 'virtual:pwa-register';
+import { registerServiceWorker } from './pwa/index.js';
 import { ApiProvider, createAppApi } from './app/api.js';
 import { App } from './app/App.js';
+import { requestPersistence } from './offline/storage.js';
 import { startSyncEngine } from './sync/index.js';
 
 document.documentElement.dataset.theme = 'field';
 const api = createAppApi();
 startSyncEngine(api);
-if (import.meta.env.PROD) registerSW({ immediate: true });
+registerServiceWorker();
+void requestPersistence();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
