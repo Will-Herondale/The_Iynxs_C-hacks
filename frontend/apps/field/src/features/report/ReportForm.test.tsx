@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { FieldEvent, ProjectionSnapshot } from '@setu/contract';
 import { ReportScreen } from './ReportForm.js';
-import { FALLBACK_ROADS, filterRoadOptions, roadOptions } from './roadOptions.js';
+import { FALLBACK_ROADS, filterRoadOptions, geoBridgeOptions, roadOptions, withGeoBridges } from './roadOptions.js';
 import type { QueueItem } from '../../sync/index.js';
 import { buildReportEvent, EMPTY_REPORT } from './buildEvent.js';
 
@@ -131,6 +131,17 @@ describe('ReportScreen', () => {
     const manual = buildReportEvent({ ...base, locationSource: 'manual' }, id, crypto.randomUUID());
     expect(gps.ok && gps.event.location.accuracyM).toBe(12);
     expect(manual.ok && manual.event.location.accuracyM).toBeUndefined();
+  });
+});
+
+describe('geo bridges', () => {
+  it('maps osm_id to id, labels unnamed bridges and skips duplicates', () => {
+    const b = geoBridgeOptions({ features: [{ properties: { osm_id: 284824410, name: 'X' } }, { properties: { osm_id: 5 } }, { properties: {} }] });
+    expect(b).toEqual([
+      { id: '284824410', kind: 'bridge', label: 'Bridge: X (284824410)' },
+      { id: '5', kind: 'bridge', label: 'Bridge: unnamed (5)' },
+    ]);
+    expect(withGeoBridges([{ id: '5', kind: 'bridge', label: 'old' }], b).map((o) => o.id)).toEqual(['5', '284824410']);
   });
 });
 

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import type { Resolver } from 'react-hook-form';
@@ -14,7 +14,9 @@ import {
 import type { ReportValues } from './buildEvent.js';
 import { BLOCKED_15, CATEGORIES, categoryDef } from './categories.js';
 import type { ReportCategory } from './categories.js';
-import { filterRoadOptions, roadOptions } from './roadOptions.js';
+import { loadGeoLayer } from '@setu/geo';
+import { filterRoadOptions, geoBridgeOptions, roadOptions, withGeoBridges } from './roadOptions.js';
+import type { RoadOption } from './roadOptions.js';
 import { describeLocation, useGeolocation } from './location.js';
 import { MapPicker } from './MapPicker.js';
 import './report.css';
@@ -82,7 +84,15 @@ export function ReportScreen({
   const source = watch('locationSource');
   const accuracy = watch('accuracyM');
   const hasLocation = lat.trim() !== '' && lng.trim() !== '' && !Number.isNaN(Number(lat)) && !Number.isNaN(Number(lng));
-  const roads = filterRoadOptions(roadOptions(snapshot), def.roadKind);
+  const [geoBridges, setGeoBridges] = useState<RoadOption[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    loadGeoLayer('bridges').then((fc) => !cancelled && setGeoBridges(geoBridgeOptions(fc)), () => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const roads = filterRoadOptions(withGeoBridges(roadOptions(snapshot), geoBridges), def.roadKind);
   const { errors, isSubmitting } = formState;
 
   const setLocation = (p: { lat: number; lng: number; accuracyM?: number }, src: ReportValues['locationSource']) => {
