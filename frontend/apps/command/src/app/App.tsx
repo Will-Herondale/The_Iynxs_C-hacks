@@ -1,7 +1,6 @@
 import type { ApiClient } from '@setu/contract';
 import { ApiProvider } from '../data';
 import { SelectionProvider } from './selection';
-import { LayerProvider } from './layers';
 import { ViewProvider } from './view';
 import { SituationSummary } from './SituationSummary';
 import { Header } from './Header';
@@ -13,15 +12,13 @@ export function App({ client }: { client?: ApiClient } = {}) {
     <ApiProvider {...(client ? { client } : {})}>
       <SelectionProvider>
         <ViewProvider>
-          <LayerProvider>
-            <ChangesProvider>
-              <div className="cmd-root">
-                <Header />
-                <SituationSummary />
-                <Workspace />
-              </div>
-            </ChangesProvider>
-          </LayerProvider>
+          <ChangesProvider>
+            <div className="cmd-root">
+              <Header />
+              <SituationSummary />
+              <Workspace />
+            </div>
+          </ChangesProvider>
         </ViewProvider>
       </SelectionProvider>
     </ApiProvider>
