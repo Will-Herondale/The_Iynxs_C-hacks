@@ -11,8 +11,8 @@ Format: `OQ-NN` — title — owner — status — notes.
 
 ## OQ-02 — Geography: Guwahati seed vs Majuli artifacts
 **Owner:** technical lead + Karthik + frontend agent
-**Status:** in-progress — district data audit underway for Majuli, Jagatsinghpur, Alappuzha
-**Notes:** Frontend seed data is Guwahati, Assam (~26.14N, 91.73E), hand-drawn geometries, scripted scenario. Karthik/backend plan targets Majuli (~26.95N, 94.2E) with verified Copernicus GLO-30 tiles. Technical lead proposed Majuli for Q1 (provisional). Three district audits running in parallel. Results will be consolidated in docs/research/district-selection-audit.md. Question: does backend support both geographies? Does frontend rework seed to Majuli or keep Guwahati for G1?
+**Status:** in-progress — district audit complete (docs/research/district-selection-audit.md), decision pending technical lead
+**Notes:** Frontend seed data is Guwahati, Assam (~26.14N, 91.73E), hand-drawn geometries, scripted scenario. Karthik/backend plan targets Majuli (~26.95N, 94.2E) with verified Copernicus GLO-30 tiles. Audit results: Majuli recommended (verified DEM downloadable, river-island "cut off" literal, weighted score 2.90); Jagatsinghpur fallback (2.85); Alappuzha not recommended (2.55, DSM elevation error on sea-level plain). Question: does backend support both geographies? Does frontend rework seed to Majuli or keep Guwahati for G1? Technical lead to confirm district selection.
 
 ## OQ-03 — water_level gauge readings vs ADR-8 datum rule
 **Owner:** backend orchestrator
