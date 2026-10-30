@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import type { ClientSyncStatus } from '@setu/contract';
-import { Badge, Button, EmptyState, Panel, SyncStatusBadge } from '@setu/ui';
+import { Badge, Button, ConfirmDialog, EmptyState, Panel, SyncStatusBadge, SyncStatusSummary } from '@setu/ui';
 import { discard, resolveConflict, retry, syncNow, useQueue, useSyncState } from '../../sync/index.js';
 import type { QueueItem } from '../../sync/index.js';
-import { ConfirmDiscard } from './ConfirmDiscard.js';
-import { SyncSummary } from './SyncSummary.js';
 import './queue.css';
 import { countByStatus, specStatusLabel } from './statusVocab.js';
 
@@ -165,14 +163,30 @@ export function QueueScreen({ onEdit, detailHref = defaultDetailHref }: QueueScr
   const all = useQueue();
   const { online, syncing, lastSyncedAt } = useSyncState();
   const [pendingDiscard, setPendingDiscard] = useState<QueueItem | null>(null);
+  const lastIso = lastSyncedAt ? new Date(lastSyncedAt).toISOString() : '';
   return (
     <Panel title="Sync">
-      <SyncSummary counts={countByStatus(all)} online={online} lastSyncedAt={lastSyncedAt} />
+      <p>
+        <strong data-testid="sync-connectivity" data-online={online ? 'true' : 'false'}>
+          {online ? '● Online' : '○ Offline — reports are saved on this device'}
+        </strong>
+      </p>
+      <p>
+        Last successful sync:{' '}
+        <time data-testid="sync-last-success" data-ts={lastIso} dateTime={lastIso || undefined}>
+          {lastSyncedAt ? new Date(lastSyncedAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour12: false }) + ' IST' : 'never'}
+        </time>
+      </p>
+      <SyncStatusSummary counts={countByStatus(all)} online={online} lastSyncedAt={lastIso || undefined} />
       <Button data-testid="queue-sync-now" variant="primary" disabled={syncing || !online} aria-busy={syncing} onClick={() => void syncNow()}>
         {syncing ? 'Synchronising…' : 'Sync now'}
       </Button>
-      <ConfirmDiscard
+      <ConfirmDialog
         open={pendingDiscard !== null}
+        title="Discard this report?"
+        body="It will be deleted from this device and never sent. This cannot be undone."
+        confirmLabel="Discard report"
+        cancelLabel="Keep report"
         onCancel={() => setPendingDiscard(null)}
         onConfirm={() => {
           if (pendingDiscard) void discard(pendingDiscard.clientEventId);

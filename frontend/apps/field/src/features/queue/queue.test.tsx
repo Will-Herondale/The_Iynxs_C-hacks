@@ -38,7 +38,7 @@ describe('QueueScreen', () => {
     expect(onEdit).toHaveBeenCalled();
     fireEvent.click(screen.getAllByTestId('queue-discard')[0]!);
     expect(fns.discard).not.toHaveBeenCalled(); // never silent
-    fireEvent.click(screen.getByTestId('discard-confirm'));
+    fireEvent.click(screen.getByRole('button', { name: 'Discard report' }));
     expect(fns.discard).toHaveBeenCalledWith('a');
     expect(rows[2]!.querySelector('[data-testid=queue-discard]')).toBeNull();
   });
@@ -58,21 +58,21 @@ describe('QueueScreen', () => {
     state.items = [mk('a', 'failed')];
     render(<QueueScreen />);
     fireEvent.click(screen.getByTestId('queue-discard'));
-    fireEvent.click(screen.getByTestId('discard-cancel'));
+    fireEvent.click(screen.getByRole('button', { name: 'Keep report' }));
     expect(fns.discard).not.toHaveBeenCalled();
-    expect(screen.queryByTestId('discard-dialog')).toBeNull();
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('shows grouped counts, connectivity and detail links', () => {
     state.sync = { online: false, syncing: false, pendingCount: 2, lastSyncedAt: Date.UTC(2026, 0, 1) };
     state.items = [mk('a', 'queued'), mk('b', 'queued'), mk('c', 'sending'), mk('d', 'synced'), mk('e', 'conflict'), mk('f', 'failed')];
     render(<QueueScreen />);
-    const count = (k: string) => screen.getByTestId(`sync-count-${k}`).getAttribute('data-count');
-    expect(count('local')).toBe('2');
-    expect(screen.getByTestId('sync-count-local').textContent).toContain('Saved locally');
-    expect(count('syncing')).toBe('1');
-    expect(count('accepted')).toBe('1');
-    expect(count('review')).toBe('1');
+    const count = (k: string) => screen.getByTestId(`sync-count-${k}`).textContent;
+    expect(count('queued')).toBe('2');
+    expect(screen.getByTestId('sync-summary').textContent).toContain('Saved locally');
+    expect(count('synchronising')).toBe('1');
+    expect(count('synced')).toBe('1');
+    expect(count('conflict')).toBe('1');
     expect(count('failed')).toBe('1');
     expect(screen.getByTestId('sync-connectivity').getAttribute('data-online')).toBe('false');
     expect(screen.getByTestId('sync-last-success').getAttribute('data-ts')).toBe('2026-01-01T00:00:00.000Z');

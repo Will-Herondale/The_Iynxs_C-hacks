@@ -30,18 +30,3 @@ export function countByStatus(items: { status: ClientSyncStatus }[]): Record<Cli
   for (const i of items) counts[i.status] += 1;
   return counts;
 }
-
-/** Groups shown in the summary: statuses sharing a user-facing label are merged. */
-export function summaryGroups(
-  counts: Record<ClientSyncStatus, number>,
-  online: boolean,
-): { key: string; label: string; count: number }[] {
-  return [
-    { key: 'local', label: online ? 'Waiting to sync' : 'Saved locally', count: counts.queued },
-    { key: 'syncing', label: 'Synchronising', count: counts.sending + counts.accepted },
-    { key: 'accepted', label: 'Accepted', count: counts.synced },
-    { key: 'review', label: 'Requires review', count: counts.conflict },
-    { key: 'rejected', label: 'Rejected', count: counts.rejected },
-    { key: 'failed', label: 'Failed — retry available', count: counts.failed },
-  ];
-}

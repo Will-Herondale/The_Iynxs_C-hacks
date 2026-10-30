@@ -1,3 +1,4 @@
+/* global document, window, Event, navigator, console, process, fetch, setTimeout */
 // Headless smoke run at 360x740 against `vite preview` on our own port.
 //   npm run build -w @setu/field && node apps/field/scripts/smoke.mjs   (from frontend/)
 import { chromium } from '@playwright/test';

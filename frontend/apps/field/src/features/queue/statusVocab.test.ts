@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { countByStatus, specStatusLabel, summaryGroups } from './statusVocab.js';
+import { countByStatus, specStatusLabel } from './statusVocab.js';
 
 describe('specStatusLabel', () => {
   it.each([
@@ -15,9 +15,8 @@ describe('specStatusLabel', () => {
     expect(specStatusLabel(s, online)).toBe(label);
   });
 
-  it('merges sending and accepted-not-confirmed in the summary', () => {
+  it('counts per status', () => {
     const counts = countByStatus([{ status: 'sending' }, { status: 'accepted' }, { status: 'synced' }]);
-    const g = Object.fromEntries(summaryGroups(counts, true).map((x) => [x.key, x.count]));
-    expect(g).toMatchObject({ syncing: 2, accepted: 1, local: 0 });
+    expect(counts).toMatchObject({ sending: 1, accepted: 1, synced: 1, queued: 0 });
   });
 });
