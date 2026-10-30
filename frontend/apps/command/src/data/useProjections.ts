@@ -14,6 +14,8 @@ export const EVENTS_KEY = ['events'] as const;
 export interface ProjectionsResult {
   snapshot?: ProjectionSnapshot;
   version?: number;
+  /** Time of the last successful fetch (ms epoch); undefined until the first one. */
+  dataUpdatedAt?: number;
   connection: ConnectionState;
   isLoading: boolean;
   error: Error | null;
@@ -69,6 +71,7 @@ export function useProjections(): ProjectionsResult {
   return {
     snapshot: q.data,
     version: q.data?.version,
+    ...(q.dataUpdatedAt ? { dataUpdatedAt: q.dataUpdatedAt } : {}),
     connection,
     isLoading: q.isLoading,
     error: q.error,

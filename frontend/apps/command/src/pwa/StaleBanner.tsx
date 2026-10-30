@@ -1,20 +1,18 @@
 import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { PROJECTIONS_KEY } from '../data';
 import { formatRelative, staleLevel } from './staleness';
 
 /**
- * Stale-data banner for the Command header. Reads the projections query's last successful
- * update time (observer is disabled: it never fetches, only watches).
+ * Stale-data banner for the Command header. The last successful update time is passed in from useProjections().
+ * It must NOT open its own useQuery on the projections key: an observer without a queryFn takes part in
+ * invalidation refetches ("No queryFn was passed") and races the real observer.
  */
 export function StaleBanner({ updatedAt, now: nowProp }: { updatedAt?: number; now?: number }) {
-  const q = useQuery({ queryKey: PROJECTIONS_KEY, enabled: false });
   const [tick, setTick] = useState(() => Date.now());
   useEffect(() => {
     const t = setInterval(() => setTick(Date.now()), 30_000);
     return () => clearInterval(t);
   }, []);
-  const at = updatedAt ?? (q.dataUpdatedAt || undefined);
+  const at = updatedAt;
   if (!at) return null;
   const age = (nowProp ?? tick) - at;
   const level = staleLevel(age);
