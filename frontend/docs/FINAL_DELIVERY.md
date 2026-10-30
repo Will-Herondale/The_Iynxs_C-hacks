@@ -20,7 +20,7 @@ Run against OpenCode's live backend (`VITE_API_URL`, not hard-coded) with the bu
 ## Not demonstrable / blockers
 1. **Route before closure vs after closure.** The backend's event log is persistent and the demo closure was already applied by earlier test events, so the live data is permanently in the "after" state. A "before" view needs a reset or a scenario namespace from OpenCode.
 2. **"No route after closure" shows as "No safe route"**, not "destination unreachable": all 9 routes are `unavailable` with `etaMin: 0`, including 8 real-network routes. The backend gives no per-route reason (issue #26).
-3. `GET /api/v1/events`: records whose `clientEventId` is an internal ULID (non-wire events) fail contract validation, so the Events view can't list them (issue #22).
-4. The demo road `syn-bridge-1` is not flagged `synthetic`, and bridge `284824410` appears twice in the road layer.
+3. `GET /api/v1/events` (backend frozen at `28296b6`): 21 of 28 records have an internal ULID `clientEventId` and fail contract validation (issue #22). The http client now validates record by record, so the Events and Audit views show the 7 valid records and a visible notice, "21 of 28 server records are not shown", instead of failing entirely.
+4. Backend `28296b6` now flags the demo roads `synthetic` (2 road features), and the map highlights them. Bridge `284824410` still appears twice in the road layer.
 5. Phase 2 of the device exchange (local projections via `@setu/core`) is blocked on OpenCode (issue #23).
 6. Not done: a "local view is not the district-wide picture" notice; an embankments layer; the `/health` path in the connectivity probe.

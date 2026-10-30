@@ -86,7 +86,7 @@ export const toggleDataClass = (id: ToggleId): DataClass => LAYER_DATA_CLASS[TOG
 export const TOGGLE_LAYERS: Record<ToggleId, string[]> = {
   terrain: [],
   rivers: [],
-  roads: ['roads-bridge-casing', 'roads-line', 'roads-line-minor'],
+  roads: ['roads-bridge-casing', 'roads-line', 'roads-line-minor', 'roads-synthetic'],
   settlements: ['settlements-circle', 'settlements-synthetic'],
   shelters: ['shelters-circle', 'shelters-synthetic'],
   flood: ['flood-fill', 'flood-outline', 'flood-outline-modelled', 'flood-uncertain'],
@@ -274,6 +274,11 @@ export const MAP_LAYERS: LayerSpecification[] = [
       'circle-stroke-width': 2,
       'circle-stroke-opacity': 0.8,
     },
+  },
+  {
+    id: 'roads-synthetic', type: 'line', source: SOURCE_IDS.roads, filter: ['==', ['get', 'synthetic'], true],
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: { 'line-color': '#7b3fb0', 'line-width': 11, 'line-opacity': 0.28 },
   },
   {
     // Backend-flagged demo/fixture features (properties.synthetic === true): purple ring, so they never pass as real.

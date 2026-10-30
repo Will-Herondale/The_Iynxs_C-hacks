@@ -1,3 +1,4 @@
+import { SkippedEventsNotice } from '../../data/skipped';
 import { memo, useMemo, useState } from 'react';
 import { Panel, EmptyState, SyncStatusBadge } from '@setu/ui';
 import type { ProjectionSnapshot } from '@setu/contract';
@@ -84,6 +85,7 @@ export function EventsFeed({
   return (
     <div data-testid="events-section">
       <Panel title="Reports & events">
+        <SkippedEventsNotice />
         {error && <p role="alert">Could not refresh events; showing last known.</p>}
         {rows.length === 0 ? (
           <EmptyState title="No reports received yet" />
