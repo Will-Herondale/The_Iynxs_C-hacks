@@ -1,0 +1,39 @@
+/* Functional component styles; relies on tokens.css custom properties. */
+.setu-app-shell { display: grid; min-height: 100vh; background: var(--setu-bg); color: var(--setu-text); font: var(--setu-font-size) var(--setu-font);
+  grid-template: 'header header' auto 'nav nav' auto 'main aside' 1fr / 1fr auto; }
+.setu-app-shell__header { grid-area: header; display: flex; align-items: center; gap: var(--setu-space-3); padding: var(--setu-space-2) var(--setu-space-4); background: var(--setu-surface); border-bottom: 2px solid var(--setu-border); }
+.setu-app-shell__nav { grid-area: nav; padding: var(--setu-space-2) var(--setu-space-4); border-bottom: 1px solid var(--setu-border); }
+.setu-app-shell__main { grid-area: main; padding: var(--setu-space-4); min-width: 0; }
+.setu-app-shell__aside { grid-area: aside; padding: var(--setu-space-4); border-left: 1px solid var(--setu-border); width: 22rem; max-width: 100%; }
+.setu-panel { background: var(--setu-surface); border: 1px solid var(--setu-border); border-radius: var(--setu-radius); padding: var(--setu-space-3); }
+.setu-panel__title { margin: 0 0 var(--setu-space-2); font-size: 1.1em; }
+.setu-button { min-height: var(--setu-tap-min); padding: 0 var(--setu-space-4); border: 2px solid var(--setu-border); border-radius: var(--setu-radius); background: var(--setu-surface-2); color: var(--setu-text); font: inherit; font-weight: 600; cursor: pointer; }
+.setu-button--primary { background: var(--setu-primary); color: var(--setu-primary-text); border-color: var(--setu-primary); }
+.setu-button--danger { background: var(--setu-danger); color: var(--setu-bg); border-color: var(--setu-danger); }
+.setu-button:disabled { opacity: 0.55; cursor: not-allowed; }
+.setu-button:focus-visible, .setu-field__control:focus-visible { outline: 3px solid var(--setu-focus); outline-offset: 2px; }
+.setu-field { display: flex; flex-direction: column; gap: var(--setu-space-1); }
+.setu-field__label { font-weight: 600; }
+.setu-field__control { min-height: var(--setu-tap-min); padding: 0 var(--setu-space-2); font: inherit; color: var(--setu-text); background: var(--setu-bg); border: 2px solid var(--setu-border); border-radius: var(--setu-radius); }
+.setu-field--error .setu-field__control { border-color: var(--setu-danger); }
+.setu-field__error { color: var(--setu-danger); font-weight: 600; }
+.setu-badge { display: inline-flex; align-items: center; gap: var(--setu-space-1); padding: 2px var(--setu-space-2); border: 2px solid currentColor; border-radius: 999px; font-size: 0.85em; font-weight: 700; color: var(--setu-text); }
+.setu-badge--info { color: var(--setu-info); } .setu-badge--success { color: var(--setu-success); }
+.setu-badge--warning { color: var(--setu-warning); } .setu-badge--danger { color: var(--setu-danger); }
+.setu-empty { text-align: center; padding: var(--setu-space-4); color: var(--setu-text-muted); }
+.setu-empty__title { margin: 0; font-weight: 700; color: var(--setu-text); }
+.setu-online { display: inline-flex; align-items: center; gap: var(--setu-space-1); font-weight: 700; }
+.setu-online--online { color: var(--setu-success); } .setu-online--offline { color: var(--setu-danger); }
+
+/* Sync status badge: colour + glyph + text; queued (hollow) vs accepted (half-filled) differ in fill and border style. */
+.setu-sync { display: inline-flex; align-items: center; gap: var(--setu-space-1); padding: 2px var(--setu-space-2); border-radius: var(--setu-radius); font-size: 0.85em; font-weight: 700; border: 2px solid var(--setu-sync-color, currentColor); color: var(--setu-sync-color, currentColor); background: transparent; }
+.setu-sync--queued { --setu-sync-color: var(--setu-sync-queued); border-style: dashed; }
+.setu-sync--sending { --setu-sync-color: var(--setu-sync-sending); }
+.setu-sync--accepted { --setu-sync-color: var(--setu-sync-accepted); background: linear-gradient(90deg, color-mix(in srgb, var(--setu-sync-accepted) 25%, transparent) 50%, transparent 50%); }
+.setu-sync--synced { --setu-sync-color: var(--setu-sync-synced); background: color-mix(in srgb, var(--setu-sync-synced) 18%, transparent); }
+.setu-sync--conflict { --setu-sync-color: var(--setu-sync-conflict); border-style: double; border-width: 4px; }
+.setu-sync--rejected { --setu-sync-color: var(--setu-sync-rejected); background: color-mix(in srgb, var(--setu-sync-rejected) 18%, transparent); }
+.setu-sync--failed { --setu-sync-color: var(--setu-sync-failed); border-style: dotted; }
+.setu-sync__icon { font-weight: 900; }
+@media (prefers-reduced-motion: no-preference) { .setu-sync--sending .setu-sync__icon { display: inline-block; animation: setu-spin 1s linear infinite; } }
+@keyframes setu-spin { to { transform: rotate(360deg); } }
