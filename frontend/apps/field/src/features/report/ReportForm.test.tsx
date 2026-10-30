@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import type { FieldEvent, ProjectionSnapshot } from '@setu/contract';
 import { ReportScreen } from './ReportForm.js';
 import { FALLBACK_ROADS, roadOptions } from './roadOptions.js';
+import type { QueueItem } from '../../sync/index.js';
 import { buildReportEvent, EMPTY_REPORT } from './buildEvent.js';
 
 const tid = (id: string) => screen.getByTestId(id) as HTMLInputElement;
@@ -83,5 +84,20 @@ describe('roadOptions', () => {
     ] } } as unknown as ProjectionSnapshot;
     expect(roadOptions(snap).map((o) => o.label)).toEqual(['R1 — Main Rd', 'Bridge: Bharalu Bridge (B9)']);
     expect(roadOptions(undefined)).toBe(FALLBACK_ROADS);
+  });
+});
+
+describe('ReportScreen editing a rejected item', () => {
+  it('shows form-error with the server validation errors', () => {
+    const r = buildReportEvent({ ...EMPTY_REPORT, type: 'road_blockage', roadId: 'R7', lat: '26.1', lng: '91.7' }, { reporterId: 'r', deviceId: 'd' }, crypto.randomUUID());
+    if (!r.ok) throw new Error('setup');
+    const item = {
+      clientEventId: r.event.clientEventId, event: r.event, type: r.event.type, status: 'rejected',
+      validationErrors: [{ path: 'roadId', message: 'Unknown road R7' }, { path: '', message: 'Second problem' }],
+    } as unknown as QueueItem;
+    render(<ReportScreen editing={item} />);
+    const box = screen.getByTestId('form-error');
+    expect(box.textContent).toContain('Unknown road R7');
+    expect(box.textContent).toContain('Second problem');
   });
 });

@@ -143,7 +143,9 @@ export function HouseholdScreen({ editing, onDone, submit = defaultSubmit, shelt
   };
 
   const err = (k: keyof HouseholdValues) => errors[k]?.message;
-  const firstError = Object.values(errors)[0]?.message ?? failure;
+  // Server-side validation errors of the rejected item being edited stay visible until it is resubmitted.
+  const serverErrors = (!sent && editing?.validationErrors) || [];
+  const firstError = Object.values(errors)[0]?.message ?? failure ?? (serverErrors.length ? 'The server rejected this report:' : null);
 
   return (
     <Panel title={title ?? (editing ? 'Edit rejected household' : 'Register household')}>
@@ -182,7 +184,14 @@ export function HouseholdScreen({ editing, onDone, submit = defaultSubmit, shelt
           <label className="setu-field__label" htmlFor="h-note">Note</label>
           <textarea id="h-note" className="setu-field__control" rows={2} data-testid="field-note" {...register('note')} />
         </div>
-        {firstError && <p role="alert" data-testid="form-error">{firstError}</p>}
+        {firstError && (
+          <div role="alert" data-testid="form-error">
+            <p>{firstError}</p>
+            {!Object.keys(errors).length && !failure && serverErrors.length > 0 && (
+              <ul>{serverErrors.map((v, i) => <li key={i}>{v.path ? `${v.path}: ` : ''}{v.message}</li>)}</ul>
+            )}
+          </div>
+        )}
         {sent && !firstError && <p role="status">{sent}</p>}
         <Button type="submit" variant="primary" data-testid="household-submit" disabled={isSubmitting}>
           {editing ? 'Resubmit' : 'Register household'}

@@ -166,6 +166,9 @@ test.describe('status distinctness', () => {
     expect(s.cls).not.toBe(c.cls);
     expect(pendingSig.text).not.toBe(s.text);
     expect(pendingSig.text).not.toBe(c.text);
+    // wave 3 vocabulary, asserted via the shared label test-id
+    await expect(fieldPage.locator('[data-testid="queue-item"][data-status="synced"] [data-testid="sync-status-label"]').first()).toHaveText(/Confirmed/);
+    await expect(conflict.getByTestId('sync-status-label').first()).toHaveText(/Disputed/);
   });
 });
 

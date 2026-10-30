@@ -3,6 +3,7 @@ import type { EventRecord, ProjectionSnapshot } from '@setu/contract';
 import { Badge, EmptyState, Panel } from '@setu/ui';
 import { useSelection, type FeatureKind } from '../app';
 import { featureSourceEventIds, joinProvenance, useEvents, useProjections, useProvenance, type ProvenanceItem } from '../data';
+import { formatDateTime, formatDeadline } from '../app/time';
 import { ExplainBlock } from './Explain';
 import { ProvenanceView } from './Provenance';
 import { ACCESS_TONE, ROAD_TONE, ROUTE_TONE, findFeature, label } from './model';
@@ -85,7 +86,7 @@ export function FeaturePanelView({ snapshot, records, onSelectEvent, provenance 
           ...(p.kind ? [['kind', p.kind] as [string, ReactNode]] : []),
           ...(p.passability ? [['passability', p.passability] as [string, ReactNode]] : []),
           ...(p.reason ? [['reason', p.reason] as [string, ReactNode]] : []),
-          ['updatedAt', p.updatedAt], ['sourceEventIds', events(p.sourceEventIds)],
+          ['updatedAt', <time dateTime={p.updatedAt}>{formatDateTime(p.updatedAt)}</time>], ['sourceEventIds', events(p.sourceEventIds)],
         ]} />
       );
       break;
@@ -102,7 +103,7 @@ export function FeaturePanelView({ snapshot, records, onSelectEvent, provenance 
             ['accessibility', <Badge tone={ACCESS_TONE[p.accessibility].tone} icon={ACCESS_TONE[p.accessibility].icon}>{label(p.accessibility)}</Badge>],
             ['routes', serving.length ? serving.map((r) => <span key={r.routeId}>{link('route', r.routeId)}<small>({r.status}) </small></span>) : 'none'],
             ['shelters', shelterIds.length ? shelterIds.map((id) => link('shelter', id)) : 'none'],
-            ...(p.evacuationDeadline ? [['evacuationDeadline', p.evacuationDeadline] as [string, ReactNode]] : []),
+            ...(p.evacuationDeadline ? [['evacuationDeadline', <time dateTime={p.evacuationDeadline}>{formatDeadline(p.evacuationDeadline)}</time>] as [string, ReactNode]] : []),
             ...(p.evacuationPriority ? [['evacuationPriority', p.evacuationPriority] as [string, ReactNode]] : []),
           ]} />
           {p.cutOffReason && p.accessibility === 'cut_off' && (
