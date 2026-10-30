@@ -33,8 +33,13 @@ function sorted<T>(items: T[], rank: (t: T) => number, name: (t: T) => string): 
   return [...items].sort((a, b) => rank(a) - rank(b) || name(a).localeCompare(name(b), undefined, { numeric: true }));
 }
 
+/** Blocked bridges first, then by status. */
 export const roads = (s: ProjectionSnapshot): RoadProps[] =>
-  sorted(s.roads.features.map((f) => f.properties), (p) => ROAD_RANK[p.status], (p) => p.roadId);
+  sorted(
+    s.roads.features.map((f) => f.properties),
+    (p) => (p.status === 'blocked' && p.kind === 'bridge' ? -1 : ROAD_RANK[p.status]),
+    (p) => p.roadId,
+  );
 export const settlements = (s: ProjectionSnapshot): SettlementProps[] =>
   sorted(s.settlements.features.map((f) => f.properties), (p) => ACCESS_RANK[p.accessibility], (p) => p.settlementId);
 export const routes = (s: ProjectionSnapshot): RouteProps[] =>
@@ -53,3 +58,23 @@ export function findFeature(s: ProjectionSnapshot, kind: FeatureKind, id: string
     case 'flood': return s.flood.features.find((f) => f.properties.areaId === id)?.properties;
   }
 }
+
+/** Settlements that carry a server-provided evacuationDeadline, soonest first. */
+export function evacDeadlines(s: ProjectionSnapshot): SettlementProps[] {
+  return s.settlements.features
+    .map((f) => f.properties)
+    .filter((p) => p.evacuationDeadline !== undefined)
+    .sort((a, b) => Date.parse(a.evacuationDeadline!) - Date.parse(b.evacuationDeadline!) || a.settlementId.localeCompare(b.settlementId, undefined, { numeric: true }));
+}
+
+/** Which kind of feature an id refers to in the snapshot (display lookup only). */
+export function featureKindOf(s: ProjectionSnapshot, id: string): FeatureKind | undefined {
+  if (s.roads.features.some((f) => f.properties.roadId === id)) return 'road';
+  if (s.settlements.features.some((f) => f.properties.settlementId === id)) return 'settlement';
+  if (s.routes.features.some((f) => f.properties.routeId === id)) return 'route';
+  if (s.shelters.features.some((f) => f.properties.shelterId === id)) return 'shelter';
+  if (s.flood.features.some((f) => f.properties.areaId === id)) return 'flood';
+  return undefined;
+}
+
+export const isBridge = (r: RoadProps) => r.kind === 'bridge';

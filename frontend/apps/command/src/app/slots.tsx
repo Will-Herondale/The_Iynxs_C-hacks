@@ -1,13 +1,25 @@
 import { MapView } from '../map';
-import { FeaturePanel, RoadList, SettlementList, RouteList, ShelterList } from '../panels';
+import { FeaturePanel, RoadList, SettlementList, RouteList, ShelterList, EvacDeadlines } from '../panels';
 import { IncidentFeed, ChangesList } from '../feed';
+import { AuditView } from '../audit';
+import { useView } from './view';
 import { LayerControls } from '../controls';
 
-export const MapSlot = () => <MapView />;
+export function MapSlot() {
+  const { view, setView } = useView();
+  // The map stays mounted (hidden) so switching back is instant and WebGL is not recreated.
+  return (
+    <>
+      <div className="cmd-map-wrap" hidden={view !== 'map'}><MapView /></div>
+      {view === 'audit' && <AuditView onShowFeature={() => setView('map')} />}
+    </>
+  );
+}
 
 export const LeftSlot = () => (
   <>
     <LayerControls />
+    <EvacDeadlines />
     <SettlementList />
     <RoadList />
     <RouteList />

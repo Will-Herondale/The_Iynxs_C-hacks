@@ -1,4 +1,5 @@
 import { Badge } from '@setu/ui';
+import { ViewSwitch } from './ViewSwitch';
 import { useProjections, type ConnectionState } from '../data';
 
 const CONN: Record<ConnectionState, { tone: 'success' | 'warning' | 'danger'; icon: string; label: string }> = {
@@ -21,6 +22,7 @@ export function Header() {
         <div><dt>Blocked roads</dt><dd data-testid="stat-blocked-roads">{blocked ?? '–'}</dd></div>
         <div><dt>Active routes</dt><dd data-testid="stat-active-routes">{active ?? '–'}</dd></div>
       </dl>
+      <ViewSwitch />
       <span className="cmd-version">v{version ?? '–'}</span>
       <span data-testid="connection-status" data-state={connection} role="status">
         <Badge tone={c.tone} icon={c.icon}>{c.label}</Badge>
