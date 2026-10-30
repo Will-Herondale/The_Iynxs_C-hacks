@@ -118,6 +118,22 @@ A `road_blockage` with `roadId=B1`, `blockage=full`, `cause=submerged` (bridge "
 
 At least one flood polygon in the seed has `confidence=uncertain`.
 
+## Command v3 — shell, navigation, Overview (LEAD)
+| id | element | attributes |
+|---|---|---|
+| `nav-overview`, `nav-map`, `nav-settlements`, `nav-routes`, `nav-events`, `nav-audit` | section navigation buttons | `aria-current="page"` on the active one |
+| `section-overview`, `section-events`, `section-audit`, `section-settlements`, `section-routes` | section containers (map stays mounted behind/beside them) | |
+| `situation-summary` | persistent compact strip (situation lines + counts) | `data-all-clear` |
+| `situation-more` | "+N more" link from the strip to Overview | |
+| `stat-cut-off`, `stat-blocked-roads`, `stat-active-routes` | counts inside the strip | text = number |
+| `overview` | Overview section root | |
+| `overview-district`, `overview-simtime`, `overview-scenario` | district / simulation time / active scripted scenario (`Not provided by backend` unless triggered; scenario carries a SYNTHETIC tag) | |
+| `overview-count-affected`, `-disconnected`, `-impassable`, `-pending`, `-evac` | clickable count tiles from projections | text includes the number |
+| `overview-alerts` / `overview-no-alerts` | critical alert list / all-clear | |
+| `overview-alert-<settlement-\|road-\|route-><id>` | one alert (click navigates + selects) | `data-severity` = critical\|warning, `data-new` |
+| `overview-recent` / `overview-event` | recent events list / one event | `data-event-id` |
+| `context-close` | closes the docked context panel (`feature-panel`) | |
+
 ## Command v3 — Reports & Events + Audit (HELPER 3)
 | id | element | attributes |
 |---|---|---|
