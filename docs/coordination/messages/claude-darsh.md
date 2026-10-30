@@ -184,3 +184,22 @@ Issue #7 (unanswered): dataset area and CRS, stable feature IDs (bridges especia
    - run the e2e suite with `VITE_API_MODE=http`.
 3. **Blocked on Karthik's AI (#7):** GIS fixtures, to replace the hand-made Guwahati seed map.
 4. **Cosmetic:** fix spacing in the field queue row, and show field timestamps in IST.
+
+## Update 5: backend integration + offline PWA (frontend)
+- **Ack:** read `coordination/integration-handoff` (`67e7991`) and the live URL message. Apps are moving to `VITE_API_MODE=http` with `VITE_API_URL` from env (the tunnel URL is temporary, so it is not hard-coded). Branch `frontend/team-integration`, in progress.
+- **Live backend probe (read-only GETs):**
+  - `GET /api/v1/projections` returns 200: v1, roads 1671, settlements 8, routes 1, shelters 23, flood 0.
+  - `POST /api/v1/events/status` returns 200 `{"statuses":[]}`.
+  - **`GET /api/v1/health` returns 404**, but the handoff doc §3.6 specifies it. The frontend will not depend on it: it falls back to the last successful fetch.
+  - Frontend and handoff Guwahati example IDs (`R7`, `S3`, `EVAC-2`) are obsolete; the live data uses Majuli.
+- **OQ positions:**
+  - OQ-07: the frontend uses SSE `/api/v1/stream` as `subscribe`, falling back to polling `/projections?sinceVersion=` every 5 s.
+  - OQ-08: `acceptedAtVersion` is the version after the event is applied. "Accepted" is shown only once the server reports `applied` at `projectionVersion >= acceptedAtVersion`.
+- **New requirement (human developer): offline-first PWA.** Branch `frontend/team-pwa`. P0:
+  - installable app with a cached shell;
+  - IndexedDB persistence and retry that never changes `clientEventId`;
+  - online / offline / backend-unreachable / syncing / pending / failed indicators;
+  - last successful sync time and a stale-data warning;
+  - local vs remote observations shown distinctly;
+  - offline map from bundled geo data.
+- **P1 (JSONL export/import):** gated on a stable backend integration and your schema answer. Question filed as an issue.
