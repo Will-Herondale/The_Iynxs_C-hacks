@@ -2,19 +2,23 @@ import { useState } from 'react';
 import { AppShell } from '@setu/ui';
 import type { QueueItem } from '../sync/index.js';
 import { ReportScreen } from '../features/report/index.js';
-import { HouseholdScreen } from '../features/household/index.js';
+import { ReportDetailScreen } from '../features/report-detail/index.js';
+import { HouseholdsScreen } from '../features/household/index.js';
 import { CampScreen } from '../features/camp/index.js';
+import { MapScreen } from '../features/map/index.js';
+import { HomeScreen } from '../features/home/index.js';
 import { useCachedProjections } from '../offline/index.js';
 import { OfflineBanner } from './OfflineBanner.js';
 import { QueueScreen, OnlineStatus, PendingCount, LastSynced, SyncNowButton } from '../features/queue/index.js';
 import { useRoute } from './route.js';
-import type { Route } from './route.js';
+import type { RouteName } from './route.js';
 
-const NAV: { route: Route; label: string; testId: string }[] = [
-  { route: 'report', label: 'Report', testId: 'nav-report' },
-  { route: 'household', label: 'Household', testId: 'nav-household' },
-  { route: 'camp', label: 'Camp', testId: 'nav-camp' },
-  { route: 'queue', label: 'Queue', testId: 'nav-queue' },
+const NAV: { route: RouteName; label: string; icon: string; testId: string }[] = [
+  { route: 'home', label: 'Home', icon: '⌂', testId: 'nav-home' },
+  { route: 'report', label: 'Report', icon: '+', testId: 'nav-report' },
+  { route: 'map', label: 'Map', icon: '◎', testId: 'nav-map' },
+  { route: 'households', label: 'Households', icon: '☖', testId: 'nav-households' },
+  { route: 'sync', label: 'Sync', icon: '↻', testId: 'nav-sync' },
 ];
 
 export function App() {
@@ -23,13 +27,14 @@ export function App() {
   const { snapshot } = useCachedProjections();
   const [editing, setEditing] = useState<QueueItem | null>(null);
 
+  const openReport = (id: string) => go(`report/${id}`);
   const onEdit = (item: QueueItem) => {
     setEditing(item);
-    go(item.type === 'household_registration' ? 'household' : 'report');
+    go(item.type === 'household_registration' ? 'households' : 'report');
   };
   const done = () => {
     setEditing(null);
-    go('queue');
+    go('sync');
   };
 
   const header = (
@@ -39,6 +44,9 @@ export function App() {
       <PendingCount />
       <LastSynced />
       <SyncNowButton />
+      <a href="#/camp" data-testid="nav-camp" className="field-header__link" aria-current={route.name === 'camp' ? 'page' : undefined}>
+        Camp
+      </a>
     </div>
   );
 
@@ -49,28 +57,54 @@ export function App() {
           <a
             href={`#/${n.route}`}
             data-testid={n.testId}
-            aria-current={route === n.route ? 'page' : undefined}
+            aria-current={route.name === n.route ? 'page' : undefined}
             onClick={() => {
-              if (n.route !== route) setEditing(null);
+              if (n.route !== route.name) setEditing(null);
             }}
           >
-            {n.label}
+            <span aria-hidden="true" className="field-nav__icon">
+              {n.icon}
+            </span>
+            <span>{n.label}</span>
           </a>
         </li>
       ))}
     </ul>
   );
 
-  const main =
-    route === 'report' ? (
-      <ReportScreen snapshot={snapshot} editing={editing?.type !== 'household_registration' ? editing : null} onDone={done} />
-    ) : route === 'household' ? (
-      <HouseholdScreen editing={editing?.type === 'household_registration' ? editing : null} onDone={done} />
-    ) : route === 'camp' ? (
-      <CampScreen />
-    ) : (
-      <QueueScreen onEdit={onEdit} />
-    );
+  let main;
+  switch (route.name) {
+    case 'report':
+      main = route.param ? (
+        <ReportDetailScreen clientEventId={route.param} onEdit={onEdit} onOpen={openReport} onBack={() => go('sync')} />
+      ) : (
+        <ReportScreen snapshot={snapshot} editing={editing?.type !== 'household_registration' ? editing : null}
+          onDone={done}
+          onOpenDetail={openReport}
+        />
+      );
+      break;
+    case 'map':
+      main = <MapScreen onOpenReport={openReport} />;
+      break;
+    case 'households':
+      main = (
+        <HouseholdsScreen
+          snapshot={snapshot}
+          onOpenReport={openReport}
+          startRegistering={route.param === 'new'}
+        />
+      );
+      break;
+    case 'camp':
+      main = <CampScreen onOpenReport={openReport} />;
+      break;
+    case 'sync':
+      main = <QueueScreen onEdit={onEdit} />;
+      break;
+    default:
+      main = <HomeScreen />;
+  }
 
   return (
     <AppShell

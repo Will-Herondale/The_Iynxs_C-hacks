@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { FieldEvent, ProjectionSnapshot } from '@setu/contract';
 import { ReportScreen } from './ReportForm.js';
-import { FALLBACK_ROADS, roadOptions } from './roadOptions.js';
+import { FALLBACK_ROADS, filterRoadOptions, geoBridgeOptions, roadOptions, withGeoBridges } from './roadOptions.js';
 import type { QueueItem } from '../../sync/index.js';
 import { buildReportEvent, EMPTY_REPORT } from './buildEvent.js';
 
@@ -58,25 +58,97 @@ describe('ReportScreen', () => {
     expect(submit).toHaveBeenCalledTimes(1);
   });
 
-  it('quick action preselects road_blockage/full; cause and bridge options work offline', async () => {
-    const submit = vi.fn(async (e: FieldEvent) => (void e, undefined));
-    render(<ReportScreen submit={submit} />);
+  it('quick action preselects blocked road/full and lists roads only', async () => {
+    render(<ReportScreen submit={vi.fn(async () => undefined)} />);
     fireEvent.click(tid('quick-blocked'));
     const road = (await screen.findByTestId('field-roadId')) as HTMLSelectElement;
-    expect(Array.from(road.options).map((o) => o.value)).toEqual(expect.arrayContaining(['R1', 'R10', 'B1']));
-    expect(screen.getByText('Bridge: B1')).toBeTruthy();
+    const values = Array.from(road.options).map((o) => o.value);
+    expect(values).toEqual(expect.arrayContaining(['R1', 'R10']));
+    expect(values).not.toContain('B1');
     expect(tid('field-blockage').value).toBe('full');
+  });
+
+  it('submerged bridge: bridges only, cause fixed to submerged, observed time editable', async () => {
+    const submit = vi.fn(async (e: FieldEvent) => (void e, undefined));
+    render(<ReportScreen submit={submit} />);
+    fireEvent.click(tid('report-type-submerged_bridge'));
+    const road = (await screen.findByTestId('field-roadId')) as HTMLSelectElement;
+    expect(Array.from(road.options).map((o) => o.value).filter(Boolean)).toEqual(['B1']);
+    expect(screen.getByTestId('cause-fixed').textContent).toContain('submerged');
     fireEvent.change(road, { target: { value: 'B1' } });
-    fireEvent.change(tid('field-cause'), { target: { value: 'submerged' } });
-    fireEvent.change(tid('field-lat'), { target: { value: '26.14' } });
-    fireEvent.change(tid('field-lng'), { target: { value: '91.73' } });
+    fireEvent.change(tid('field-observedAt'), { target: { value: '2026-10-30T09:15' } });
+    fireEvent.change(tid('field-lat'), { target: { value: '26.95' } });
+    fireEvent.change(tid('field-lng'), { target: { value: '94.17' } });
+    expect(screen.getByTestId('location-summary').textContent).toContain('Manually placed');
     fireEvent.click(tid('report-submit'));
     await waitFor(() => expect(submit).toHaveBeenCalledTimes(1));
-    expect(submit.mock.calls[0]![0]).toMatchObject({ type: 'road_blockage', roadId: 'B1', blockage: 'full', cause: 'submerged' });
+    const ev = submit.mock.calls[0]![0];
+    expect(ev).toMatchObject({ type: 'road_blockage', roadId: 'B1', blockage: 'full', cause: 'submerged' });
+    expect(ev.occurredAt).toBe(new Date('2026-10-30T09:15').toISOString());
+    expect(ev.location.accuracyM).toBeUndefined();
+    expect((await screen.findByTestId('report-saved-label')).textContent).toBe('Saved locally');
+  });
+
+  it('damaged infrastructure and other are disabled with the #15 note and cannot be selected', () => {
+    render(<ReportScreen submit={vi.fn(async () => undefined)} />);
+    for (const c of ['damaged_infrastructure', 'other']) {
+      const b = screen.getByTestId(`report-category-${c}`);
+      expect(b.getAttribute('aria-disabled')).toBe('true');
+      expect(b.textContent).toContain('Blocked: issue #15');
+      fireEvent.click(b);
+      expect(b.getAttribute('aria-checked')).toBe('false');
+    }
+  });
+
+  it('water level shows the cm unit and the disabled estimated-vs-measured hint', () => {
+    render(<ReportScreen submit={vi.fn(async () => undefined)} />);
+    fireEvent.click(tid('report-type-water_level'));
+    expect(screen.getByText(/unit: cm/)).toBeTruthy();
+    expect(screen.getByTestId('estimate-hint').textContent).toContain('issue #15');
+  });
+
+  it('location is optional-GPS: unknown until set, and submit is refused without one', async () => {
+    const submit = vi.fn(async () => undefined);
+    render(<ReportScreen submit={submit} />);
+    expect(screen.getByTestId('location-summary').textContent).toContain('Unknown');
+    fireEvent.click(tid('report-submit'));
+    expect(await screen.findByTestId('form-error')).toBeTruthy();
+    expect(submit).not.toHaveBeenCalled();
+  });
+
+  it('rejects an observation time in the future', () => {
+    const r = buildReportEvent(
+      { ...EMPTY_REPORT, category: 'flooded_road', lat: '26.9', lng: '94.1', observedAt: '2999-01-01T00:00' },
+      { reporterId: 'r', deviceId: 'd' }, crypto.randomUUID(),
+    );
+    expect(r.ok).toBe(false);
+  });
+
+  it('GPS accuracy is carried into the event only when the location came from GPS', () => {
+    const base = { ...EMPTY_REPORT, category: 'flooded_road' as const, lat: '26.9', lng: '94.1', accuracyM: '12' };
+    const id = { reporterId: 'r', deviceId: 'd' };
+    const gps = buildReportEvent({ ...base, locationSource: 'gps' }, id, crypto.randomUUID());
+    const manual = buildReportEvent({ ...base, locationSource: 'manual' }, id, crypto.randomUUID());
+    expect(gps.ok && gps.event.location.accuracyM).toBe(12);
+    expect(manual.ok && manual.event.location.accuracyM).toBeUndefined();
+  });
+});
+
+describe('geo bridges', () => {
+  it('maps osm_id to id, labels unnamed bridges and skips duplicates', () => {
+    const b = geoBridgeOptions({ features: [{ properties: { osm_id: 284824410, name: 'X' } }, { properties: { osm_id: 5 } }, { properties: {} }] });
+    expect(b).toEqual([
+      { id: '284824410', kind: 'bridge', label: 'Bridge: X (284824410)' },
+      { id: '5', kind: 'bridge', label: 'Bridge: unnamed (5)' },
+    ]);
+    expect(withGeoBridges([{ id: '5', kind: 'bridge', label: 'old' }], b).map((o) => o.id)).toEqual(['5', '284824410']);
   });
 });
 
 describe('roadOptions', () => {
+  it('filters bridges', () => {
+    expect(filterRoadOptions(FALLBACK_ROADS, 'bridge').map((o) => o.id)).toEqual(['B1']);
+  });
   it('labels bridges from the cached snapshot', () => {
     const snap = { roads: { features: [
       { properties: { roadId: 'R1', name: 'Main Rd' } },

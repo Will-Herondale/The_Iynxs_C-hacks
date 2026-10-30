@@ -121,3 +121,103 @@ Status vocabulary (design system, wave 5), shown by `SyncStatusBadge` / `StatusB
 ### Demo scenario (scripted in mock-backend; field names PROPOSED in issue #6)
 Superseded by the Majuli S1/S2/S4 scenarios in "Scripted mock scenario" above (the Guwahati B1/S4/EVAC-3 demo is gone). Flood polygons carry
 `confidence=modelled` (synthetic DEM-threshold mask); the baseline snapshot has no flood.
+
+## Field v3 (wave 5)
+
+Owned by Team Field v3 (`apps/field`). Routes are hash routes: `#/home` (default) `#/report` `#/map` `#/households` `#/sync`, plus
+`#/report/<clientEventId>` (report detail), `#/households/new` (opens the registration form), `#/camp`. Old hashes `#/household` → households, `#/queue` → sync.
+**Migrated ids:** `nav-household` → `nav-households`, `nav-queue` → `nav-sync`. `nav-report` and `nav-camp` are unchanged (`nav-camp` is a header link).
+Status labels follow the 7-label spec vocabulary (Saved locally / Waiting to sync / Synchronising / Accepted / Requires review / Rejected / Failed — retry available).
+
+### Shell and Home (lead)
+| id | element | attributes |
+|---|---|---|
+| `nav-home` `nav-report` `nav-map` `nav-households` `nav-sync` | bottom tab bar (mobile) / top nav | `aria-current="page"` when active |
+| `home-screen` | Home section | |
+| `home-district` | district name (`Majuli (demo)` fixture unless provided) | |
+| `home-district-fixture` | "demo fixture" note, shown while the district is not from data | |
+| `home-connectivity` | online/offline + last synced | `data-online` |
+| `home-new-report` | big New Report link (`#/report`) | |
+| `home-register-household` | Register household link (`#/households/new`) | |
+| `home-count-pending` / `home-count-synced` / `home-count-attention` | counters from the local queue (attention = conflict, rejected, failed) | `data-attention` |
+| `home-recent` / `home-recent-item` / `home-recent-empty` | last 5 items; each links to `#/report/<id>` | |
+| `home-sync-now` | manual sync | |
+
+### Report workflow and detail (Helper 1)
+| id | element | attributes |
+|---|---|---|
+| `report-categories` | category radiogroup (big buttons) | |
+| `report-type-water_level` / `report-type-flood_report` / `report-type-road_blockage` / `report-type-submerged_bridge` | Water level / Flooded road / Blocked road / Submerged bridge categories (old `report-type-*` ids kept) | `aria-checked`, `data-category` |
+| `report-type-road_cleared` | Road reopened | |
+| `report-category-damaged_infrastructure` / `report-category-other` | DISABLED, "Blocked: issue #15" | `aria-disabled="true"` |
+| `quick-blocked` | shortcut: Blocked road | |
+| `field-roadId` | road select (roads only) or bridge select (submerged bridge) | |
+| `field-blockage` / `field-cause` / `cause-fixed` | partial/full; obstruction type; fixed "submerged" for bridges | |
+| `field-severity` / `field-depthCm` / `field-areaId` | flooded road inputs | |
+| `field-levelCm` / `field-trend` / `field-gaugeId` / `estimate-hint` | water level (unit cm); disabled estimated-vs-measured hint (#15) | |
+| `field-observedAt` | editable observation time (defaults to now) | |
+| `location-summary` | GPS ±m / Manually placed / Unknown | |
+| `location-gps` / `location-map-toggle` | optional GPS; open the offline map picker | |
+| `map-picker` / `map-picker-unavailable` | compact MapLibre picker / fallback notice | |
+| `field-lat` / `field-lng` | manual coordinates | |
+| `report-submit` | "Save report" | |
+| `report-saved` / `report-saved-label` | confirmation; label text = `Saved locally` | `data-client-event-id` |
+| `report-view-detail` / `report-new-another` / `report-done` | confirmation actions | |
+| `report-detail` | detail root | `data-client-event-id`, `data-status` (ClientSyncStatus or `superseded`) |
+| `detail-status` | 7-label status badge | |
+| `detail-client-event-id` / `detail-event-id` / `detail-event-id-none` | Mono ids | |
+| `detail-location` / `detail-observed` / `detail-submitted` | location with accuracy; observed vs submitted time (IST) | |
+| `detail-payload` | original payload fields | |
+| `detail-ack` / `detail-ack-none` | server ack (eventId, acceptedAtVersion) | |
+| `detail-review` | conflict reason / rejection errors | |
+| `detail-edit` / `detail-back` | edit rejected (creates a linked replacement) / back | |
+| `provenance-superseded` / `provenance-open-replacement` | original shows what superseded it | |
+| `provenance-supersedes` / `provenance-open-original` | replacement shows what it replaces | |
+
+### Map tab (Helper 2)
+Basemap = bundled `@setu/geo` layers (works offline). Report markers: circle = pending, square = accepted, plus text labels.
+| id | element | attributes |
+|---|---|---|
+| `map-canvas` | MapLibre container | |
+| `map-offline-note` / `map-basemap-note` | connectivity note / basemap status | |
+| `map-key` | marker + layer key (shape + label) | |
+| `map-report-<clientEventId>` | marker on the map | |
+| `map-you` | volunteer location marker | |
+| `map-settlement-<id>` | cut-off settlement marker | |
+| `map-projection` / `map-projection-meta` | latest cached projection, "data as of" | |
+| `map-blocked-list` / `map-flood-list` / `map-cutoff-list` | blocked roads / flood areas (modelled/synthetic labelled) / cut-off settlements | |
+| `map-reports` / `map-report-link` | my reports list (opens detail); `li[data-state]` pending\|accepted\|review\|rejected | |
+
+### Sync screen (Helper 2)
+Uses `@setu/ui` `SyncStatusSummary` (`sync-summary`, `sync-count-queued|synchronising|synced|conflict|rejected|failed`) and `ConfirmDialog` (role=dialog, buttons "Keep report" / "Discard report").
+| id | element | attributes |
+|---|---|---|
+| `sync-connectivity` / `sync-last-success` | connectivity; last successful sync | `data-online` / `data-ts` |
+| `queue-sync-now` | manual sync | |
+| `queue-filter-<key>` / `queue-list` / `queue-item` | filters; list; one item | item: `data-client-event-id`, `data-status`, `data-spec-label`, `data-type` |
+| `queue-item-explain` / `queue-detail-link` | one-line explanation; link to `#/report/<id>` | |
+| `queue-retry` / `queue-edit` / `queue-discard` | per-item actions (discard asks to confirm) | |
+| `conflict-panel` / `conflict-keep-mine` / `conflict-accept-server` | review panel | |
+
+### Households and camp (Helper 3)
+| id | element | attributes |
+|---|---|---|
+| `households-screen` | Households tab root | |
+| `households-register` / `households-cancel` | open / close the registration form | |
+| `households-saved` | "Saved locally" confirmation after registering | |
+| `households-search` | search box (name, village, camp; local households only) | |
+| `households-list` / `household-row` | list / one household | row: `data-household-id`, `data-client-event-id`, `data-status` |
+| `households-no-match` | no search result message | |
+| `household-history-toggle` / `household-history` / `household-history-item` | registration history (events + statuses) | item: `data-client-event-id`, `data-status` |
+| `household-open-detail` / `household-open-report` | open report detail (needs `onOpenReport`) | |
+| `household-edit` | edit and resubmit a rejected household | |
+| `household-id` | locally generated `householdId` (form) | |
+| `household-shelterId` | current camp select (form; hidden in camp mode) | |
+| `household-places-missing` | no cached village list | |
+| `household-member-names-blocked` / `household-member-names-blocked-summary` | "Blocked: #15" note | |
+| `household-duplicates-blocked` | duplicate review placeholder (BLOCKED #15) | |
+| `camp-summary`, `camp-summary-households` / `-people` / `-pending` / `-review` / `-rejected` | camp summary counts | |
+| `camp-capacity` | "not published" capacity/occupancy note | |
+| `camp-open-report` | open report detail from a camp row | |
+
+Existing `household-*`, `field-lat`/`field-lng`, `camp-*` ids are unchanged. `household-settlementId` now lists cached settlements (`Name (osm_id)`); the form takes a `snapshot` prop. Lead integration: `<HouseholdsScreen snapshot onOpenReport startRegistering />` and `<CampScreen onOpenReport />`.
