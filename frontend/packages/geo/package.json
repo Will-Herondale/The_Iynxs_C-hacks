@@ -1,0 +1,29 @@
+{
+  "name": "@setu/geo",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./data/*": "./data/*"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "import": "node scripts/import.mjs",
+    "test": "vitest run --root ../.. packages/geo"
+  },
+  "files": ["dist", "data"],
+  "sideEffects": false,
+  "dependencies": {},
+  "peerDependencies": { "maplibre-gl": ">=4" },
+  "peerDependenciesMeta": { "maplibre-gl": { "optional": true } },
+  "devDependencies": {
+    "@turf/bbox": "^7.2.0",
+    "@turf/bbox-clip": "^7.2.0",
+    "@turf/boolean-intersects": "^7.2.0",
+    "@turf/simplify": "^7.2.0",
+    "@types/geojson": "^7946.0.14",
+    "maplibre-gl": "^5.0.0"
+  }
+}

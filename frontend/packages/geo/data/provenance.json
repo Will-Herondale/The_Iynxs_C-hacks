@@ -1,0 +1,124 @@
+{
+  "generatedBy": "packages/geo/scripts/import.mjs",
+  "source": {
+    "repo": "SETU",
+    "branch": "data/karthik",
+    "pr": 16,
+    "commit": "dce5ec1372c17f2957a3b04bf5f30a19490e6e1e"
+  },
+  "processing": "Features kept if they intersect majuli_boundary; waterways clipped to boundary bbox + 0.01°; coordinates rounded to 5 dp; simplified with @turf/simplify.",
+  "layers": {
+    "island": {
+      "branch": "data/karthik",
+      "commit": "dce5ec1372c17f2957a3b04bf5f30a19490e6e1e",
+      "file": "geo/data/out/geojson/majuli_boundary.geojson",
+      "licence": "ODbL 1.0 (© OpenStreetMap contributors)",
+      "synthetic": false,
+      "note": "OSM administrative outline (includes river channels), not a land-only mask."
+    },
+    "waterbodies": {
+      "branch": "data/karthik",
+      "commit": "dce5ec1372c17f2957a3b04bf5f30a19490e6e1e",
+      "file": "geo/data/out/geojson/waterbodies.geojson",
+      "licence": "ODbL 1.0 (© OpenStreetMap contributors)",
+      "synthetic": false,
+      "note": "OSM natural=water polygons >= 2000 m²."
+    },
+    "waterways": {
+      "branch": "data/karthik",
+      "commit": "dce5ec1372c17f2957a3b04bf5f30a19490e6e1e",
+      "file": "geo/data/out/geojson/waterways.geojson",
+      "licence": "ODbL 1.0 (© OpenStreetMap contributors)",
+      "synthetic": false,
+      "note": "OSM waterways; permanent water as mapped, braided channels drift every monsoon."
+    },
+    "roads": {
+      "branch": "data/karthik",
+      "commit": "dce5ec1372c17f2957a3b04bf5f30a19490e6e1e",
+      "file": "geo/data/out/geojson/roads.geojson",
+      "licence": "ODbL 1.0 (© OpenStreetMap contributors)",
+      "synthetic": false,
+      "note": "Trunk/primary/secondary/tertiary(+links)/unclassified only; tracks, paths, footways, service roads, construction/proposed dropped. Sparse in Majuli."
+    },
+    "bridges": {
+      "branch": "data/karthik",
+      "commit": "dce5ec1372c17f2957a3b04bf5f30a19490e6e1e",
+      "file": "geo/data/out/geojson/bridges.geojson",
+      "licence": "ODbL 1.0 (© OpenStreetMap contributors)",
+      "synthetic": false,
+      "note": "OSM bridge=yes ways; no surveyed deck heights."
+    },
+    "places": {
+      "branch": "data/karthik",
+      "commit": "dce5ec1372c17f2957a3b04bf5f30a19490e6e1e",
+      "file": "geo/data/out/geojson/places.geojson",
+      "licence": "ODbL 1.0 (© OpenStreetMap contributors)",
+      "synthetic": false,
+      "note": "Only a few places carry population."
+    },
+    "shelters": {
+      "branch": "data/karthik",
+      "commit": "dce5ec1372c17f2957a3b04bf5f30a19490e6e1e",
+      "file": "geo/data/out/geojson/shelters.geojson",
+      "licence": "Majuli District Flood Contingency Plan 2026-27 (DDMA Majuli)",
+      "synthetic": false,
+      "note": "Pre-identified camps, not confirmed open. Capacity and occupancy are NOT published."
+    },
+    "ferries": {
+      "branch": "data/karthik",
+      "commit": "dce5ec1372c17f2957a3b04bf5f30a19490e6e1e",
+      "file": "geo/data/out/geojson/ferries.geojson",
+      "licence": "ODbL 1.0 (© OpenStreetMap contributors)",
+      "synthetic": false
+    },
+    "roads-minor": {
+      "branch": "data/karthik",
+      "commit": "dce5ec1372c17f2957a3b04bf5f30a19490e6e1e",
+      "file": "geo/data/out/geojson/roads.geojson",
+      "licence": "ODbL 1.0 (© OpenStreetMap contributors)",
+      "synthetic": false,
+      "note": "residential/living_street roads (optional layer)."
+    },
+    "terrain": {
+      "branch": "data/karthik",
+      "commit": "dce5ec1372c17f2957a3b04bf5f30a19490e6e1e",
+      "file": "geo/data/out/majuli_dem_30m_wgs84.tif",
+      "licence": "Copernicus DEM GLO-30 (ESA/Airbus), free with attribution",
+      "synthetic": false,
+      "note": "Hillshade derived at build time (dem.mjs). DSM, ~4 m vertical error."
+    },
+    "waterOccurrence": {
+      "branch": "data/karthik",
+      "commit": "dce5ec1372c17f2957a3b04bf5f30a19490e6e1e",
+      "file": "geo/data/out/majuli_water_occurrence_30m.tif",
+      "licence": "EC JRC/Google Global Surface Water",
+      "synthetic": false,
+      "note": "Reference only; not bundled."
+    },
+    "scenarios": {
+      "branch": "data/karthik",
+      "commit": "dce5ec1372c17f2957a3b04bf5f30a19490e6e1e",
+      "file": "geo/data/out/scenarios/S1..S5_*.json",
+      "licence": "Project data",
+      "synthetic": true,
+      "note": "SYNTHETIC demonstration scenarios; not reconstructions of real events and not validated against observations."
+    }
+  },
+  "counts": {
+    "island": 1,
+    "roads": 452,
+    "bridges": 80,
+    "waterbodies": 31,
+    "waterways": 73,
+    "places": 11,
+    "shelters": 23,
+    "ferries": 2,
+    "roads-minor": 655
+  },
+  "bounds": [
+    93.95658,
+    26.86636,
+    94.59287,
+    27.1822
+  ]
+}
