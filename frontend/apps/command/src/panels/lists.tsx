@@ -3,6 +3,7 @@ import type { ProjectionSnapshot } from '@setu/contract';
 import { Badge, EmptyState, Panel } from '@setu/ui';
 import { useSelection, type FeatureKind } from '../app';
 import { useProjections } from '../data';
+import { ExplainBlock } from './Explain';
 import {
   ACCESS_TONE, ROAD_TONE, ROUTE_TONE, label, roads, routes, settlements, shelters,
 } from './model';
@@ -19,8 +20,8 @@ function live(View: (p: ListProps) => ReactNode) {
   };
 }
 
-function Row({ testId, kind, id, attrs, children }: {
-  testId: string; kind: FeatureKind; id: string; attrs?: Record<string, string>; children: ReactNode;
+function Row({ testId, kind, id, attrs, children, extra }: {
+  testId: string; kind: FeatureKind; id: string; attrs?: Record<string, string>; children: ReactNode; extra?: ReactNode;
 }) {
   const { selected, select } = useSelection();
   const isSel = selected?.kind === kind && selected.id === id;
@@ -41,6 +42,7 @@ function Row({ testId, kind, id, attrs, children }: {
       >
         {children}
       </button>
+      {extra}
     </li>
   );
 }
@@ -60,8 +62,12 @@ export function RoadListView({ snapshot: s }: ListProps) {
   return (
     <Block title="Roads" empty={items.length === 0}>
       {items.map((r) => (
-        <Row key={r.roadId} testId={`road-row-${r.roadId}`} kind="road" id={r.roadId} attrs={{ 'data-status': r.status }}>
-          <span><strong>{r.roadId}</strong> {r.name}</span>
+        <Row key={r.roadId} testId={`road-row-${r.roadId}`} kind="road" id={r.roadId} attrs={{ 'data-status': r.status, 'data-kind': r.kind ?? 'road', ...(r.passability ? { 'data-passability': r.passability } : {}) }}>
+          <span>
+            {r.kind === 'bridge' && <span aria-label="bridge" title="Bridge">🌉 </span>}
+            <strong>{r.roadId}</strong> {r.name}
+            {r.reason && <small data-testid={`road-reason-${r.roadId}`} style={{ display: 'block', opacity: 0.85 }}>{r.reason}</small>}
+          </span>
           <Badge tone={ROAD_TONE[r.status].tone} icon={ROAD_TONE[r.status].icon}>{label(r.status)}</Badge>
         </Row>
       ))}
@@ -74,7 +80,8 @@ export function SettlementListView({ snapshot: s }: ListProps) {
   return (
     <Block title="Settlements" empty={items.length === 0}>
       {items.map((p) => (
-        <Row key={p.settlementId} testId={`settlement-row-${p.settlementId}`} kind="settlement" id={p.settlementId} attrs={{ 'data-accessibility': p.accessibility }}>
+        <Row key={p.settlementId} testId={`settlement-row-${p.settlementId}`} kind="settlement" id={p.settlementId} attrs={{ 'data-accessibility': p.accessibility }}
+          extra={p.cutOffReason && p.accessibility === 'cut_off' ? <ExplainBlock testId={`explain-cutoff-${p.settlementId}`} title="Why cut off" reason={p.cutOffReason} {...(s ? { snapshot: s } : {})} /> : undefined}>
           <span><strong>{p.settlementId}</strong> {p.name}</span>
           <Badge tone={ACCESS_TONE[p.accessibility].tone} icon={ACCESS_TONE[p.accessibility].icon}>{label(p.accessibility)}</Badge>
         </Row>
@@ -88,7 +95,8 @@ export function RouteListView({ snapshot: s }: ListProps) {
   return (
     <Block title="Routes" empty={items.length === 0}>
       {items.map((p) => (
-        <Row key={p.routeId} testId={`route-row-${p.routeId}`} kind="route" id={p.routeId} attrs={{ 'data-status': p.status }}>
+        <Row key={p.routeId} testId={`route-row-${p.routeId}`} kind="route" id={p.routeId} attrs={{ 'data-status': p.status }}
+          extra={p.refusal && p.status === 'unavailable' ? <ExplainBlock testId={`explain-refusal-${p.routeId}`} title="Why this route is refused" reason={p.refusal} {...(s ? { snapshot: s } : {})} /> : undefined}>
           <span>
             <strong>{p.routeId}</strong> {p.from}→{p.to} · {p.etaMin} min
             {p.replacesRouteId ? ` · replaces ${p.replacesRouteId}` : ''}
