@@ -105,7 +105,10 @@ export async function resolveConflict(id: string, choice: 'keep-mine' | 'accept-
   await supersede(id, withNewId(orig.event, note.slice(0, 2000)));
 }
 
-/** Rejected → edited resubmit: the edited event gets a new clientEventId. */
+/**
+ * Rejected → edited resubmit: the edited event gets a clientEventId different from the original.
+ * A caller-supplied fresh id is kept so its confirmation and detail link match the queued item.
+ */
 export async function replace(id: string, event: FieldEvent): Promise<QueueItem> {
-  return supersede(id, withNewId(event));
+  return supersede(id, event.clientEventId === id ? withNewId(event) : event);
 }

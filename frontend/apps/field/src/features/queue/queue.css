@@ -6,3 +6,13 @@
 .queue-item__detail { display: inline-flex; align-items: center; padding: 0 12px; }
 .queue-filters { display: flex; flex-wrap: wrap; gap: 8px; }
 .queue-filters button { min-height: 44px; }
+
+.queue-conflict pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+.queue-conflict, .queue-conflict > * { min-width: 0; max-width: 100%; }
+.queue-conflict__cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }

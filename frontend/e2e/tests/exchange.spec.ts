@@ -1,20 +1,21 @@
 import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { test, expect, resetMockState, submitRoadBlockage, FIELD_URL } from '../fixtures/index.js';
+import { test, expect, openField, goOffline, submitReport } from '../fixtures/index.js';
 
 const NOTE = 'Imported events are saved on this device and will appear in district projections after sync.';
 
 test.describe('device-to-device exchange (JSONL)', () => {
   test('export on A, import on B, duplicate re-import, invalid line', async ({ browser }) => {
-    await resetMockState();
     const a = await (await browser.newContext()).newPage();
     const b = await (await browser.newContext()).newPage();
-    for (const p of [a, b]) await p.goto(`${FIELD_URL}/?mock=offline`);
+    for (const p of [a, b]) await openField(p, 'home');
+    // Both devices offline: nothing reaches the server, so the exchange is purely device-to-device.
+    for (const p of [a, b]) await goOffline(p);
 
     // A: create a report offline and export it.
-    await submitRoadBlockage(a, 'R7', 'full');
-    await a.goto(`${FIELD_URL}/?mock=offline#/sync`);
+    await submitReport(a, 'road_blockage');
+    await a.getByTestId('nav-sync').click();
     await a.getByTestId('nav-exchange').click();
     const [download] = await Promise.all([a.waitForEvent('download'), a.getByTestId('exchange-export').click()]);
     expect(download.suggestedFilename()).toMatch(/^setu-events-.+\.jsonl$/);
@@ -26,12 +27,16 @@ test.describe('device-to-device exchange (JSONL)', () => {
     const ids = lines.map((l) => (JSON.parse(l) as { clientEventId: string }).clientEventId);
 
     // B: import, preview, confirm.
-    await b.goto(`${FIELD_URL}/?mock=offline#/sync/exchange`);
+    await b.getByTestId('nav-sync').click();
+    await b.getByTestId('nav-exchange').click();
     await b.getByTestId('exchange-import-file').setInputFiles(file);
     const rows = b.getByTestId('exchange-result-row');
     await expect(rows).toHaveCount(lines.length);
     await expect(rows.first()).toHaveAttribute('data-result', 'accepted');
     await b.getByTestId('exchange-import-confirm').click();
+    // The confirm button opens a dialog; the import only happens when it is confirmed.
+    await b.getByRole('dialog').getByRole('button', { name: 'Import' }).click();
+    await expect(b.getByRole('dialog')).toBeHidden();
     await expect(b.getByTestId('exchange-note')).toHaveText(NOTE);
 
     // B: re-import the same file -> all duplicate.
