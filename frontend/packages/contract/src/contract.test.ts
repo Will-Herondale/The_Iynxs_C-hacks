@@ -60,7 +60,7 @@ describe('projections', () => {
       shelters: fc({ type: 'Point', coordinates: [0, 0] }, { shelterId: 'SH1', name: 'x', capacity: 10, occupancy: 1, open: true }),
     };
     expect(ProjectionSnapshotSchema.safeParse(snap).success).toBe(true);
-    snap.roads.features[0]!.properties.status = 'weird';
+    (snap.roads.features[0]!.properties as { status: string }).status = 'weird';
     expect(ProjectionSnapshotSchema.safeParse(snap).success).toBe(false);
   });
 });

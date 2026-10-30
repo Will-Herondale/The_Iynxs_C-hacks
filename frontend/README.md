@@ -18,7 +18,7 @@ frontend/
 ```
 
 Apps talk to the backend **only** through the `ApiClient` interface. Choose the adapter with
-`createApiClientWithMock(import.meta.env.VITE_API_MODE)` (default `mock`; `http` throws
+`createApiClient({mode, mockAdapter})` / `createApiClientWithMock()` (mode from `import.meta.env.VITE_API_MODE`) (default `mock`; `http` throws
 `NotImplementedError("pending API contract sign-off")` until the contract is signed off).
 The frontend never computes projections, routes or accessibility; it renders what the API returns.
 
@@ -44,9 +44,9 @@ shows every state with its own colour, icon and text.
 The mock acks as `accepted` immediately and applies the event to the feed/projections after
 `applyDelayMs` (default 1500). Flip failure modes at runtime:
 
-- URL: `?mock=offline,latency=800,fail5xx=0.3,timeout=0.1,conflict=blockage_on_cleared_road,reject=always,delay=3000`
+- URL: `?mock=offline`, or `?mock=latency:800,5xx:0.3,timeout:0.2,conflict,reject,delay:3000` (saved to localStorage; `?mock=off` clears)
   (saved to localStorage; `?mock=reset` clears it)
-- Code/console: `configureMock({ latencyMs, failRate5xx, timeoutRate, conflictRule, rejectRule, offline, applyDelayMs })`
+- Code/console: `configureMock({ latencyMs, failRate5xx, timeoutRate, conflictRule, rejectRule, offline, applyDelayMs })` (`conflictRule`/`rejectRule` accept `true` for the default rules, or a function)
 - `resetMock()` restores the seed scenario.
 
 ## Cross-app mock sync (field tab -> command tab)

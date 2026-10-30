@@ -3,7 +3,8 @@ import { NotImplementedError, type ApiClient } from '@setu/contract';
 const PENDING = 'pending API contract sign-off';
 
 /** Stub: the real HTTP adapter waits for backend sign-off on the contract. */
-export function createHttpApiClient(_opts: { baseUrl?: string } = {}): ApiClient {
+export function createHttpApiClient(opts: { baseUrl?: string } = {}): ApiClient {
+  void opts;
   const fail = (): never => {
     throw new NotImplementedError(PENDING);
   };
