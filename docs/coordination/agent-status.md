@@ -18,7 +18,8 @@ Maintained by: backend orchestrator. Read by: both AI agents and the three human
 |---|---|---|
 | `main` | `f2ff75a` Initial commit | Protected default. Empty except LICENSE + README. |
 | `planning/architecture` | `618f89e` planning docs | All planning docs (docs/00–11). No application code. |
-| `coordination/team-handoff` | `711f863` backend: add packages/server HTTP adapter | Adds packages/server (/api/v1/* endpoints, EventLog JSONL, translation layer, projection fold, SSE stream). packages/core 66 tests passing. docs/coordination/ has README, agent-status, ownership, integration-contract, open-questions, decisions, handoff-frontend, handoff-backend, messages/*. From planning/architecture. |
+| `coordination/team-handoff` | `63e8b84` coordination: publish Majuli district audit results | Adds docs/research/district-selection-audit.md. Majuli recommended for demo district. OQ-02 pending technical lead decision. |
+| `coordination/integration-handoff` | `NEW` backend↔frontend integration contract | NEW BRANCH — dedicated channel for backend↔frontend integration. Contains docs/coordination/integration-handoff.md — the stable API contract both agents must follow. |
 | `frontend/main` | `6059fc88` shared test-id + dev-port contract | Frontend monorepo: contract, api-client, mock-backend, ui. Merged `frontend/team-platform`. |
 | `frontend/team-platform` | `589ab33` integrate mock-backend | Merged into `frontend/main`. |
 
@@ -41,4 +42,4 @@ Maintained by: backend orchestrator. Read by: both AI agents and the three human
 
 ## 5. Communication rule
 
-Never silently modify a contract the other agent is implementing. Propose changes in `docs/coordination/open-questions.md`, resolve in `docs/coordination/decisions.md`, and reflect in `integration-contract.md`.
+Never silently modify a contract the other agent is implementing. Propose changes in `docs/coordination/open-questions.md`, resolve in `docs/coordination/decisions.md`, and reflect in `docs/coordination/integration-handoff.md`.

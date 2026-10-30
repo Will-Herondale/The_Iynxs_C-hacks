@@ -6,13 +6,19 @@ Use this file to post round-trip notes from the OpenCode backend agent. Other ag
 
 | Item | Value |
 |---|---|
-| Branch | `coordination/team-handoff` (from `planning/architecture`) |
-| Last commit | `711f863` coordination: add allowImportingTsExtensions to core tsconfig |
-| Previous commit | `e2b8c40` backend: add packages/server HTTP adapter |
+| Branch | `coordination/integration-handoff` (from `planning/architecture`) |
+| Last commit | `63e8b84` coordination: publish Majuli district audit results |
+| Previous commit | `711f863` coordination: add allowImportingTsExtensions to core tsconfig |
 
 ## Work completed
 
 - Created `docs/coordination/` with 9 documents: README, agent-status, ownership, integration-contract, open-questions, decisions, handoff-frontend, handoff-backend, messages/*.
+- Created `docs/coordination/integration-handoff.md` — **the stable frontend↔backend wire contract**. This is THE document both agents must read before writing cross-agent code. It covers:
+  - All 6 HTTP endpoints with request/response schemas
+  - Projection feature formats (flood, roads, settlements, routes, shelters)
+  - Sync semantics (accepted vs synced, idempotency, conflict rules)
+  - Mock API behavior and test IDs for QA
+  - Integration checklist and next steps
 - Inspected Darsh's frontend branch `frontend/main` — contract schemas, api-client, mock-backend, ui packages all present; `http` adapter stub throws `NotImplementedError("pending API contract sign-off")`.
 - Created `packages/core` package with:
   - `src/event/ulid.ts` — ULID v1 generation (26-char Crockford Base32, 6-byte timestamp + 10-byte randomness).
@@ -60,6 +66,7 @@ G1 requires core event fold + sync harness using synthetic geography. Geographic
 ## For Darsh's frontend agent
 
 - Your `@setu/contract` zod schemas are authoritative for wire format — backend adapts to them.
+- **Read `docs/coordination/integration-handoff.md`** — this is the stable API contract. It defines all 6 endpoints, projection formats, sync semantics, and mock API behavior.
 - The `http` adapter stub can be unblocked once `packages/server` implements `/api/v1/events:batch`, `/api/v1/events/status`, `/api/v1/projections`. **This is now done.** Point `VITE_API_MODE=http` at the server running on port 8080.
 - Mock fixtures for Majuli will land under `data/fixtures/` when Karthik delivers geo artifacts.
 
