@@ -59,7 +59,9 @@ const snap = {
     { type: 'Feature', geometry: { type: 'Point', coordinates: [94.3, 26.97] }, properties: { settlementId: 'S2', name: 'Fine', population: 10, accessibility: 'accessible', households: 2, needs: [] } },
   ] },
   routes: { type: 'FeatureCollection', version: 7, generatedAt: '2026-01-01T00:00:00+05:30', features: [] },
-  shelters: { type: 'FeatureCollection', version: 7, generatedAt: '2026-01-01T00:00:00+05:30', features: [] },
+  shelters: { type: 'FeatureCollection', version: 7, generatedAt: '2026-01-01T00:00:00+05:30', features: [
+    { type: 'Feature', geometry: { type: 'Point', coordinates: [94.4, 26.9] }, properties: { shelterId: 'MJ-SH-009', name: 'Camp Nine', capacity: 0, occupancy: 0, open: false } },
+  ] },
 } as unknown as ProjectionSnapshot;
 
 afterEach(() => { cleanup(); state.items = []; state.snapshot = undefined; state.online = true; });
@@ -87,7 +89,7 @@ describe('projectionView', () => {
     const v = projectionView(snap);
     expect(v.blockedRoads.map((r) => r.id)).toEqual(['284824410']);
     expect(v.blockedRoads[0]!.kind).toBe('bridge');
-    expect(v.flood.map((f) => f.label)).toEqual(['Modelled · SYNTHETIC', 'Observed']);
+    expect(v.flood.map((f) => f.label)).toEqual(['Modelled · EXPERIMENTAL', 'Observed']);
     expect(v.cutOff.map((s) => s.name)).toEqual(['Kamalabari']);
   });
 });
@@ -107,7 +109,14 @@ describe('MapScreen', () => {
     const open = vi.fn();
     render(<MapScreen onOpenReport={open} />);
     expect(screen.getByTestId('map-blocked-list').textContent).toContain('Bridge X');
-    expect(screen.getByTestId('map-flood-list').textContent).toContain('SYNTHETIC');
+    expect(screen.getByTestId('map-flood-list').textContent).toContain('EXPERIMENTAL');
+    const shel = screen.getByTestId('map-shelter-list');
+    expect(shel.textContent).toContain('Pre-identified · not confirmed');
+    expect(shel.textContent).toContain('capacity not published');
+    expect(shel.textContent).not.toMatch(/Closed|0 of 0/);
+    expect(screen.getByTestId('map-key-shelter').textContent).toContain('pre-identified');
+    expect(screen.getByTestId('map-key-routes').textContent).toContain('not verified');
+    expect(screen.getAllByTestId('data-class-tag').map((e) => e.getAttribute('data-class'))).toEqual(expect.arrayContaining(['REAL', 'SYNTHETIC', 'EXPERIMENTAL']));
     expect(screen.getByTestId('map-cutoff-list').textContent).toContain('Kamalabari');
     const links = screen.getAllByTestId('map-report-link');
     expect(links.map((l) => l.closest('li')!.getAttribute('data-state'))).toEqual(['pending', 'accepted']);

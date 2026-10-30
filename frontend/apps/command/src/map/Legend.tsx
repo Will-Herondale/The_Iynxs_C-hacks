@@ -1,16 +1,27 @@
-import { PassabilityLegend } from '@setu/ui';
+import { LAYER_DATA_CLASS, type DataClass } from '@setu/geo';
+import { DataClassTag, PassabilityLegend } from '@setu/ui';
 import { COLORS } from './layers';
 import { OBSERVATION_STATES } from './observations';
 
-type Swatch = 'line' | 'dashed' | 'dot' | 'halo' | 'area' | 'modelled' | 'uncertain' | 'cross' | 'ring' | 'diamond';
-interface Item { label: string; color: string; swatch: Swatch; synthetic?: boolean }
+type Swatch = 'unverified' | 'hollow' | 'line' | 'dashed' | 'dot' | 'halo' | 'area' | 'modelled' | 'uncertain' | 'cross' | 'ring' | 'diamond';
+interface Item { label: string; color: string; swatch: Swatch; synthetic?: boolean; routeState?: string; shelterStatus?: string }
+
+/** Class per legend group (single source: LAYER_DATA_CLASS). */
+export const LEGEND_CLASS: Record<string, DataClass> = {
+  Flood: LAYER_DATA_CLASS['flood-modelled'],
+  Roads: LAYER_DATA_CLASS.roads,
+  Settlements: LAYER_DATA_CLASS.settlements,
+  Routes: LAYER_DATA_CLASS.routes,
+  'Reports (observations)': LAYER_DATA_CLASS.settlements,
+  Shelters: LAYER_DATA_CLASS.shelters,
+};
 
 export const LEGEND_ROWS: { title: string; items: Item[] }[] = [
   {
     title: 'Flood',
     items: [
       { label: 'Flood — observed (solid)', color: COLORS.observedFlood, swatch: 'area' },
-      { label: 'Flood — modelled (dashed)', color: COLORS.modelledFlood, swatch: 'modelled', synthetic: true },
+      { label: 'Flood — modelled (dashed) · EXPERIMENTAL', color: COLORS.modelledFlood, swatch: 'modelled', synthetic: true },
       { label: 'Flood — uncertain', color: COLORS.warning, swatch: 'uncertain' },
     ],
   },
@@ -36,10 +47,8 @@ export const LEGEND_ROWS: { title: string; items: Item[] }[] = [
   {
     title: 'Routes',
     items: [
-      { label: 'Evacuation (active)', color: COLORS.safe, swatch: 'line' },
-      { label: 'Supply', color: COLORS.routeSupply, swatch: 'line' },
-      { label: 'Recalculated (alternative)', color: COLORS.safe, swatch: 'line' },
-      { label: 'Refused (unavailable)', color: COLORS.grey, swatch: 'dashed' },
+      { label: '? Route (not verified)', color: COLORS.unverified, swatch: 'unverified', routeState: 'not-verified' },
+      { label: 'Refused / unavailable ✕', color: COLORS.grey, swatch: 'dashed', routeState: 'refused' },
     ],
   },
   {
@@ -54,8 +63,8 @@ export const LEGEND_ROWS: { title: string; items: Item[] }[] = [
   {
     title: 'Shelters',
     items: [
-      { label: 'Shelter (open)', color: COLORS.shelterOpen, swatch: 'dot' },
-      { label: 'Shelter (closed)', color: COLORS.shelterClosed, swatch: 'dot' },
+      { label: 'Open (reported)', color: COLORS.shelterOpen, swatch: 'dot', shelterStatus: 'open-reported' },
+      { label: 'Pre-identified · not confirmed', color: COLORS.shelterClosed, swatch: 'hollow', shelterStatus: 'pre-identified' },
     ],
   },
 ];
@@ -63,6 +72,10 @@ export const LEGEND_ROWS: { title: string; items: Item[] }[] = [
 function Mark({ color, swatch }: { color: string; swatch: Swatch }) {
   const base = { display: 'inline-block', flex: 'none' } as const;
   switch (swatch) {
+    case 'unverified':
+      return <span aria-hidden style={{ ...base, width: 20, height: 0, borderTop: `4px dashed ${color}` }} />;
+    case 'hollow':
+      return <span aria-hidden style={{ ...base, width: 14, height: 14, borderRadius: '50%', background: 'rgba(255,255,255,0.55)', border: `3px dashed ${color}`, boxSizing: 'border-box' }} />;
     case 'line':
       return <span aria-hidden style={{ ...base, width: 20, height: 4, background: color, borderRadius: 2 }} />;
     case 'dashed':
@@ -105,6 +118,7 @@ export function Legend() {
   return (
     <div
       data-testid="map-legend"
+      className="cmd-legend"
       style={{
         position: 'absolute', left: 8, bottom: 24, zIndex: 2, maxWidth: 260, maxHeight: '60%', overflowY: 'auto', padding: '6px 10px',
         background: 'rgba(255,255,255,0.94)', color: '#111', borderRadius: 6, fontSize: 12,
@@ -116,16 +130,21 @@ export function Legend() {
         <PassabilityLegend />
         {LEGEND_ROWS.map((g) => (
           <div key={g.title} style={{ marginTop: 6 }}>
-            <div style={{ fontWeight: 600 }}>{g.title}</div>
+            <div style={{ fontWeight: 600 }}>{g.title} {LEGEND_CLASS[g.title] && <DataClassTag dataClass={LEGEND_CLASS[g.title]!} {...(g.title === 'Flood' ? { label: 'Modelled · EXPERIMENTAL' } : {})} />}</div>
             {g.items.map((i) => (
-              <div key={i.label} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+              <div key={i.label} data-testid="map-legend-item" {...(LEGEND_CLASS[g.title] ? { 'data-class': LEGEND_CLASS[g.title] } : {})} {...(i.routeState ? { 'data-route-state': i.routeState } : {})} {...(i.shelterStatus ? { 'data-shelter-status': i.shelterStatus } : {})} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
                 <Mark color={i.color} swatch={i.swatch} />
                 <span>{i.label}{i.synthetic && <SyntheticNote />}</span>
               </div>
             ))}
             {g.title === 'Flood' && (
               <div data-testid="map-legend-flood-caveat" style={{ marginTop: 3, fontSize: 11, color: '#444' }}>
-                Modelled flood is a DEM-threshold approximation — not a validated hydraulic simulation. Scenario-derived data is SYNTHETIC.
+                Modelled flood is a DEM-threshold approximation — EXPERIMENTAL, not a validated hydraulic simulation. Scenario-derived data is SYNTHETIC.
+              </div>
+            )}
+            {g.title === 'Routes' && (
+              <div data-testid="map-legend-route-caveat" style={{ marginTop: 3, fontSize: 11, color: '#444' }}>
+                No route is verified as computed on the road network. Never treat a route or its ETA as a safe evacuation route.
               </div>
             )}
           </div>

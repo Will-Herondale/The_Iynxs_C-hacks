@@ -94,6 +94,10 @@ Everything the apps show comes through the `ApiClient` interface. Right now that
 | Optional projection fields for this demo (bridge kind, passability, cut-off reason, evacuation deadline, route refusal, flood confidence, blockage cause) | proposed by the frontend, rendered when present, absent-safe ([issue #6](https://github.com/Will-Herondale/The_Iynxs_C-hacks/issues/6)) |
 | Real GIS map data | pending ([issue #7](https://github.com/Will-Herondale/The_Iynxs_C-hacks/issues/7)) |
 
+### Data honesty caveat (wave 9)
+
+Routes and ETAs in the demo come from the scenario fixtures, not a router: they are shown as **Route (not verified)** (dashed amber) with ETA "indicative, source unconfirmed". The road graph is fragmented (1,030 components) so no route is a validated evacuation path. All 23 shelters are **Pre-identified · not confirmed** (capacity and occupancy not published). Layers carry REAL / SYNTHETIC / EXPERIMENTAL tags. See `DATA_CLASSIFICATION.md`.
+
 ## 5. Automated check
 
 `cd frontend/e2e && npx playwright test` runs the whole story headlessly, including `demo-b1.spec.ts`, which also regenerates the four screenshots in `docs/demo/`.

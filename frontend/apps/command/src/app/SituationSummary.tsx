@@ -35,7 +35,7 @@ export function SituationSummary() {
       <dl className="cmd-situation__counts">
         <div><dt>Cut off</dt><dd data-testid="stat-cut-off">{cutOff ?? '–'}</dd></div>
         <div><dt>Blocked roads</dt><dd data-testid="stat-blocked-roads">{blocked ?? '–'}</dd></div>
-        <div><dt>Active routes</dt><dd data-testid="stat-active-routes">{active ?? '–'}</dd></div>
+        <div><dt title="Scenario routes; not verified as computed">Routes (not verified)</dt><dd data-testid="stat-active-routes">{active ?? '–'}</dd></div>
       </dl>
     </section>
   );

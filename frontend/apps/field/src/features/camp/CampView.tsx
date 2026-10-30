@@ -6,6 +6,7 @@ import '../household/household.css';
 import { DataAsOf, StaleWarning } from '../status/index.js';
 import { useQueue } from '../../sync/index.js';
 import type { QueueItem } from '../../sync/index.js';
+import { shelterCounts, shelterStatus } from '../map/honesty.js';
 
 export const CAMP_KEY = 'setu.field.camp';
 
@@ -41,13 +42,15 @@ export function campHouseholds(items: QueueItem[], shelterId: string): QueueItem
 }
 
 function CampInfo({ shelter, asOf, online }: { shelter: ProjectionSnapshot['shelters']['features'][number]['properties']; asOf?: string; online: boolean }) {
+  const st = shelterStatus(shelter);
+  const counts = shelterCounts(shelter);
   return (
     <Panel title={shelter.name}>
-      <div data-testid="camp-info" data-shelter-id={shelter.shelterId}>
+      <div data-testid="camp-info" data-shelter-id={shelter.shelterId} data-shelter-status={st.status}>
         <p>
-          <Badge tone={shelter.open ? 'success' : 'danger'}>{shelter.open ? 'Open' : 'Closed'}</Badge>
+          <Badge tone={st.status === 'open-reported' ? 'success' : 'neutral'}>{st.status === 'open-reported' ? '✓ ' : '◌ '}{st.label}</Badge>
         </p>
-        <p data-testid="camp-capacity">Capacity and occupancy: <strong>not published</strong> (no source data yet; capacity is not managed here).</p>
+        <p data-testid="camp-capacity">Capacity and occupancy: <strong>{counts}</strong>{counts === 'not published' ? ' (no source data yet; capacity is not managed here).' : '.'}</p>
         {asOf && !online && <p role="note">Data as of {asOf}. You are offline, so this may be out of date.</p>}
       </div>
     </Panel>

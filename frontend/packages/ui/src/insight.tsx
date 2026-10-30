@@ -8,6 +8,8 @@ export const SETU_MAP_COLORS = {
   uncertain: '#f2b84b',
   warning: '#f2a63b',
   review: '#d2a8ff',
+  /** Route not verified: dashed amber, never solid green. */
+  unverified: '#e0a030',
 } as const;
 
 export interface ExplanationProps {

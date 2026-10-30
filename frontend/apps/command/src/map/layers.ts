@@ -1,5 +1,6 @@
 import type { ExpressionSpecification, LayerSpecification } from 'maplibre-gl';
 import type { ProjectionSnapshot } from '@setu/contract';
+import { LAYER_DATA_CLASS, type DataClass, type LayerKey } from '@setu/geo';
 import { SETU_MAP_COLORS } from '@setu/ui';
 import type { FeatureKind } from '../app';
 
@@ -67,6 +68,21 @@ export const TOGGLE_LABELS: Record<ToggleId, string> = {
 };
 
 /** Overlay (snapshot-driven) layer ids per toggle. Basemap layers are added by basemap.ts. */
+/** Single-source data class key (LAYER_DATA_CLASS) per toggle. Backend flood is modelled -> EXPERIMENTAL. */
+export const TOGGLE_CLASS_KEY: Record<ToggleId, LayerKey> = {
+  terrain: 'hillshade',
+  rivers: 'waterways',
+  roads: 'roads',
+  settlements: 'settlements',
+  shelters: 'shelters',
+  flood: 'flood-modelled',
+  blocked: 'road-status',
+  cutoff: 'settlements',
+  observations: 'settlements',
+  routes: 'routes',
+};
+export const toggleDataClass = (id: ToggleId): DataClass => LAYER_DATA_CLASS[TOGGLE_CLASS_KEY[id]];
+
 export const TOGGLE_LAYERS: Record<ToggleId, string[]> = {
   terrain: [],
   rivers: [],
@@ -130,6 +146,7 @@ export const COLORS = {
   observedFlood: '#0d47a1',
   modelledFlood: '#64b5f6',
   routeSupply: '#37474f',
+  unverified: palette.unverified ?? '#e0a030',
   shelterOpen: '#00796b',
   shelterClosed: '#616161',
   blocking: '#ff6d00',
@@ -172,11 +189,6 @@ const roadStatusColor: ExpressionSpecification = [
   COLORS.grey,
 ];
 
-const routeColor: ExpressionSpecification = [
-  'case',
-  ['==', ['get', 'kind'], 'supply'], COLORS.routeSupply,
-  COLORS.safe,
-];
 
 const settlementColor: ExpressionSpecification = [
   'match', ['get', 'accessibility'],
@@ -185,6 +197,9 @@ const settlementColor: ExpressionSpecification = [
   'cut_off', COLORS.grey,
   COLORS.grey,
 ];
+
+/** Shelter not open with capacity 0 and occupancy 0 = pre-identified, not confirmed. */
+const preidentified: ExpressionSpecification = ['all', ['!', ['get', 'open']], ['==', ['get', 'capacity'], 0], ['==', ['get', 'occupancy'], 0]];
 
 const noMatch: ExpressionSpecification = ['==', ['get', 'none'], '__none__'];
 
@@ -233,12 +248,13 @@ export const MAP_LAYERS: LayerSpecification[] = [
     // Recalculated routes: soft glow underneath to make them stand out.
     id: 'routes-recalc-glow', type: 'line', source: SOURCE_IDS.routes, filter: isStatus('recalculated'),
     layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': COLORS.safe, 'line-width': 14, 'line-opacity': 0.3 },
+    paint: { 'line-color': COLORS.unverified, 'line-width': 14, 'line-opacity': 0.25 },
   },
   {
+    // Not verified: the frontend cannot tell a route was computed, so it is never drawn solid green.
     id: 'routes-line', type: 'line', source: SOURCE_IDS.routes, filter: ['!', isStatus('unavailable')],
-    layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': routeColor, 'line-width': ['case', isStatus('recalculated'), 6, 4] },
+    layout: { 'line-cap': 'butt', 'line-join': 'round' },
+    paint: { 'line-color': COLORS.unverified, 'line-width': ['case', isStatus('recalculated'), 6, 4], 'line-dasharray': [2, 1.5] },
   },
   {
     // Refused routes: grey, dashed, faded (unavailable). The blocking feature carries the red.
@@ -271,11 +287,11 @@ export const MAP_LAYERS: LayerSpecification[] = [
   {
     id: 'shelters-circle', type: 'circle', source: SOURCE_IDS.shelters,
     paint: {
-      // Radius grows with occupancy; closed shelters are grey.
-      'circle-radius': ['interpolate', ['linear'], ['get', 'occupancy'], 0, 6, 500, 12],
-      'circle-color': ['case', ['get', 'open'], COLORS.shelterOpen, COLORS.shelterClosed],
-      'circle-stroke-color': '#ffffff',
-      'circle-stroke-width': 2,
+      // Radius grows with occupancy. Pre-identified (not open, 0/0) = hollow grey ring, not a "closed" shelter.
+      'circle-radius': ['interpolate', ['linear'], ['get', 'occupancy'], 0, 7, 500, 12],
+      'circle-color': ['case', ['get', 'open'], COLORS.shelterOpen, preidentified, 'rgba(255,255,255,0.55)', COLORS.shelterClosed],
+      'circle-stroke-color': ['case', ['get', 'open'], '#ffffff', preidentified, COLORS.shelterClosed, '#ffffff'],
+      'circle-stroke-width': ['case', preidentified, 3, 2],
     },
   },
   {

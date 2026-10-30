@@ -1,5 +1,7 @@
 import type { ProjectionSnapshot, RouteProps, SettlementProps } from '@setu/contract';
 import { ROUTE_RANK } from '../../panels/model';
+import type { RouteState } from '@setu/geo';
+import { routeState } from '@setu/geo';
 
 /** Display grouping over server routes. No routing is computed; "no safe route" is read from server statuses. */
 
@@ -22,13 +24,12 @@ export const routesFrom = (s: ProjectionSnapshot, settlementId: string): RoutePr
   allRoutes(s).filter((r) => r.from === settlementId && r.kind === 'evacuation');
 
 /**
- * True when evacuation is needed (cut off / limited / has a deadline) and no evacuation route from the
- * settlement is usable according to the server (none listed, or every one `unavailable`).
+ * True when the settlement has evacuation routes and every one is `unavailable`. A settlement with
+ * no routes at all is "no route data", not "no safe route".
  */
 export function hasNoSafeRoute(s: ProjectionSnapshot, p: SettlementProps): boolean {
   const rs = routesFrom(s, p.settlementId);
-  if (rs.length > 0) return rs.every((r) => r.status === 'unavailable');
-  return p.accessibility === 'cut_off';
+  return rs.length > 0 && rs.every((r) => r.status === 'unavailable');
 }
 
 export type RouteCoverage = 'no-safe-route' | 'rerouted' | 'route-available' | 'no-route-listed';
@@ -41,7 +42,13 @@ export function coverage(s: ProjectionSnapshot, p: SettlementProps): RouteCovera
 
 export const COVERAGE_LABEL: Record<RouteCoverage, string> = {
   'no-safe-route': 'No safe route',
-  rerouted: 'Rerouted',
-  'route-available': 'Route available',
-  'no-route-listed': 'No route listed',
+  rerouted: 'Rerouted · not verified',
+  'route-available': 'Route not verified',
+  'no-route-listed': 'No route data',
 };
+
+/** Settlement-level route state from the shared rules (never `calculated`). */
+export function settlementRouteState(s: ProjectionSnapshot, p: SettlementProps): RouteState {
+  const rs = routesFrom(s, p.settlementId);
+  return routeState(undefined, { settlementRoutes: rs });
+}

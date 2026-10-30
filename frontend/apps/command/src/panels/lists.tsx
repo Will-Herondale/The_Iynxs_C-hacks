@@ -1,11 +1,13 @@
 import type { ReactNode } from 'react';
 import type { ProjectionSnapshot } from '@setu/contract';
-import { Badge, EmptyState, Panel } from '@setu/ui';
+import { LAYER_DATA_CLASS } from '@setu/geo';
+import { Badge, DataClassTag, EmptyState, Panel } from '@setu/ui';
+import { RouteStateBadge, ShelterStatusBadge, formatIndicativeEta, routeStateOf, shelterAttr, shelterCounts, shelterInfo } from '../honesty';
 import { useSelection, type FeatureKind } from '../app';
 import { useProjections } from '../data';
 import { ExplainBlock } from './Explain';
 import {
-  ACCESS_TONE, ROAD_TONE, ROUTE_TONE, label, roads, routes, settlements, shelters,
+  ACCESS_TONE, ROAD_TONE, label, roads, routes, settlements, shelters,
 } from './model';
 
 interface ListProps {
@@ -49,9 +51,10 @@ function Row({ testId, kind, id, attrs, children, extra }: {
 
 const listStyle = { listStyle: 'none', margin: 0, padding: 0 } as const;
 
-function Block({ title, empty, children }: { title: string; empty: boolean; children: ReactNode }) {
+function Block({ title, empty, children, dataClass }: { title: string; empty: boolean; children: ReactNode; dataClass?: 'REAL' | 'SYNTHETIC' | 'EXPERIMENTAL' }) {
   return (
     <Panel title={title}>
+      {dataClass && <p style={{ margin: '0 0 4px' }} data-class={dataClass}><DataClassTag dataClass={dataClass} /></p>}
       {empty ? <EmptyState title="No data yet" /> : <ul style={listStyle}>{children}</ul>}
     </Panel>
   );
@@ -60,7 +63,7 @@ function Block({ title, empty, children }: { title: string; empty: boolean; chil
 export function RoadListView({ snapshot: s }: ListProps) {
   const items = s ? roads(s) : [];
   return (
-    <Block title="Roads" empty={items.length === 0}>
+    <Block title="Roads" empty={items.length === 0} dataClass={LAYER_DATA_CLASS.roads}>
       {items.map((r) => (
         <Row key={r.roadId} testId={`road-row-${r.roadId}`} kind="road" id={r.roadId} attrs={{ 'data-status': r.status, 'data-kind': r.kind ?? 'road', ...(r.passability ? { 'data-passability': r.passability } : {}) }}>
           <span>
@@ -78,7 +81,7 @@ export function RoadListView({ snapshot: s }: ListProps) {
 export function SettlementListView({ snapshot: s }: ListProps) {
   const items = s ? settlements(s) : [];
   return (
-    <Block title="Settlements" empty={items.length === 0}>
+    <Block title="Settlements" empty={items.length === 0} dataClass={LAYER_DATA_CLASS.settlements}>
       {items.map((p) => (
         <Row key={p.settlementId} testId={`settlement-row-${p.settlementId}`} kind="settlement" id={p.settlementId} attrs={{ 'data-accessibility': p.accessibility }}
           extra={p.cutOffReason && p.accessibility === 'cut_off' ? <ExplainBlock testId={`explain-cutoff-${p.settlementId}`} title="Why cut off" reason={p.cutOffReason} {...(s ? { snapshot: s } : {})} /> : undefined}>
@@ -93,15 +96,15 @@ export function SettlementListView({ snapshot: s }: ListProps) {
 export function RouteListView({ snapshot: s }: ListProps) {
   const items = s ? routes(s) : [];
   return (
-    <Block title="Routes" empty={items.length === 0}>
+    <Block title="Routes" empty={items.length === 0} dataClass={LAYER_DATA_CLASS.routes}>
       {items.map((p) => (
-        <Row key={p.routeId} testId={`route-row-${p.routeId}`} kind="route" id={p.routeId} attrs={{ 'data-status': p.status }}
+        <Row key={p.routeId} testId={`route-row-${p.routeId}`} kind="route" id={p.routeId} attrs={{ 'data-status': p.status, 'data-route-state': routeStateOf(s, p) }}
           extra={p.refusal && p.status === 'unavailable' ? <ExplainBlock testId={`explain-refusal-${p.routeId}`} title="Why this route is refused" reason={p.refusal} {...(s ? { snapshot: s } : {})} /> : undefined}>
           <span>
-            <strong>{p.routeId}</strong> {p.from}→{p.to} · {p.etaMin} min
+            <strong>{p.routeId}</strong> {p.from}→{p.to} · <span data-testid={`route-eta-${p.routeId}`}>{formatIndicativeEta(p.etaMin)}</span>
             {p.replacesRouteId ? ` · replaces ${p.replacesRouteId}` : ''}
           </span>
-          <Badge tone={ROUTE_TONE[p.status].tone} icon={ROUTE_TONE[p.status].icon}>{label(p.status)}</Badge>
+          <RouteStateBadge state={routeStateOf(s, p)} />
         </Row>
       ))}
     </Block>
@@ -111,13 +114,16 @@ export function RouteListView({ snapshot: s }: ListProps) {
 export function ShelterListView({ snapshot: s }: ListProps) {
   const items = s ? shelters(s) : [];
   return (
-    <Block title="Shelters" empty={items.length === 0}>
-      {items.map((p) => (
-        <Row key={p.shelterId} testId={`shelter-row-${p.shelterId}`} kind="shelter" id={p.shelterId} attrs={{ 'data-open': String(p.open) }}>
-          <span><strong>{p.shelterId}</strong> {p.name} · {p.occupancy}/{p.capacity}</span>
-          <Badge tone={p.open ? 'success' : 'danger'} icon={p.open ? '✓' : '✕'}>{p.open ? 'open' : 'closed'}</Badge>
-        </Row>
-      ))}
+    <Block title="Shelters" empty={items.length === 0} dataClass={LAYER_DATA_CLASS.shelters}>
+      {items.map((p) => {
+        const info = shelterInfo(p);
+        return (
+          <Row key={p.shelterId} testId={`shelter-row-${p.shelterId}`} kind="shelter" id={p.shelterId} attrs={{ 'data-open': String(p.open), 'data-shelter-status': shelterAttr(info) }}>
+            <span><strong>{p.shelterId}</strong> {p.name} · {shelterCounts(info, p)}</span>
+            <ShelterStatusBadge info={info} />
+          </Row>
+        );
+      })}
     </Block>
   );
 }

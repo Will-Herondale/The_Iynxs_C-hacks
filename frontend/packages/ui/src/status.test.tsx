@@ -134,3 +134,18 @@ describe('a11y (axe)', () => {
     expect(await violations(container)).toEqual([]);
   });
 });
+
+describe('DataClassTag', () => {
+  it('renders icon, text, tooltip and data-class for each class', async () => {
+    const { DataClassTag } = await import('./index.js');
+    for (const c of ['REAL', 'SYNTHETIC', 'EXPERIMENTAL'] as const) {
+      const { container, unmount } = render(<DataClassTag dataClass={c} />);
+      const el = container.querySelector('[data-testid="data-class-tag"]')!;
+      expect(el.getAttribute('data-class')).toBe(c);
+      expect(el.textContent).toContain(c);
+      expect(el.getAttribute('title')).toBeTruthy();
+      expect(await violations(container)).toEqual([]);
+      unmount();
+    }
+  });
+});

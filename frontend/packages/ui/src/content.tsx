@@ -25,6 +25,27 @@ export function SyntheticTag({ note = 'Synthetic scenario data. Not a real obser
   );
 }
 
+/* ---------- DataClassTag ---------- */
+
+export type DataClassName = 'REAL' | 'SYNTHETIC' | 'EXPERIMENTAL';
+
+export const DATA_CLASS_META: Record<DataClassName, { icon: string; label: string; tip: string }> = {
+  REAL: { icon: '▣', label: 'REAL', tip: 'Sourced GIS data (roads, bridges, waterways, places, terrain).' },
+  SYNTHETIC: { icon: '◇', label: 'SYNTHETIC', tip: 'Scenario or fixture-derived data. Not a real observation.' },
+  EXPERIMENTAL: { icon: '△', label: 'EXPERIMENTAL', tip: 'Modelled layer (DEM-threshold or HAND-derived). Not validated; not for evacuation safety decisions.' },
+};
+
+export function DataClassTag({ dataClass, label }: { dataClass: DataClassName; label?: string }) {
+  const m = DATA_CLASS_META[dataClass];
+  return (
+    <span className={`setu-dataclass setu-dataclass--${dataClass.toLowerCase()}`} title={m.tip} data-class={dataClass} data-testid="data-class-tag">
+      <span aria-hidden="true">{m.icon}</span>
+      <span>{label ?? m.label}</span>
+      <span className="setu-sr-only"> — {m.tip}</span>
+    </span>
+  );
+}
+
 /* ---------- SeverityLabel ---------- */
 
 export type SeverityLevel = 1 | 2 | 3 | 4 | 5 | 'critical' | 'high' | 'normal';

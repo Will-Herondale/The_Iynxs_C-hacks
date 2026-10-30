@@ -66,6 +66,33 @@ describe('settlements section', () => {
   });
 });
 
+describe('route honesty states', () => {
+  it('active routes are "Route not verified", with indicative ETA', () => {
+    wrap(<RoutesSectionView snapshot={seed} />);
+    const rows = screen.getAllByTestId(/^route-row-/).filter((c) => c.getAttribute('data-status') !== 'unavailable');
+    expect(rows.length).toBeGreaterThan(0);
+    for (const c of rows) {
+      expect(c.getAttribute('data-route-state')).toBe('not-verified');
+      expect(c.textContent).toContain('Route not verified');
+      expect(c.textContent).toContain('indicative, source unconfirmed');
+    }
+    expect(screen.getByTestId('routes-source-note').textContent).toContain('cannot confirm');
+  });
+  it('all routes unavailable -> No safe route; no routes -> No route data (not "no safe route")', () => {
+    const s = cutOff();
+    const id = s.settlements.features[0]!.properties.settlementId;
+    wrap(<RoutesSectionView snapshot={s} />);
+    expect(screen.getByTestId(`no-safe-route-${id}`).getAttribute('data-route-state')).toBe('no-safe-route');
+    cleanup();
+    const n = structuredClone(cutOff());
+    n.routes.features = n.routes.features.filter((f) => f.properties.from !== id);
+    wrap(<RoutesSectionView snapshot={n} />);
+    expect(screen.queryByTestId(`no-safe-route-${id}`)).toBeNull();
+    expect(screen.getByTestId(`no-route-data-${id}`).textContent).toContain('No route data');
+    expect(settlementRows(n).find((r) => r.id === id)!.routeState).toBe('no-route-data');
+  });
+});
+
 describe('routes section', () => {
   it('lists status, eta, refusal and filters by origin/destination', () => {
     const s = structuredClone(seed);
@@ -75,6 +102,8 @@ describe('routes section', () => {
     wrap(<RoutesSectionView snapshot={s} />);
     const card = screen.getByTestId(`route-row-${r.routeId}`);
     expect(card.textContent).toContain(`${r.etaMin} min`);
+    expect(card.textContent).toContain('indicative, source unconfirmed');
+    expect(card.getAttribute('data-route-state')).toBe('refused');
     expect(within(card).getByTestId(`explain-refusal-${r.routeId}`).textContent).toContain('Bridge impassable');
     fireEvent.change(screen.getByTestId('routes-filter-origin'), { target: { value: r.from } });
     for (const c of screen.getAllByTestId(/^route-row-/)) expect(c.textContent).toBeTruthy();
