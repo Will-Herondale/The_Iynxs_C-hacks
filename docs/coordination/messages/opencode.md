@@ -7,12 +7,12 @@ Use this file to post round-trip notes from the OpenCode backend agent. Other ag
 | Item | Value |
 |---|---|
 | Branch | `coordination/team-handoff` (from `planning/architecture`) |
-| Last commit | `aec61bb` coordination: update agent-status with coordination branch and backend state |
-| Previous commit | `ea114c4` coordination: publish multi-agent handoff documents |
+| Last commit | `fd98feb` backend: project and route modules complete, all 66 tests pass |
+| Previous commit | `769e5fa` backend: fix ingest batch to sort by (origin,seq) delivery order |
 
 ## Work completed
 
-- Created `docs/coordination/` with 6 documents: README, agent-status, ownership, integration-contract, open-questions, decisions, handoff-frontend, handoff-backend.
+- Created `docs/coordination/` with 9 documents: README, agent-status, ownership, integration-contract, open-questions, decisions, handoff-frontend, handoff-backend, messages/*.
 - Inspected Darsh's frontend branch `frontend/main` — contract schemas, api-client, mock-backend, ui packages all present; `http` adapter stub throws `NotImplementedError("pending API contract sign-off")`.
 - Created `packages/core` package with:
   - `src/event/ulid.ts` — ULID v1 generation (26-char Crockford Base32, 6-byte timestamp + 10-byte randomness).
@@ -20,18 +20,24 @@ Use this file to post round-trip notes from the OpenCode backend agent. Other ag
   - `src/event/canonical.ts` — Canonical JSON serialization (sorted keys, integers only, no floats).
   - `src/event/content-hash.ts` — SHA-256 over canonical JSON envelope fields.
   - `src/event/envelope.ts` — Envelope type, creation, validation, happensBefore, totalOrder.
-  - `src/sync/version-vector.ts` — Version vector operations (empty, get, set, merge, equal, clone, sorted entries).
+  - `src/sync/version-vector.ts` — Version vector operations (empty, get, set, merge, equal, clone).
   - `src/sync/types.ts` — SyncRequest/SyncResponse/SyncState types.
-  - `src/index.ts` — Public exports.
-- Unit tests: 33 tests across 6 files — all passing.
+  - `src/sync/ingest.ts` — Sync ingest algorithm (duplicate delivery, hole healing, hash collision rejection, max-event-size, idempotent).
+  - `src/project/network.ts` — Road state projection with valid-time observation selection and disputed flag.
+  - `src/project/flood.ts` — HAND inundation projection with hydraulic depth computation.
+  - `src/project/people.ts` — Cross-script person matching with phonetic keys and basis-point scoring.
+  - `src/route/dag.ts` — Time-expanded DAG for routing with node waiting.
+  - `src/route/latest-departure.ts` — Reverse sweep latest-safe-departure.
+  - `src/route/cutoff.ts` — Settlement reachability and cut-off computation.
+  - `src/index.ts` — Public exports for all modules.
+- Unit tests: 66 tests across 11 test files — all passing.
 
 ## Pending work
 
-- Implement `packages/core/src/sync/` merge/ingest algorithm (per-origin seq, holes, contiguous hwm).
-- Implement `packages/core/src/project/` deterministic fold (flood, network, people, decision).
-- Implement `packages/core/src/route/` time-expanded DAG, latest-safe-departure, cut-off sweep.
-- Implement `packages/server/` HTTP adapter for `/api/v1/*` endpoints (per integration-contract.md).
-- Create `packages/geo/` Python batch builder (Karthik dependency).
+- Implement `packages/server/` HTTP adapter for `/api/v1/events:batch`, `/api/v1/events/status`, `/api/v1/projections`, `/api/v1/events`, `/api/v1/stream`.
+- Implement `packages/geo/` Python batch builder (Karthik dependency — DEM → HAND artifacts).
+- Implement deterministic event fold combining all projections into `ProjectionSnapshot`.
+- Create mock fixtures under `data/fixtures/` for Majuli scenario.
 
 ## Blockers / questions
 

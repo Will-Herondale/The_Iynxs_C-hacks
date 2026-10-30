@@ -36,7 +36,7 @@ Maintained by: backend orchestrator. Read by: both AI agents and the three human
 ## 4. Work state
 
 - **Frontend:** contract schemas (zod), API client interface, mock in-process backend, dev relay, seed scenario (Guwahati), UI component kit. `http` adapter throws `NotImplementedError` pending contract sign-off. Apps (`apps/field`, `apps/command`) not yet scaffolded.
-- **Backend:** packages/core scaffolded (event envelope, HLC, canonical JSON, content hash, version vector, sync types, 33 tests passing). Next: sync merge/ingest, deterministic fold, routing DAG, packages/server HTTP adapter.
+- **Backend:** packages/core complete (event envelope, HLC, canonical JSON, content hash, version vector, sync ingest with hole healing, project/flood, project/network, project/people, route/dag, route/latest-departure, route/cutoff — 66 tests passing across 11 test files). Next: packages/server HTTP adapter for /api/v1/* endpoints, packages/geo Python builder (waiting on Karthik artifacts).
 - **Karthik:** nothing landed yet; DEM tiles verified downloadable, Majuli geodata audit complete.
 
 ## 5. Communication rule
