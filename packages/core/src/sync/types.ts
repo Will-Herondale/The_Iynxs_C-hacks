@@ -28,4 +28,5 @@ export function syncStateEmpty(): SyncState {
 }
 
 export type { VersionVector } from './version-vector.js';
+export { vvGet, vvSet, vvClone } from './version-vector.js';
 export type { Envelope } from '../event/envelope.js';
