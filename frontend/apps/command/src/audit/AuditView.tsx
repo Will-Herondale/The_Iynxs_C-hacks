@@ -1,3 +1,4 @@
+import { SkippedEventsNotice } from '../data/skipped';
 import { useMemo, useState } from 'react';
 import { Panel, EmptyState, SyncStatusBadge } from '@setu/ui';
 import type { EventRecord, FieldEventType } from '@setu/contract';
@@ -63,6 +64,7 @@ export function AuditView({ onShowFeature }: AuditViewProps) {
   return (
     <div data-testid="audit-view">
       <Panel title="Audit: every report received">
+        <SkippedEventsNotice />
         <div style={{ display: 'flex', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
           <label>
             Type{' '}

@@ -40,11 +40,13 @@ export interface HttpApiClientOptions {
   reconnectMaxMs?: number;
   /** Defaults to the global EventSource when present; otherwise polling only. */
   eventSource?: EventSourceFactory;
+  /** Called after every listEvents() with how many server records failed contract validation (0 = none). Valid records are still returned. */
+  onSkippedRecords?: (info: { skipped: number; total: number; firstIssue?: string }) => void;
 }
 
 const BatchResponse = z.object({ acks: z.array(SubmitAckSchema) });
 const StatusResponse = z.object({ statuses: z.array(EventStatusSchema) });
-const EventsResponse = z.object({ events: z.array(EventRecordSchema) });
+const EventsResponse = z.object({ events: z.array(z.unknown()) });
 const StreamMessage = z.object({ type: z.literal('version'), version: z.number().int().nonnegative() });
 
 export function createHttpApiClient(opts: HttpApiClientOptions = {}): ApiClient {
@@ -142,7 +144,17 @@ export function createHttpApiClient(opts: HttpApiClientOptions = {}): ApiClient 
     if (params.type !== undefined) q.set('type', params.type);
     const qs = q.toString();
     const res = await request('/api/v1/events' + (qs ? `?${qs}` : ''));
-    return (await json(res, EventsResponse)).events;
+    // Validate record by record: one bad record must not hide the valid ones. Skipped records are reported, never silently dropped.
+    const raw = (await json(res, EventsResponse)).events;
+    const valid: EventRecord[] = [];
+    let firstIssue: string | undefined;
+    for (const rec of raw) {
+      const r = EventRecordSchema.safeParse(rec);
+      if (r.success) valid.push(r.data);
+      else firstIssue ??= `${r.error.issues[0]?.path.join('.') ?? '?'}: ${r.error.issues[0]?.message ?? 'invalid'}`;
+    }
+    opts.onSkippedRecords?.({ skipped: raw.length - valid.length, total: raw.length, ...(firstIssue ? { firstIssue } : {}) });
+    return valid;
   }
 
   function subscribe(onChange: (snapshotVersion: number) => void): () => void {

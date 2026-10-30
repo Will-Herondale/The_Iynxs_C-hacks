@@ -12,10 +12,12 @@ export interface CreateApiClientOptions {
   mockAdapter?: ApiClient;
   /** For mode 'http' (stub until contract sign-off). */
   baseUrl?: string;
+  /** For mode 'http': reports server event records skipped for failing contract validation. */
+  onSkippedRecords?: (info: { skipped: number; total: number; firstIssue?: string }) => void;
 }
 
 export function createApiClient(opts: CreateApiClientOptions): ApiClient {
-  if (opts.mode === 'http') return createHttpApiClient({ baseUrl: opts.baseUrl });
+  if (opts.mode === 'http') return createHttpApiClient({ baseUrl: opts.baseUrl, ...(opts.onSkippedRecords ? { onSkippedRecords: opts.onSkippedRecords } : {}) });
   if (opts.mode === 'mock') {
     if (!opts.mockAdapter) {
       throw new Error("createApiClient({mode:'mock'}) needs a mockAdapter; use createApiClientWithMock from @setu/mock-backend");
