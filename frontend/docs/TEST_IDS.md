@@ -36,7 +36,7 @@ Mock failure toggles go through the URL, e.g. `?mock=offline`, `?mock=5xx:1`, `?
 | `household-submit` | submit | |
 | `form-error` | validation error text | |
 | `queue-list` | queue container | |
-| `queue-item` | one queued item | `data-client-event-id`, `data-status` = ClientSyncStatus, `data-type` |
+| `queue-item` | one queued item | `data-client-event-id`, `data-status` = ClientSyncStatus, `data-type`, `data-attempts` |
 | `queue-retry`, `queue-discard`, `queue-edit` | per-item actions (inside `queue-item`) | |
 | `conflict-panel` | conflict details (inside `queue-item`) | |
 | `conflict-keep-mine`, `conflict-accept-server` | conflict resolution | |
