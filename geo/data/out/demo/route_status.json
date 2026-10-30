@@ -1,0 +1,41 @@
+{
+  "type": "FeatureCollection",
+  "version": 1,
+  "generatedAt": "2026-10-30T14:03:31.074723+00:00",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "route-auniati-evac",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            94.1622,
+            26.9586
+          ],
+          [
+            94.17,
+            26.965
+          ],
+          [
+            94.18,
+            26.97
+          ]
+        ]
+      },
+      "properties": {
+        "routeId": "route-auniati-evac-001",
+        "from": "10692764768",
+        "to": "MJ-SH-009",
+        "kind": "evacuation",
+        "status": "recalculated",
+        "etaMin": 45,
+        "replacesRouteId": null,
+        "avoids": [
+          "284824410"
+        ],
+        "synthetic": true
+      }
+    }
+  ]
+}

@@ -21,6 +21,7 @@ Full pipeline green:
 - `scripts/50_validate.py` — 28 checks, all PASS. Produces `flood_sweep.csv` and `validation_report.json`. Includes HAND raster checks and scenario-target island validation.
 - `scripts/60_scenarios.py` — 5 synthetic scenario configs (S1–S5), fixed seeds 101–105, `synthetic: true`, real feature ids.
 - `scripts/70_hand.py` — HAND (height above nearest drainage) raster from DEM + GSW via D8 flow direction + reverse flow tracing.
+- `scripts/80_demo_artifacts.py` — observation-driven demo artifacts: road graph, settlements, shelters, synthetic scenario S1_obs_driven.
 
 ## Artifacts produced (`geo/data/out/`)
 | Artifact | Size | Notes |
@@ -37,6 +38,15 @@ Full pipeline green:
 | `manifest.csv` | — | Provenance, 14 rows |
 | `scenarios/S{1..5}_*.json` | — | Synthetic scenario configs |
 | `preview/majuli_layers.png` | 1.3 MB | Sourced layers only |
+| `demo/road_graph.geojson` | 1.4 MB | REAL — 1671 road/bridge/embankment features on island |
+| `demo/settlements.geojson` | 2.6 KB | REAL — 8 island settlements (village/hamlet/town) |
+| `demo/shelters.geojson` | 5.7 KB | REAL — 23 DDMA camps, open=false |
+| `demo/scenario_obs.json` | 2.7 KB | SYNTHETIC — observation-driven scenario (S1: submerged bridge) |
+| `demo/road_status.json` | 786 B | SYNTHETIC — road closure from observation |
+| `demo/settlement_status.json` | 4.5 KB | SYNTHETIC — settlement accessibility impacts |
+| `demo/shelter_status.json` | 2.6 KB | SYNTHETIC — shelter reassignment impacts |
+| `demo/flood_extent.json` | 885 B | SYNTHETIC — synthetic flood polygon |
+| `demo/route_status.json` | 809 B | SYNTHETIC — recalculated evacuation route |
 | `geojson/*.geojson` | — | Per-layer GeoJSON |
 
 Layer counts: buildings 182,097; roads 11,736; embankments 13; bridges 518 (202 ≥30 m); waterways 191; waterbodies 120; places 62; amenities 8; ferries 2; shelters 23; boundary 1.
@@ -66,6 +76,7 @@ Layer counts: buildings 182,097; roads 11,736; embankments 13; bridges 518 (202 
 ## Validation results
 - `50_validate.py`: 28 checks, 28 pass, `"ok": true`.
 - Flood sweep island totals at 92 m: 745.1 km of 893 km road flooded (83.4%), 14 of 23 camps, 11,661 island buildings.
+- Demo artifacts (`80_demo_artifacts.py`): road graph (1671 features), settlements (8), shelters (23), scenario S1_obs_driven — all generate cleanly, real vs synthetic clearly flagged.
 
 ## Commits and branches
 - Branch `data/karthik` pushed to `origin/data/karthik`. PR #16 open to `main`.
