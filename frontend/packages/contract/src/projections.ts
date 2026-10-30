@@ -14,10 +14,15 @@ function collection<G extends z.ZodTypeAny, P extends z.ZodTypeAny>(geometry: G,
   });
 }
 
+// Fields marked PROPOSED (frontend) are optional, backward-compatible additions awaiting
+// backend sign-off (GitHub issue #6). The frontend renders them when present and never derives them.
+export const FloodConfidenceSchema = z.enum(['observed', 'modelled', 'uncertain']);
 export const FloodPropsSchema = z.object({
   areaId: z.string(),
   depthCm: z.number().nonnegative(),
   severity: z.number().int().min(1).max(5),
+  /** PROPOSED (frontend) */
+  confidence: FloodConfidenceSchema.optional(),
 });
 export const RoadStatusValueSchema = z.enum(['open', 'partial', 'blocked', 'unknown']);
 export const RoadPropsSchema = z.object({
@@ -26,6 +31,18 @@ export const RoadPropsSchema = z.object({
   status: RoadStatusValueSchema,
   updatedAt: z.string().datetime({ offset: true }),
   sourceEventIds: z.array(z.string()),
+  /** PROPOSED (frontend): bridges are passability features too. Absent means 'road'. */
+  kind: z.enum(['road', 'bridge']).optional(),
+  /** PROPOSED (frontend) */
+  passability: z.enum(['passable', 'limited', 'impassable', 'unknown']).optional(),
+  /** PROPOSED (frontend): human-readable explanation of the current status. */
+  reason: z.string().optional(),
+});
+/** PROPOSED (frontend): why a settlement is cut off / a route refused. */
+export const ExplanationSchema = z.object({
+  summary: z.string(),
+  blockingFeatureIds: z.array(z.string()),
+  sourceEventIds: z.array(z.string()).optional(),
 });
 export const AccessibilitySchema = z.enum(['accessible', 'limited', 'cut_off']);
 export const SettlementPropsSchema = z.object({
@@ -35,6 +52,12 @@ export const SettlementPropsSchema = z.object({
   accessibility: AccessibilitySchema,
   households: z.number().int().nonnegative(),
   needs: z.array(z.string()),
+  /** PROPOSED (frontend) */
+  cutOffReason: ExplanationSchema.optional(),
+  /** PROPOSED (frontend): ISO time by which evacuation must be complete. */
+  evacuationDeadline: z.string().datetime({ offset: true }).optional(),
+  /** PROPOSED (frontend) */
+  evacuationPriority: z.enum(['critical', 'high', 'normal']).optional(),
 });
 export const RouteKindSchema = z.enum(['evacuation', 'supply']);
 export const RouteStatusSchema = z.enum(['active', 'recalculated', 'unavailable']);
@@ -46,6 +69,8 @@ export const RoutePropsSchema = z.object({
   status: RouteStatusSchema,
   etaMin: z.number().nonnegative(),
   replacesRouteId: z.string().optional(),
+  /** PROPOSED (frontend): set when status = unavailable. */
+  refusal: ExplanationSchema.optional(),
 });
 export const ShelterPropsSchema = z.object({
   shelterId: z.string(),
@@ -71,6 +96,8 @@ export const ProjectionSnapshotSchema = z.object({
   shelters: ShelterSchema,
 });
 
+export type FloodConfidence = z.infer<typeof FloodConfidenceSchema>;
+export type Explanation = z.infer<typeof ExplanationSchema>;
 export type FloodProps = z.infer<typeof FloodPropsSchema>;
 export type RoadProps = z.infer<typeof RoadPropsSchema>;
 export type RoadStatusValue = z.infer<typeof RoadStatusValueSchema>;
