@@ -14,7 +14,18 @@ export interface BlockageScript {
   settlements: string[];
   /** Route made unavailable and the precomputed replacement. */
   reroute?: { routeId: string; replacementId: string; geometry: Pos[]; etaMin: number };
+  /** Routes that cross this road and are refused (unavailable, with a `refusal`) when it is blocked. */
+  refuses?: string[];
+  /** The blocked road was the settlement's only road access (changes the cut-off wording). */
+  onlyAccess?: boolean;
+  /** A full blockage floods the bridge approach: grow flood area A2 (confidence observed). */
+  growFlood?: boolean;
+  /** Evacuation priority the settlements return to when the road is cleared. */
+  baselinePriority?: SettlementProps['evacuationPriority'];
 }
+
+/** Evacuation deadline = event time + this many hours (deterministic from occurredAt). */
+export const EVACUATION_WINDOW_H = 3;
 
 export const BLOCKAGE_SCRIPTS: Record<string, BlockageScript> = {
   // Scenario 1: Beltola-Basistha Road blocked -> Beltola cut off, EVAC-2 replaced by EVAC-2b
@@ -25,7 +36,15 @@ export const BLOCKAGE_SCRIPTS: Record<string, BlockageScript> = {
   R4: { settlements: ['S1'], reroute: { routeId: 'EVAC-1', replacementId: 'EVAC-1b', geometry: EVAC_1B_GEOMETRY, etaMin: 47 } },
   // Garchuk-Maligaon Road
   R10: { settlements: ['S6'] },
+  // Demo: Bharalu Bridge (B1) submerged -> Hatigaon (S4) cut off, EVAC-3 refused, flood A2 grows over the bridge
+  B1: { settlements: ['S4'], refuses: ['EVAC-3'], onlyAccess: true, growFlood: true, baselinePriority: 'high' },
 };
+
+const CAUSE_NOUN: Record<string, string> = { submerged: 'Submerged', debris: 'Debris', collapse: 'Collapsed', damage: 'Damaged', other: 'Blocked' };
+const CAUSE_VERB: Record<string, string> = { submerged: 'submerged', debris: 'blocked by debris', collapse: 'collapsed', damage: 'damaged', other: 'blocked' };
+
+const hhmm = (iso: string) => new Date(iso).toISOString().slice(11, 16);
+const deadlineOf = (occurredAt: string) => new Date(new Date(occurredAt).getTime() + EVACUATION_WINDOW_H * 3600_000).toISOString();
 
 export interface ApplyOptions {
   /** Timestamp for updatedAt/generatedAt; defaults to now. */
@@ -81,6 +100,10 @@ function blockRoad(s: ProjectionSnapshot, e: Extract<FieldEvent, { type: 'road_b
   if (!(road.properties.status === 'blocked' && status === 'partial')) road.properties.status = status;
   road.properties.updatedAt = now;
   if (!road.properties.sourceEventIds.includes(eventKey(e))) road.properties.sourceEventIds.push(eventKey(e));
+  const isBlocked = road.properties.status === 'blocked';
+  road.properties.passability = isBlocked ? 'impassable' : 'limited';
+  const noun = CAUSE_NOUN[e.cause ?? 'other'] ?? 'Blocked';
+  road.properties.reason = `${isBlocked ? noun : 'Partly ' + noun.toLowerCase()} — volunteer report at ${hhmm(e.occurredAt)}${e.cause ? ` (cause: ${e.cause})` : ''}`;
   effects.push(`road ${roadId} -> ${road.properties.status}`);
 
   const script = BLOCKAGE_SCRIPTS[roadId];
@@ -90,13 +113,35 @@ function blockRoad(s: ProjectionSnapshot, e: Extract<FieldEvent, { type: 'road_b
     if (!st) continue;
     const target: SettlementProps['accessibility'] = status === 'blocked' ? 'cut_off' : 'limited';
     if (st.properties.accessibility !== 'cut_off') st.properties.accessibility = target;
+    if (status === 'blocked') {
+      const verb = CAUSE_VERB[e.cause ?? 'other'] ?? 'blocked';
+      const access = script.onlyAccess ? `${script.refuses?.[0] ?? 'it'} was the only road access` : 'it was a main road access';
+      st.properties.cutOffReason = {
+        summary: `${st.properties.name} (${sid}) is cut off: ${road.properties.name} (${roadId}) is ${verb} and ${access}.`,
+        blockingFeatureIds: [roadId],
+        sourceEventIds: [eventKey(e)],
+      };
+      st.properties.evacuationDeadline = deadlineOf(e.occurredAt);
+      st.properties.evacuationPriority = 'critical';
+    }
     effects.push(`settlement ${sid} -> ${st.properties.accessibility}`);
+  }
+  if (status === 'blocked') {
+    for (const rid of script.refuses ?? []) {
+      const rt = findRoute(s, rid);
+      if (!rt) continue;
+      rt.properties.status = 'unavailable';
+      rt.properties.refusal = refusalFor(road.properties.name, roadId, e.cause);
+      effects.push(`route ${rid} -> unavailable`);
+    }
+    if (script.growFlood) growA2(s, effects);
   }
   if (status === 'blocked' && script.reroute) {
     const { routeId, replacementId, geometry, etaMin } = script.reroute;
     const old = findRoute(s, routeId);
     if (old) {
       old.properties.status = 'unavailable';
+      old.properties.refusal = refusalFor(road.properties.name, roadId, e.cause);
       effects.push(`route ${routeId} -> unavailable`);
       if (!findRoute(s, replacementId)) {
         const p: RouteProps = { routeId: replacementId, from: old.properties.from, to: old.properties.to, kind: old.properties.kind, status: 'recalculated', etaMin, replacesRouteId: routeId };
@@ -110,10 +155,26 @@ function blockRoad(s: ProjectionSnapshot, e: Extract<FieldEvent, { type: 'road_b
   return true;
 }
 
+function refusalFor(roadName: string, roadId: string, cause?: string) {
+  return { summary: `Refused: crosses ${roadName} (${roadId}), which is impassable${cause ? ` (${cause})` : ''}.`, blockingFeatureIds: [roadId] };
+}
+
+function growA2(s: ProjectionSnapshot, effects: string[]): void {
+  const a2 = s.flood.features.find((f) => f.properties.areaId === 'A2');
+  if (!a2) return;
+  a2.properties.confidence = 'observed';
+  if (JSON.stringify(a2.geometry.coordinates) !== JSON.stringify(FLOOD_A2_GROWN.coordinates)) {
+    a2.geometry = structuredClone(FLOOD_A2_GROWN);
+    effects.push('flood A2 extent grown');
+  }
+}
+
 function clearRoad(s: ProjectionSnapshot, e: Extract<FieldEvent, { type: 'road_cleared' }>, now: string, effects: string[]): boolean {
   const road = findRoad(s, e.roadId);
   if (!road || road.properties.status === 'open') return false;
   road.properties.status = 'open';
+  road.properties.passability = 'passable';
+  road.properties.reason = `Cleared — volunteer report at ${hhmm(e.occurredAt)}`;
   road.properties.updatedAt = now;
   if (!road.properties.sourceEventIds.includes(eventKey(e))) road.properties.sourceEventIds.push(eventKey(e));
   effects.push(`road ${e.roadId} -> open`);
@@ -122,12 +183,20 @@ function clearRoad(s: ProjectionSnapshot, e: Extract<FieldEvent, { type: 'road_c
     const st = findSettlement(s, sid);
     if (st && st.properties.accessibility !== 'accessible') {
       st.properties.accessibility = 'accessible';
+      delete st.properties.cutOffReason;
+      delete st.properties.evacuationDeadline;
+      if (script?.baselinePriority) st.properties.evacuationPriority = script.baselinePriority;
+      else delete st.properties.evacuationPriority;
       effects.push(`settlement ${sid} -> accessible`);
     }
   }
+  for (const rid of script?.refuses ?? []) {
+    const rt = findRoute(s, rid);
+    if (rt) { rt.properties.status = 'active'; delete rt.properties.refusal; effects.push(`route ${rid} -> active`); }
+  }
   if (script?.reroute) {
     const old = findRoute(s, script.reroute.routeId);
-    if (old) { old.properties.status = 'active'; effects.push(`route ${script.reroute.routeId} -> active`); }
+    if (old) { old.properties.status = 'active'; delete old.properties.refusal; effects.push(`route ${script.reroute.routeId} -> active`); }
     const repl = findRoute(s, script.reroute.replacementId);
     if (repl) { repl.properties.status = 'unavailable'; effects.push(`route ${script.reroute.replacementId} -> unavailable`); }
   }
