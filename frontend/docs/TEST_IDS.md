@@ -54,7 +54,7 @@ Mock failure toggles go through the URL, e.g. `?mock=offline`, `?mock=5xx:1`, `?
 | `incident-feed` | incident/event feed | |
 | `incident-item` | one event | `data-client-event-id`, `data-status` = ClientSyncStatus-like (accepted\|synced\|conflict\|rejected) |
 | `stat-cut-off`, `stat-blocked-roads`, `stat-active-routes` | header stats | text = number |
-| `connection-status` | live-update status | `data-state` = live\|polling\|offline |
+| `connection-status` | live-update status | `data-state` = live\|polling\|offline\|unavailable |
 
 The road/settlement/route lists are required. They make the projections testable and accessible without reading the map canvas. Clicking a row selects the feature and opens `feature-panel`, the same as clicking it on the map.
 

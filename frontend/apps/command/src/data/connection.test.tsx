@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
-import { createApiClientWithMock } from '@setu/mock-backend';
+import { stubApi } from '../testing/stubApi';
 import { ApiProvider, useProjections } from '.';
 
 function Probe() {
@@ -12,10 +12,11 @@ function Probe() {
 describe('connection state follows navigator.onLine', () => {
   it('goes offline on window offline and back live on online', async () => {
     render(
-      <ApiProvider client={createApiClientWithMock()}>
+      <ApiProvider client={stubApi()}>
         <Probe />
       </ApiProvider>,
     );
+    await act(async () => { await Promise.resolve(); });
     expect(screen.getByTestId('c').textContent).toBe('live');
     await act(async () => { window.dispatchEvent(new Event('offline')); });
     expect(screen.getByTestId('c').textContent).toBe('offline');

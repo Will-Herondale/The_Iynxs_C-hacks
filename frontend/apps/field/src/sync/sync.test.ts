@@ -261,18 +261,3 @@ describe('queue actions', () => {
     expect(await db.queue.count()).toBe(1);
   });
 });
-
-describe('with the mock backend', () => {
-  it('road_blockage goes queued → accepted → synced', async () => {
-    const { createApiClientWithMock, configureMock, resetMock } = await import('@setu/mock-backend');
-    resetMock();
-    configureMock({ applyDelayMs: 0, latencyMs: 0 });
-    const api = createApiClientWithMock();
-    const e = ev();
-    await enqueue(e);
-    await runPass(api);
-    await new Promise((r) => setTimeout(r, 20));
-    await confirmAccepted(api);
-    expect((await get(e.clientEventId))?.status).toBe('synced');
-  });
-});

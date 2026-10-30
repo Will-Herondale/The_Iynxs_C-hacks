@@ -76,7 +76,7 @@ describe('useProjections', () => {
     await waitFor(() => expect(screen.getByTestId('p').dataset.v).toBe('3'));
     fail = true;
     act(() => notify(4));
-    await waitFor(() => expect(screen.getByTestId('p').dataset.conn).toBe('offline'));
+    await waitFor(() => expect(screen.getByTestId('p').dataset.conn).toBe('unavailable'));
     expect(screen.getByTestId('p').dataset.v).toBe('3');
   });
 });

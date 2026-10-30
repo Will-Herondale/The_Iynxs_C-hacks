@@ -9,6 +9,7 @@ import { MapScreen } from '../features/map/index.js';
 import { HomeScreen } from '../features/home/index.js';
 import { useCachedProjections } from '../offline/index.js';
 import { OfflineBanner } from './OfflineBanner.js';
+import { ApiStatus } from './ApiStatus.js';
 import { QueueScreen, OnlineStatus, PendingCount, LastSynced, SyncNowButton } from '../features/queue/index.js';
 import { useRoute } from './route.js';
 import type { RouteName } from './route.js';
@@ -113,6 +114,7 @@ export function App() {
       main={
         <>
           <OfflineBanner />
+          <ApiStatus />
           {main}
         </>
       }

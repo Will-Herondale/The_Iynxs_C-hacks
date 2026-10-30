@@ -5,6 +5,7 @@ import { useProjections, type ConnectionState } from '../data';
 const CONN: Record<ConnectionState, { tone: 'success' | 'warning' | 'danger'; icon: string; label: string }> = {
   live: { tone: 'success', icon: '●', label: 'Live' },
   polling: { tone: 'warning', icon: '↻', label: 'Polling every 5s' },
+  unavailable: { tone: 'danger', icon: '✗', label: 'Backend unavailable' },
   offline: { tone: 'danger', icon: '⦸', label: 'Offline (showing last data)' },
 };
 
