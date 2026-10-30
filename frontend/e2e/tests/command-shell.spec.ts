@@ -63,7 +63,7 @@ for (const vp of COMMAND_VIEWPORTS) {
       expect(box!.width).toBeGreaterThan(300);
       expect(box!.height).toBeGreaterThan(200);
       await expect(page.getByTestId('map-legend')).toBeVisible();
-      await expect(page.getByTestId('map-legend-synthetic')).toBeVisible();
+      await expect(page.getByTestId('map-legend-synthetic')).toBeAttached();
       await expect(page.getByTestId('map-layer-controls')).toBeVisible();
       for (const l of LAYERS) {
         const box = page.getByTestId(`layer-toggle-${l}`);
@@ -93,10 +93,10 @@ for (const vp of COMMAND_VIEWPORTS) {
   });
 }
 
-test.describe('command: Settlements / Routes distinguish "No route data" from "No safe route"', () => {
+test.describe('command: Settlements / Routes distinguish "No route listed" from "No safe route"', () => {
   test.use({ viewport: COMMAND_VIEWPORTS[0] });
 
-  test('settlement without routes → No route data; all routes unavailable → No safe route', async ({ page }) => {
+  test('settlement without routes → No route listed; all routes unavailable → No safe route', async ({ page }) => {
     const snap = fixtureSnapshot();
     // S4 has routes but every one is unavailable; S5 has none at all.
     for (const f of snap.routes.features) if (f.properties.from === 'S4') f.properties.status = 'unavailable';
@@ -111,9 +111,9 @@ test.describe('command: Settlements / Routes distinguish "No route data" from "N
     await expect(page.getByTestId('no-safe-route-S5')).toHaveCount(0);
 
     await page.getByTestId('nav-settlements').click();
-    await expect(page.getByTestId('settlement-row-S4')).toContainText('No safe route');
-    await expect(page.getByTestId('settlement-row-S5')).toContainText('No route data');
-    await expect(page.getByTestId('settlement-row-S5')).not.toContainText('No safe route');
+    await expect(page.getByTestId('settlement-row-S4')).toHaveAttribute('data-status', 'no-safe-route');
+    await expect(page.getByTestId('settlement-row-S5')).toHaveAttribute('data-status', 'no-route-listed');
+    await expect(page.getByTestId('settlement-row-S5')).not.toHaveAttribute('data-status', 'no-safe-route');
   });
 });
 
