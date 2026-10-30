@@ -129,3 +129,23 @@ describe('FeaturePanel', () => {
     expect(screen.getByTestId('feature-panel-empty')).toBeTruthy();
   });
 });
+
+describe('synthetic features (properties.synthetic from the backend)', () => {
+  it('tags flagged settlement, route and shelter rows as SYNTHETIC and leaves real ones untagged', () => {
+    const s = structuredClone(seed);
+    s.settlements.features[0]!.properties.synthetic = true;
+    s.routes.features[0]!.properties.synthetic = true;
+    s.shelters.features[0]!.properties.synthetic = true;
+    const sId = s.settlements.features[0]!.properties.settlementId;
+    const rId = s.routes.features[0]!.properties.routeId;
+    const hId = s.shelters.features[0]!.properties.shelterId;
+    wrap(<><SettlementListView snapshot={s} /><RouteListView snapshot={s} /><ShelterListView snapshot={s} /></>);
+    for (const id of [`settlement-row-${sId}`, `route-row-${rId}`, `shelter-row-${hId}`]) {
+      const row = screen.getByTestId(id);
+      expect(row.getAttribute('data-class')).toBe('synthetic');
+      expect(within(row).getByTestId('data-class-tag').textContent).toContain('SYNTHETIC');
+    }
+    const other = s.settlements.features[1]!.properties.settlementId;
+    expect(screen.getByTestId(`settlement-row-${other}`).getAttribute('data-class')).toBeNull();
+  });
+});

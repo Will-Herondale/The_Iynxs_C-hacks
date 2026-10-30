@@ -87,13 +87,13 @@ export const TOGGLE_LAYERS: Record<ToggleId, string[]> = {
   terrain: [],
   rivers: [],
   roads: ['roads-bridge-casing', 'roads-line', 'roads-line-minor'],
-  settlements: ['settlements-circle'],
-  shelters: ['shelters-circle'],
+  settlements: ['settlements-circle', 'settlements-synthetic'],
+  shelters: ['shelters-circle', 'shelters-synthetic'],
   flood: ['flood-fill', 'flood-outline', 'flood-outline-modelled', 'flood-uncertain'],
   blocked: ['roads-blocked', 'roads-blocking', 'flood-blocking'],
   cutoff: ['settlements-halo'],
   observations: ['observations-symbol'],
-  routes: ['routes-recalc-glow', 'routes-line', 'routes-refused'],
+  routes: ['routes-recalc-glow', 'routes-line', 'routes-refused', 'routes-synthetic'],
 };
 
 /** Selection highlights stay visible whatever the toggles say, so a selected feature is never lost. */
@@ -274,6 +274,20 @@ export const MAP_LAYERS: LayerSpecification[] = [
       'circle-stroke-width': 2,
       'circle-stroke-opacity': 0.8,
     },
+  },
+  {
+    // Backend-flagged demo/fixture features (properties.synthetic === true): purple ring, so they never pass as real.
+    id: 'settlements-synthetic', type: 'circle', source: SOURCE_IDS.settlements, filter: ['==', ['get', 'synthetic'], true],
+    paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, 11, 13, 16], 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-color': '#7b3fb0', 'circle-stroke-width': 3, 'circle-stroke-opacity': 0.9 },
+  },
+  {
+    id: 'shelters-synthetic', type: 'circle', source: SOURCE_IDS.shelters, filter: ['==', ['get', 'synthetic'], true],
+    paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, 12, 13, 17], 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-color': '#7b3fb0', 'circle-stroke-width': 3, 'circle-stroke-opacity': 0.9 },
+  },
+  {
+    id: 'routes-synthetic', type: 'line', source: SOURCE_IDS.routes, filter: ['==', ['get', 'synthetic'], true],
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: { 'line-color': '#7b3fb0', 'line-width': 10, 'line-opacity': 0.28 },
   },
   {
     id: 'settlements-circle', type: 'circle', source: SOURCE_IDS.settlements,
