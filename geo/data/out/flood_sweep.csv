@@ -1,0 +1,16 @@
+water_level_m,road_km_flooded_island,road_pct_flooded_island,camps_flooded,buildings_flooded_island,road_km_flooded_aoi,buildings_flooded_aoi,synthetic,note
+78,0.3,0.0,0,3,16.7,951,true,hypothetical water level series for demonstration; not an observed hydrograph and not a validated flood extent
+79,0.7,0.1,0,4,38.9,1820,true,hypothetical water level series for demonstration; not an observed hydrograph and not a validated flood extent
+80,2.0,0.2,0,5,81.2,3034,true,hypothetical water level series for demonstration; not an observed hydrograph and not a validated flood extent
+81,7.1,0.8,0,11,164.2,5271,true,hypothetical water level series for demonstration; not an observed hydrograph and not a validated flood extent
+82,23.3,2.6,0,176,271.5,8321,true,hypothetical water level series for demonstration; not an observed hydrograph and not a validated flood extent
+83,51.7,5.8,0,559,424.5,11238,true,hypothetical water level series for demonstration; not an observed hydrograph and not a validated flood extent
+84,85.6,9.6,0,1057,628.3,14532,true,hypothetical water level series for demonstration; not an observed hydrograph and not a validated flood extent
+85,150.2,16.8,0,1716,916.1,18587,true,hypothetical water level series for demonstration; not an observed hydrograph and not a validated flood extent
+86,231.9,26.0,3,2569,1243.2,23627,true,hypothetical water level series for demonstration; not an observed hydrograph and not a validated flood extent
+87,314.5,35.2,4,3565,1582.8,29812,true,hypothetical water level series for demonstration; not an observed hydrograph and not a validated flood extent
+88,405.4,45.4,5,5042,1910.8,38038,true,hypothetical water level series for demonstration; not an observed hydrograph and not a validated flood extent
+89,502.0,56.2,8,6904,2235.1,48250,true,hypothetical water level series for demonstration; not an observed hydrograph and not a validated flood extent
+90,595.3,66.7,9,8631,2540.2,59584,true,hypothetical water level series for demonstration; not an observed hydrograph and not a validated flood extent
+91,679.3,76.1,12,10183,2859.2,72056,true,hypothetical water level series for demonstration; not an observed hydrograph and not a validated flood extent
+92,745.1,83.4,14,11661,3146.4,85409,true,hypothetical water level series for demonstration; not an observed hydrograph and not a validated flood extent

@@ -1,0 +1,51 @@
+{
+  "scenario_id": "S1",
+  "slug": "submerged_bridge",
+  "name": "Submerged bridge",
+  "seed": 101,
+  "synthetic": true,
+  "note": "Synthetic demonstration scenario. Not a reconstruction of any real flood event and not validated against observations. The deck height is read from a DSM surface at the bridge midpoint, so it approximates the canopy/road surface, not a surveyed deck.",
+  "base_layers": {
+    "roads": "geojson/roads.geojson",
+    "bridges": "geojson/bridges.geojson",
+    "ferries": "geojson/ferries.geojson",
+    "places": "geojson/places.geojson",
+    "shelters": "shelters.csv",
+    "island": "geojson/majuli_boundary.geojson",
+    "dem": "majuli_dem_30m_wgs84.tif",
+    "water_occurrence": "majuli_water_occurrence_30m_demgrid.tif"
+  },
+  "selection_rule": "longest bridge >=30 m that intersects the island outline and carries a primary/secondary/trunk road",
+  "candidates_considered": 4,
+  "nearest_other_bridge_m": 816.0,
+  "known_gaps": "The Majuli-Jorhat crossing is tagged highway=construction in OSM, so it is excluded here even though it is the island's main link. Scenarios therefore exercise river crossings that are already open.",
+  "perturbations": [
+    {
+      "type": "submerge_bridge",
+      "target": {
+        "layer": "bridges",
+        "osm_id": 284824410,
+        "name": null,
+        "length_m": 139.4,
+        "highway": "primary"
+      },
+      "deck_elevation_m": 84.8,
+      "offset_m": 0.5,
+      "water_level_m": 85.3,
+      "edge_state": {
+        "passable": false,
+        "reason": "submerged_bridge"
+      }
+    }
+  ],
+  "expected_effects": [
+    "the bridge edge disappears from every route",
+    "settlements on the far side gain at least one hop",
+    "closest reachable shelter changes for affected places"
+  ],
+  "assertions": [
+    "edge absent from all returned routes",
+    "route length/time is >= the baseline for every affected pair",
+    "affected settlements are reported explicitly rather than silently re-routed"
+  ]
+}

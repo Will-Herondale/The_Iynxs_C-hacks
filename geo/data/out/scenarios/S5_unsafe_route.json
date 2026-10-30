@@ -1,0 +1,45 @@
+{
+  "scenario_id": "S5",
+  "slug": "unsafe_route",
+  "name": "Fastest route is unsafe",
+  "seed": 105,
+  "synthetic": true,
+  "note": "Synthetic demonstration scenario. Not a reconstruction of any real flood event and not validated against observations. Risk weights are authored and not empirically calibrated.",
+  "base_layers": {
+    "roads": "geojson/roads.geojson",
+    "bridges": "geojson/bridges.geojson",
+    "ferries": "geojson/ferries.geojson",
+    "places": "geojson/places.geojson",
+    "shelters": "shelters.csv",
+    "island": "geojson/majuli_boundary.geojson",
+    "dem": "majuli_dem_30m_wgs84.tif",
+    "water_occurrence": "majuli_water_occurrence_30m_demgrid.tif"
+  },
+  "perturbations": [
+    {
+      "type": "route_risk",
+      "water_level_m": 88,
+      "risk_formula": "risk = w_depth*depth_over_threshold + w_bridge*unassessed_bridge + w_class*road_class_exposure + w_detour*detour_penalty",
+      "weights": {
+        "w_depth": 1.0,
+        "w_bridge": 0.6,
+        "w_class": 0.3,
+        "w_detour": 0.2
+      },
+      "depth_normalisation_m": 0.5,
+      "compare": [
+        "fastest",
+        "safe"
+      ]
+    }
+  ],
+  "expected_effects": [
+    "the fastest route is flagged unsafe",
+    "the safe route is longer but avoids deep water and unassessed bridges"
+  ],
+  "assertions": [
+    "safe route risk <= fastest route risk",
+    "per-segment risk contributions are exposed in the response",
+    "when no safe route exists the answer is unsafe/unavailable, not fastest-with-warning"
+  ]
+}

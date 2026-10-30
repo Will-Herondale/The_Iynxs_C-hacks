@@ -1,0 +1,14 @@
+# Raw downloads are never committed: they are large (440 MB) and fully
+# reproducible from geo/scripts/00_download.sh. See geo/DATASETS.md.
+geo/data/raw/
+!geo/data/raw/.gitkeep
+
+# Python / tooling
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# Working outputs that are regenerated on every run
+geo/data/out/*.tmp
+geo/data/out/*.part

@@ -1,0 +1,14 @@
+layer,features,source,licence,retrieved,resolution,crs,synthetic
+aoi,1,Documented study box (not a boundary),n/a (derived),2026-10-30,n/a,EPSG:4326,false
+majuli_boundary,1,OpenStreetMap relation (admin boundary 'Majuli'),ODbL 1.0,2026-10-30,vector,EPSG:4326,false
+roads,11736,OpenStreetMap via Overpass API,ODbL 1.0,2026-10-30,vector,EPSG:4326,false
+bridges,518,OpenStreetMap via Overpass API,ODbL 1.0,2026-10-30,vector,EPSG:4326,false
+waterways,191,OpenStreetMap via Overpass API,ODbL 1.0,2026-10-30,vector,EPSG:4326,false
+waterbodies,120,OpenStreetMap via Overpass API,ODbL 1.0,2026-10-30,vector,EPSG:4326,false
+ferries,2,OpenStreetMap via Overpass API,ODbL 1.0,2026-10-30,vector,EPSG:4326,false
+places,62,OpenStreetMap via Overpass API,ODbL 1.0,2026-10-30,vector,EPSG:4326,false
+amenities,8,OpenStreetMap via Overpass API,ODbL 1.0,2026-10-30,vector,EPSG:4326,false
+buildings,182097,OpenStreetMap via Overpass API,ODbL 1.0,2026-10-30,vector,EPSG:4326,false
+majuli_dem_30m_*,,"Copernicus DEM GLO-30 (ESA/Airbus), AWS Open Data","Copernicus DEM licence (free, attribution)",2026-10-30,30 m,EPSG:4326 / EPSG:32646,false
+majuli_water_occurrence_30m_demgrid,,JRC GSW v1.4 resampled (nearest) onto the Copernicus DEM grid,"Copernicus, free",2026-10-30,1/3600° (~31 m),EPSG:4326,false
+majuli_water_occurrence_30m,,JRC Global Surface Water v1.4 (1984-2021),"Copernicus, free (attribute 'Source: EC JRC/Google')",2026-10-30,30 m,EPSG:4326,false

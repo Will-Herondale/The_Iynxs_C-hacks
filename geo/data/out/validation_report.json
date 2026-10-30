@@ -1,0 +1,163 @@
+{
+  "checks": [
+    {
+      "check": "raster exists: majuli_dem_30m_wgs84.tif",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "raster exists: majuli_dem_30m_utm46n.tif",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "raster exists: majuli_water_occurrence_30m.tif",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "raster exists: majuli_water_occurrence_30m_demgrid.tif",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "layer exists: aoi",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "layer exists: majuli_boundary",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "layer exists: roads",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "layer exists: bridges",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "layer exists: waterways",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "layer exists: waterbodies",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "layer exists: ferries",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "layer exists: places",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "layer exists: amenities",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "layer exists: buildings",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "layer exists: shelters",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "DEM and DEM-aligned GSW share a grid",
+      "pass": true,
+      "detail": "3961x1585 vs 3961x1585"
+    },
+    {
+      "check": "demgrid CRS is EPSG:4326",
+      "pass": true,
+      "detail": "EPSG:4326"
+    },
+    {
+      "check": "UTM DEM is EPSG:32646",
+      "pass": true,
+      "detail": "EPSG:32646"
+    },
+    {
+      "check": "DEM coverage inside AOI > 99%",
+      "pass": true,
+      "detail": "0.06% nodata"
+    },
+    {
+      "check": "GSW coverage inside AOI > 99%",
+      "pass": true,
+      "detail": "0.09% nodata"
+    },
+    {
+      "check": "flood metrics are non-decreasing across the sweep",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "no camp sits implausibly low for the island (< 70 m)",
+      "pass": true,
+      "detail": "0 below 70 m"
+    },
+    {
+      "check": "scenario files present (S1-S5)",
+      "pass": true,
+      "detail": "5 found"
+    },
+    {
+      "check": "every scenario target resolves and lies on the island",
+      "pass": true,
+      "detail": "5 configs checked"
+    }
+  ],
+  "ok": true,
+  "scenarios": {
+    "files": [
+      "S1_submerged_bridge.json",
+      "S2_blocked_road.json",
+      "S3_rising_water.json",
+      "S4_settlement_disconnected.json",
+      "S5_unsafe_route.json"
+    ],
+    "problems": []
+  },
+  "camps": {
+    "count": 23,
+    "dem_elev_m_min": 85.2,
+    "dem_elev_m_median": 90.8,
+    "dem_elev_m_max": 96.5,
+    "below_80m": 0
+  },
+  "dem": {
+    "nodata_pct": 0.06,
+    "min_m": 68.2,
+    "max_m": 1567.4
+  },
+  "sweep": {
+    "levels_m": [
+      78,
+      92
+    ],
+    "rows": 15,
+    "island_road_km": 893.0,
+    "aoi_road_km": 6024.1,
+    "synthetic": true,
+    "note": "hypothetical water level series for demonstration; not an observed hydrograph and not a validated flood extent"
+  },
+  "router_checks_not_run": [
+    "reproducible route ids for a fixed seed",
+    "route never crosses water deeper than the vehicle threshold",
+    "disconnected settlement matches a full reachability check"
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "scenario_id": "S2",
+  "slug": "blocked_road",
+  "name": "Blocked approach road",
+  "seed": 102,
+  "synthetic": true,
+  "note": "Synthetic demonstration scenario. Not a reconstruction of any real flood event and not validated against observations. No live road-closure feed is used; the closure is authored.",
+  "base_layers": {
+    "roads": "geojson/roads.geojson",
+    "bridges": "geojson/bridges.geojson",
+    "ferries": "geojson/ferries.geojson",
+    "places": "geojson/places.geojson",
+    "shelters": "shelters.csv",
+    "island": "geojson/majuli_boundary.geojson",
+    "dem": "majuli_dem_30m_wgs84.tif",
+    "water_occurrence": "majuli_water_occurrence_30m_demgrid.tif"
+  },
+  "selection_rule": "lowest camp by DSM elevation; nearest non-bridge road within 500 m; a 200 m stretch at its midpoint",
+  "perturbations": [
+    {
+      "type": "block_road",
+      "target": {
+        "layer": "roads",
+        "osm_id": 1074461062,
+        "name": null,
+        "highway": "unclassified",
+        "length_m": 3084.8
+      },
+      "closure": {
+        "length_m": 200,
+        "at": {
+          "lon": 628363.09802,
+          "lat": 2991963.466079
+        },
+        "blocked": true,
+        "reason": "road_blocked"
+      },
+      "durations_h": [
+        6,
+        12,
+        24
+      ],
+      "exposed_shelter": {
+        "shelter_id": "MJ-SH-009",
+        "dem_elev_m": 85.2
+      }
+    }
+  ],
+  "expected_effects": [
+    "detour through lower-lying roads",
+    "travel time increase for the affected shelter catchment",
+    "possible loss of access within the stated time budget"
+  ],
+  "assertions": [
+    "closure is respected by the router",
+    "the detour never uses a road tagged impassable",
+    "any access loss is flagged instead of being hidden by a longer route"
+  ]
+}
