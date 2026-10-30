@@ -52,18 +52,30 @@ describe('CampView', () => {
     fireEvent.change(select, { target: { value: 'SH1' } });
     const info = screen.getByTestId('camp-info');
     expect(info.getAttribute('data-shelter-id')).toBe('SH1');
-    expect(info.textContent).toContain('not published');
-    expect(info.textContent).toContain('Open');
+    expect(info.textContent).toContain('Open (reported)');
+    expect(info.getAttribute('data-shelter-status')).toBe('open-reported');
+    expect(info.textContent).toContain('120 of 200');
     expect(info.textContent).not.toContain('Data as of');
     expect(window.localStorage.getItem(CAMP_KEY)).toBe('SH1');
   });
 
-  it('restores the remembered camp and shows "data as of" and Closed offline', () => {
+  it('shows open:false 0/0 as pre-identified, not closed, with no counts', () => {
+    render(<CampView snapshot={snapshot} online />);
+    fireEvent.change(screen.getByTestId('camp-select'), { target: { value: 'SH2' } });
+    const info = screen.getByTestId('camp-info');
+    expect(info.getAttribute('data-shelter-status')).toBe('pre-identified');
+    expect(info.textContent).toContain('Pre-identified · not confirmed');
+    expect(info.textContent).not.toContain('Closed');
+    expect(screen.getByTestId('camp-capacity').textContent).toContain('not published');
+    expect(info.textContent).not.toMatch(/50 of 50|0 of 0/);
+  });
+
+  it('restores the remembered camp and shows "data as of" and pre-identified offline', () => {
     window.localStorage.setItem(CAMP_KEY, 'SH2');
     render(<CampView snapshot={snapshot} cachedAt={Date.UTC(2026, 9, 30, 9)} online={false} />);
     const info = screen.getByTestId('camp-info');
     expect(info.getAttribute('data-shelter-id')).toBe('SH2');
-    expect(info.textContent).toContain('Closed');
+    expect(info.textContent).toContain('Pre-identified · not confirmed');
     expect(info.textContent).toContain('Data as of');
   });
 
@@ -96,7 +108,7 @@ describe('CampView', () => {
     expect(screen.getByTestId('camp-household-list')).toBeTruthy();
   });
 
-  it('summarises the camp: households, people, pending, awaiting review; no capacity numbers', () => {
+  it('summarises the camp: households, people, pending, awaiting review; reported-open counts only', () => {
     window.localStorage.setItem(CAMP_KEY, 'SH1');
     state.items = [row('a', 'SH1', 'queued'), row('b', 'SH1', 'conflict'), row('c', 'SH1', 'synced'), row('d', 'SH2', 'queued')].map((r, i) => {
       const it = r as unknown as { event: Record<string, unknown> };
@@ -108,8 +120,7 @@ describe('CampView', () => {
     expect(screen.getByTestId('camp-summary-people').textContent).toBe('9');
     expect(screen.getByTestId('camp-summary-pending').textContent).toBe('1');
     expect(screen.getByTestId('camp-summary-review').textContent).toBe('1');
-    expect(screen.getByTestId('camp-capacity').textContent).toContain('not published');
-    expect(screen.getByTestId('camp-info').textContent).not.toMatch(/120|200/);
+    expect(screen.getByTestId('camp-capacity').textContent).toContain('120 of 200');
     expect(screen.getByTestId('household-duplicates-blocked').textContent).toContain('#15');
   });
 });

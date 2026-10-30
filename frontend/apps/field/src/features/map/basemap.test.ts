@@ -12,3 +12,17 @@ describe('offline basemap', () => {
     expect(DISTRICT_CENTER[0]).toBeCloseTo(94.2, 0);
   });
 });
+
+import { shelterCounts, shelterStatus } from './honesty.js';
+
+describe('shelter honesty', () => {
+  it('only open===true is Open (reported)', () => {
+    expect(shelterStatus({ open: true }).label).toBe('Open (reported)');
+    expect(shelterStatus({ open: false })).toEqual({ status: 'pre-identified', label: 'Pre-identified · not confirmed' });
+  });
+  it('never shows 0/0 as counts', () => {
+    expect(shelterCounts({ open: false, capacity: 0, occupancy: 0 })).toBe('not published');
+    expect(shelterCounts({ open: true, capacity: 0, occupancy: 0 })).toBe('not published');
+    expect(shelterCounts({ open: true, capacity: 10, occupancy: 2 })).toBe('2 of 10');
+  });
+});

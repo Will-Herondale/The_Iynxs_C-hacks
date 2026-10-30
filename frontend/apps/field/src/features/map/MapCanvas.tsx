@@ -72,6 +72,15 @@ export function MapCanvas({ snapshot, reports, position, onOpenReport }: MapCanv
         add(n, s.lng, s.lat);
       }
     }
+    if (snap) {
+      for (const sh of projectionView(snap).shelters) {
+        const n = el('div', `map-shelter map-shelter--${sh.status}`, `${sh.status === 'open-reported' ? '⌂' : '◌'} ${sh.name}`);
+        n.dataset.testid = `map-shelter-${sh.id}`;
+        n.dataset.shelterStatus = sh.status;
+        n.title = `${sh.label}; capacity ${sh.counts}`;
+        add(n, sh.lng, sh.lat);
+      }
+    }
     for (const r of reps) add(reportElement(r, (id) => openRef.current(id)), r.lng, r.lat);
     if (pos) {
       const n = el('div', 'map-you', '◉ You');

@@ -1,4 +1,5 @@
 import type { Feature, FeatureCollection, LineString, Polygon } from 'geojson';
+import { shelterCounts, shelterStatus } from './honesty.js';
 import type { FloodProps, ProjectionSnapshot, RoadProps, SettlementProps } from '@setu/contract';
 
 /** Source ids/layers are namespaced so they never clash with @setu/geo base layers. */
@@ -16,14 +17,15 @@ export const EMPTY: FeatureCollection = { type: 'FeatureCollection', features: [
 
 export function floodLabel(p: FloodProps): string {
   if (p.confidence === 'observed') return 'Observed';
-  if (p.confidence === 'uncertain') return 'Modelled · uncertain · SYNTHETIC';
-  return 'Modelled · SYNTHETIC';
+  if (p.confidence === 'uncertain') return 'Modelled · uncertain · EXPERIMENTAL';
+  return 'Modelled · EXPERIMENTAL';
 }
 
 export interface ProjectionView {
   version: number;
   generatedAt: string;
   blockedRoads: { id: string; name: string; status: RoadProps['status']; kind: 'road' | 'bridge'; reason?: string }[];
+  shelters: { id: string; name: string; status: string; label: string; counts: string; lng: number; lat: number }[];
   flood: { id: string; label: string; depthCm: number; observed: boolean }[];
   cutOff: { id: string; name: string; accessibility: SettlementProps['accessibility']; reason?: string; lat: number; lng: number }[];
 }
@@ -42,6 +44,18 @@ export function projectionView(s: ProjectionSnapshot): ProjectionView {
         kind: f.properties.kind ?? 'road',
         reason: f.properties.reason,
       })),
+    shelters: s.shelters.features.map((f) => {
+      const st = shelterStatus(f.properties);
+      return {
+        id: f.properties.shelterId,
+        name: f.properties.name,
+        status: st.status,
+        label: st.label,
+        counts: shelterCounts(f.properties),
+        lng: f.geometry.coordinates[0] ?? 0,
+        lat: f.geometry.coordinates[1] ?? 0,
+      };
+    }),
     flood: s.flood.features.map((f) => ({
       id: f.properties.areaId,
       label: floodLabel(f.properties),
