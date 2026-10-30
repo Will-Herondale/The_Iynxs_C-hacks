@@ -79,6 +79,19 @@ Layer counts: buildings 182,097; roads 11,736; embankments 13; bridges 518 (202 
 - Demo artifacts (`80_demo_artifacts.py`): road graph (1671 features), settlements (8), shelters (23), scenario S1_obs_driven — all generate cleanly, real vs synthetic clearly flagged.
 - Offline bundle (`90_offline_bundle.py`): 60 MB core bundle, all layers loadable locally, no network services required. Manifest at `geo/data/out/offline/manifest.json`.
 
+## P0 Verification results (complete)
+
+| Check | Result |
+|---|---|
+| GeoJSON validity | All 14 vector files valid JSON |
+| Geometry validity | 0 invalid geometries across all layers |
+| CRS | All EPSG:4326 |
+| Bridge 284824410 | Present in road_graph + bridges layer, deck elev 84.8 m |
+| Settlements within island | 8 of 8 |
+| Shelters within island | 23 of 23 |
+| Schema vs contract | settlementId/name/population/accessibility/households/needs ✅ shelterId/name/capacity/occupancy/open ✅ roadId/name/status/updatedAt/sourceEventIds ✅ |
+| Road graph components | 1030 (fragmented — OSM sparsity in Majuli, documented) |
+
 ## Offline readiness (P0)
 - **No live Overpass:** All OSM data is pre-extracted to local GeoJSON.
 - **No tile servers:** All rasters are local GeoTIFFs (DEM, GSW occurrence).
