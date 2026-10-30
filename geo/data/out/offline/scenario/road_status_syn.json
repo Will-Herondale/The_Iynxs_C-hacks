@@ -1,0 +1,32 @@
+{
+  "type": "FeatureCollection",
+  "version": 1,
+  "generated_at": "2026-10-30T00:00:00+00:00",
+  "synthetic": true,
+  "note": "Synthetic road status for SYN-DEMO-001. No real road geometries are altered.",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "SYN-SEG-001",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [94.59955, 27.10000],
+          [94.60045, 27.10000]
+        ]
+      },
+      "properties": {
+        "roadId": "SYN-BRG-000",
+        "name": "Synthetic Bridge Alpha - span",
+        "status": "blocked",
+        "updated_at": "2026-10-30T00:00:00+00:00",
+        "source_event_ids": ["SYN-EVT-001"],
+        "block_reason": "submerged_bridge",
+        "water_level_m": 85.3,
+        "deck_elevation_m": 84.8,
+        "classification": "SYNTHETIC",
+        "synthetic": true
+      }
+    }
+  ]
+}

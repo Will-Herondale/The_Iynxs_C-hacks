@@ -1,0 +1,126 @@
+{
+  "scenario_id": "SYN-DEMO-001",
+  "name": "Network-valid bridge closure demonstration (synthetic)",
+  "seed": 20261030,
+  "synthetic": true,
+  "generated_at": "2026-10-30T00:00:00+00:00",
+  "note": "Fully synthetic local road subgraph for network-valid demonstration. No real geography is altered. All feature IDs, coordinates, and metrics are authored for demonstration purposes only. Not a reconstruction of any real event.",
+  "base_layers": {
+    "roads": "geo/data/out/geojson/roads.geojson",
+    "bridges": "geo/data/out/geojson/bridges.geojson",
+    "settlements": "geo/data/out/demo/settlements.geojson",
+    "shelters": "geo/data/out/demo/shelters.geojson"
+  },
+  "real_data_findings": {
+    "road_graph_components": 1030,
+    "largest_component_endpoints": 86,
+    "largest_component_features": 107,
+    "settlements_in_largest_component": ["2885275507", "10692764768", "2885248524"],
+    "shelters_in_largest_component": [],
+    "no_bridge_removal_splits_largest_component": true,
+    "no_settlement_shelter_share_component": true,
+    "conclusion": "No network-valid settlement-to-shelter route exists in the real data. Synthetic subgraph used below."
+  },
+  "synthetic_subgraph": {
+    "note": "Explicitly synthetic. Does not alter or replace any real geography. Placed at (94.6000, 27.1000), 13.3 km from nearest real feature.",
+    "location": {
+      "lon": 94.6000,
+      "lat": 27.1000,
+      "nearest_real_feature_m": 13315
+    },
+    "features": [
+      {
+        "feature_id": "SYN-SET-001",
+        "type": "settlement",
+        "name": "Synthetic Settlement Alpha",
+        "coordinates": [94.59910, 27.10000],
+        "classification": "SYNTHETIC"
+      },
+      {
+        "feature_id": "SYN-BRG-000-a",
+        "type": "bridge_entry",
+        "name": "Synthetic Bridge Alpha - entry",
+        "coordinates": [94.59955, 27.10000],
+        "classification": "SYNTHETIC"
+      },
+      {
+        "feature_id": "SYN-BRG-000-b",
+        "type": "bridge_exit",
+        "name": "Synthetic Bridge Alpha - exit",
+        "coordinates": [94.60045, 27.10000],
+        "classification": "SYNTHETIC"
+      },
+      {
+        "feature_id": "SYN-SHELTER-001",
+        "type": "shelter",
+        "name": "Synthetic Shelter Alpha",
+        "coordinates": [94.60090, 27.10000],
+        "classification": "SYNTHETIC",
+        "open": false,
+        "capacity": 0,
+        "occupancy": 0
+      }
+    ],
+    "road_segments": [
+      {
+        "segment_id": "SYN-SEG-000",
+        "type": "road",
+        "name": "Synthetic Road Alpha - approach",
+        "from": "SYN-SET-001",
+        "to": "SYN-BRG-000-a",
+        "length_m": 50,
+        "classification": "SYNTHETIC"
+      },
+      {
+        "segment_id": "SYN-SEG-001",
+        "type": "bridge",
+        "name": "Synthetic Bridge Alpha - span",
+        "from": "SYN-BRG-000-a",
+        "to": "SYN-BRG-000-b",
+        "length_m": 100,
+        "classification": "SYNTHETIC"
+      },
+      {
+        "segment_id": "SYN-SEG-002",
+        "type": "road",
+        "name": "Synthetic Road Alpha - exit",
+        "from": "SYN-BRG-000-b",
+        "to": "SYN-SHELTER-001",
+        "length_m": 50,
+        "classification": "SYNTHETIC"
+      }
+    ]
+  },
+  "before_closure": {
+    "note": "Connectivity computed on the synthetic subgraph only.",
+    "settlement_connected_to_road": true,
+    "settlement_to_shelter_path": ["SYN-SET-001", "SYN-SEG-000", "SYN-BRG-000-a", "SYN-SEG-001", "SYN-BRG-000-b", "SYN-SEG-002", "SYN-SHELTER-001"],
+    "total_distance_m": 200,
+    "shelter_reachable": true,
+    "shelter_status": "pre_identified_not_confirmed"
+  },
+  "after_closure": {
+    "note": "Bridge SYN-BRG-000 (segments SYN-BRG-000-a to SYN-BRG-000-b) submerged. No alternative route exists in the synthetic subgraph.",
+    "closed_segment": "SYN-SEG-001",
+    "closure_reason": "submerged_bridge",
+    "water_level_m": 85.3,
+    "deck_elevation_m": 84.8,
+    "settlement_connected_to_road": true,
+    "settlement_to_shelter_path": null,
+    "shelter_reachable": false,
+    "settlement_status": "cut_off",
+    "cut_off_reason": "bridge_submerged_synthetic"
+  },
+  "classification": {
+    "real_features": [],
+    "synthetic_features": ["SYN-SET-001", "SYN-BRG-000-a", "SYN-BRG-000-b", "SYN-SHELTER-001", "SYN-SEG-000", "SYN-SEG-001", "SYN-SEG-002"],
+    "experimental_features": []
+  },
+  "limitations": [
+    "Synthetic subgraph is not real geography - does not represent any actual location in Majuli",
+    "Bridge deck elevation (84.8 m) and water level (85.3 m) are illustrative, not surveyed",
+    "Water level is relative to a notional surface, not MSL",
+    "Shelter capacity/occupancy = 0 (not published, not invented)",
+    "Shelter open = false (pre-identified, not confirmed open)"
+  ]
+}

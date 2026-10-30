@@ -258,6 +258,72 @@
       "licence": "n/a (synthetic)",
       "core": true,
       "notes": "Recalculated evacuation route avoiding submerged bridge"
+    },
+    {
+      "file": "scenario/scenario_syn_demo.json",
+      "features": "n/a",
+      "size_mb": 0.0,
+      "crs": "EPSG:4326",
+      "classification": "SYNTHETIC",
+      "source": "Authored demonstration scenario (corrected)",
+      "licence": "n/a (synthetic)",
+      "core": true,
+      "notes": "Network-valid synthetic scenario S1_obs_driven replacement. Includes real-data findings and synthetic subgraph."
+    },
+    {
+      "file": "scenario/road_status_syn.json",
+      "features": 1,
+      "size_mb": 0.0,
+      "crs": "EPSG:4326",
+      "classification": "SYNTHETIC",
+      "source": "Authored demonstration impact (corrected)",
+      "licence": "n/a (synthetic)",
+      "core": true,
+      "notes": "Synthetic bridge closure status."
+    },
+    {
+      "file": "scenario/settlement_status_syn.json",
+      "features": 3,
+      "size_mb": 0.0,
+      "crs": "EPSG:4326",
+      "classification": "SYNTHETIC",
+      "source": "Authored demonstration impact (corrected)",
+      "licence": "n/a (synthetic)",
+      "core": true,
+      "notes": "Synthetic settlement status + real settlement reference data."
+    },
+    {
+      "file": "scenario/shelter_status_syn.json",
+      "features": 2,
+      "size_mb": 0.0,
+      "crs": "EPSG:4326",
+      "classification": "SYNTHETIC",
+      "source": "Authored demonstration impact (corrected)",
+      "licence": "n/a (synthetic)",
+      "core": true,
+      "notes": "Synthetic shelter status + real shelter reference data."
+    },
+    {
+      "file": "scenario/flood_extent_syn.json",
+      "features": 1,
+      "size_mb": 0.0,
+      "crs": "EPSG:4326",
+      "classification": "SYNTHETIC",
+      "source": "Authored demonstration flood polygon (corrected)",
+      "licence": "n/a (synthetic)",
+      "core": true,
+      "notes": "Synthetic flood polygon around synthetic bridge."
+    },
+    {
+      "file": "scenario/route_status_syn.json",
+      "features": 2,
+      "size_mb": 0.0,
+      "crs": "EPSG:4326",
+      "classification": "SYNTHETIC",
+      "source": "Authored demonstration route (corrected)",
+      "licence": "n/a (synthetic)",
+      "core": true,
+      "notes": "Before/after route status for synthetic bridge closure."
     }
   ],
   "total_core_mb": 60.35,
@@ -265,7 +331,7 @@
   "total_mb": 111.98,
   "summary": {
     "real_layers": 15,
-    "synthetic_layers": 6,
+    "synthetic_layers": 12,
     "experimental_layers": 1,
     "core_bundle_mb": 60.35,
     "optional_mb": 51.63,

@@ -1,0 +1,33 @@
+{
+  "type": "FeatureCollection",
+  "version": 1,
+  "generated_at": "2026-10-30T00:00:00+00:00",
+  "synthetic": true,
+  "note": "Synthetic flood extent for SYN-DEMO-001. Not observed or historical. Illustrative only.",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "SYN-FLOOD-001",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [94.59930, 27.09980],
+          [94.60070, 27.09980],
+          [94.60070, 27.10020],
+          [94.59930, 27.10020],
+          [94.59930, 27.09980]
+        ]]
+      },
+      "properties": {
+        "areaId": "SYN-AREA-001",
+        "depthCm": 50,
+        "severity": 3,
+        "water_level_m": 85.3,
+        "method": "synthetic_scenario_fixture",
+        "classification": "SYNTHETIC",
+        "synthetic": true,
+        "note": "Synthetic flood polygon around synthetic bridge. Not observed, not historical, not validated."
+      }
+    }
+  ]
+}

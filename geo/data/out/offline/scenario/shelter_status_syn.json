@@ -1,0 +1,49 @@
+{
+  "type": "FeatureCollection",
+  "version": 1,
+  "generated_at": "2026-10-30T00:00:00+00:00",
+  "synthetic": true,
+  "note": "Synthetic shelter status for SYN-DEMO-001. Real shelters retain DDMA status (pre-identified, not confirmed open). Synthetic shelter is part of the demo subgraph.",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "SYN-SHELTER-001",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [94.60090, 27.10000]
+      },
+      "properties": {
+        "shelterId": "SYN-SHELTER-001",
+        "name": "Synthetic Shelter Alpha",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_settlement": "SYN-SET-001",
+        "classification": "SYNTHETIC",
+        "synthetic": true,
+        "note": "Synthetic shelter. Capacity/occupancy = 0 (not published, not invented). Open = false (pre-identified, not confirmed open)."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "MJ-SH-001",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [94.29445, 27.08166]
+      },
+      "properties": {
+        "shelterId": "MJ-SH-001",
+        "name": "Cherpai Bhewchuk Kumarbari Balika LPS",
+        "capacity": 0,
+        "occupancy": 0,
+        "open": false,
+        "status": "pre_identified_not_confirmed",
+        "serves_settlement": null,
+        "classification": "REAL",
+        "synthetic": false,
+        "note": "Real DDMA pre-identified camp. Coordinates from DDMA Flood Contingency Plan 2026-27. Not confirmed open."
+      }
+    }
+  ]
+}

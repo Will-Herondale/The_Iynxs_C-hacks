@@ -1,0 +1,56 @@
+{
+  "type": "FeatureCollection",
+  "version": 1,
+  "generated_at": "2026-10-30T00:00:00+00:00",
+  "synthetic": true,
+  "note": "Synthetic route status for SYN-DEMO-001. ETA is illustrative, not computed by a routing engine.",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "SYN-ROUTE-001-before",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [94.59910, 27.10000],
+          [94.59955, 27.10000],
+          [94.60045, 27.10000],
+          [94.60090, 27.10000]
+        ]
+      },
+      "properties": {
+        "routeId": "SYN-ROUTE-001-before",
+        "from": "SYN-SET-001",
+        "to": "SYN-SHELTER-001",
+        "kind": "evacuation",
+        "status": "active",
+        "eta_min": 4,
+        "replaces_route_id": null,
+        "avoids": [],
+        "classification": "SYNTHETIC",
+        "synthetic": true,
+        "note": "Before closure: settlement -> bridge -> shelter, 200m total. ETA of 4 min is illustrative (walking pace), not computed."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SYN-ROUTE-001-after",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": []
+      },
+      "properties": {
+        "routeId": "SYN-ROUTE-001-after",
+        "from": "SYN-SET-001",
+        "to": "SYN-SHELTER-001",
+        "kind": "evacuation",
+        "status": "unavailable",
+        "eta_min": null,
+        "replaces_route_id": "SYN-ROUTE-001-before",
+        "avoids": ["SYN-BRG-000"],
+        "classification": "SYNTHETIC",
+        "synthetic": true,
+        "note": "After closure: bridge submerged, no alternative route in synthetic subgraph. Settlement cut off from shelter."
+      }
+    }
+  ]
+}

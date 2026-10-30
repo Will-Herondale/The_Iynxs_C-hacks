@@ -46,6 +46,16 @@ All vector layers and rasters are available as local files in `geo/data/out/offl
 - Bundle manifest: `geo/data/out/offline/manifest.json` (sizes, CRS, classification).
 - Core bundle: ~60 MB; minimum viable bundle ~33 MB.
 
+### Network-valid demonstration scenario
+Real road graph analysis (`data/out/demo/road_graph.geojson`) found:
+- 1,030 connected components; largest is 86 endpoints (3.3% of all endpoints)
+- No component contains both a settlement and a shelter
+- No bridge removal splits the largest component
+- Original scenario claims (Auniati cut off, MJ-SH-009 serving Auniati, 45-min ETA) are unsupported
+
+A fully synthetic local road subgraph (`SYN-DEMO-001`) at (94.6000, 27.1000), 13.3 km from any real feature, provides network-valid before/after connectivity demonstration. All synthetic features carry `synthetic: true` and `classification: "SYNTHETIC"`. Real geography is unaltered.
+
+
 ## Known gaps to flag to backend
 - Shelter capacity/occupancy not published → must not be invented; suggest `capacity: 0, occupancy: 0, open: false` with `needs_review: true` provenance flag.
 - Population available for only 1 of 62 places; WorldPop `ind_ppp_2020_UNadj.tif` (1.5 GB, 100 m) is the recommended source but was not downloaded due to size.

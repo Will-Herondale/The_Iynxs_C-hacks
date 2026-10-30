@@ -1,0 +1,77 @@
+{
+  "type": "FeatureCollection",
+  "version": 1,
+  "generated_at": "2026-10-30T00:00:00+00:00",
+  "synthetic": true,
+  "note": "Synthetic settlement status for SYN-DEMO-001. Real settlements retain their actual connectivity status; synthetic settlement is part of the demo subgraph.",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "SYN-SET-001",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [94.59910, 27.10000]
+      },
+      "properties": {
+        "settlementId": "SYN-SET-001",
+        "name": "Synthetic Settlement Alpha",
+        "place": "village",
+        "population": 0,
+        "households": 0,
+        "needs": ["evacuation"],
+        "accessibility": "cut_off",
+        "cut_off_reason": "bridge_submerged_synthetic",
+        "elevation_m": null,
+        "water_level_m": 85.3,
+        "classification": "SYNTHETIC",
+        "synthetic": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "2885275507",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [94.16577, 26.94656]
+      },
+      "properties": {
+        "settlementId": "2885275507",
+        "name": "Kamalabari",
+        "place": "town",
+        "population": 0,
+        "households": 0,
+        "needs": [],
+        "accessibility": "accessible",
+        "cut_off_reason": null,
+        "elevation_m": 88.8,
+        "water_level_m": null,
+        "classification": "REAL",
+        "synthetic": false,
+        "note": "Real settlement, connected to component 0 (86 endpoints). No shelter reachable within same component in real data."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "10692764768",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [94.1238, 26.9365]
+      },
+      "properties": {
+        "settlementId": "10692764768",
+        "name": "Auniati",
+        "place": "village",
+        "population": 0,
+        "households": 0,
+        "needs": [],
+        "accessibility": "accessible",
+        "cut_off_reason": null,
+        "elevation_m": 82.3,
+        "water_level_m": null,
+        "classification": "REAL",
+        "synthetic": false,
+        "note": "Real settlement, 45m from component 0 road endpoint. NOT cut off by bridge 284824410 (bridge removal does not disconnect Auniati). Previous claim of cut-off was unsupported."
+      }
+    }
+  ]
+}
