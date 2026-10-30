@@ -5,3 +5,4 @@ export { EvacDeadlines, EvacDeadlinesView } from './EvacDeadlines';
 export { ProvenanceView, joinProvenance } from './Provenance';
 export { ExplainBlock } from './Explain';
 export { evacDeadlines } from './model';
+export { NotProvided, MonoId, NOT_PROVIDED, FLOOD_CAVEAT, FLOOD_SYNTHETIC_NOTE } from './NotProvided';
