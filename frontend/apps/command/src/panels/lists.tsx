@@ -65,8 +65,9 @@ export function RoadListView({ snapshot: s }: ListProps) {
   return (
     <Block title="Roads" empty={items.length === 0} dataClass={LAYER_DATA_CLASS.roads}>
       {items.map((r) => (
-        <Row key={r.roadId} testId={`road-row-${r.roadId}`} kind="road" id={r.roadId} attrs={{ 'data-status': r.status, 'data-kind': r.kind ?? 'road', ...(r.passability ? { 'data-passability': r.passability } : {}) }}>
-          <span>
+        <Row key={r.roadId} testId={`road-row-${r.roadId}`} kind="road" id={r.roadId} attrs={{...((r as { synthetic?: boolean }).synthetic ? { 'data-class': 'synthetic' } : {}),  'data-status': r.status, 'data-kind': r.kind ?? 'road', ...(r.passability ? { 'data-passability': r.passability } : {}) }}>
+          {(r as { synthetic?: boolean }).synthetic && <DataClassTag dataClass="SYNTHETIC" label="DEMO · SYNTHETIC" />}
+            <span>
             {r.kind === 'bridge' && <span aria-label="bridge" title="Bridge">🌉 </span>}
             <strong>{r.roadId}</strong> {r.name}
             {r.reason && <small data-testid={`road-reason-${r.roadId}`} style={{ display: 'block', opacity: 0.85 }}>{r.reason}</small>}
@@ -83,9 +84,10 @@ export function SettlementListView({ snapshot: s }: ListProps) {
   return (
     <Block title="Settlements" empty={items.length === 0} dataClass={LAYER_DATA_CLASS.settlements}>
       {items.map((p) => (
-        <Row key={p.settlementId} testId={`settlement-row-${p.settlementId}`} kind="settlement" id={p.settlementId} attrs={{ 'data-accessibility': p.accessibility }}
+        <Row key={p.settlementId} testId={`settlement-row-${p.settlementId}`} kind="settlement" id={p.settlementId} attrs={{...((p as { synthetic?: boolean }).synthetic ? { 'data-class': 'synthetic' } : {}),  'data-accessibility': p.accessibility }}
           extra={p.cutOffReason && p.accessibility === 'cut_off' ? <ExplainBlock testId={`explain-cutoff-${p.settlementId}`} title="Why cut off" reason={p.cutOffReason} {...(s ? { snapshot: s } : {})} /> : undefined}>
-          <span><strong>{p.settlementId}</strong> {p.name}</span>
+          {(p as { synthetic?: boolean }).synthetic && <DataClassTag dataClass="SYNTHETIC" label="DEMO · SYNTHETIC" />}
+            <span><strong>{p.settlementId}</strong> {p.name}</span>
           <Badge tone={ACCESS_TONE[p.accessibility].tone} icon={ACCESS_TONE[p.accessibility].icon}>{label(p.accessibility)}</Badge>
         </Row>
       ))}
@@ -98,9 +100,10 @@ export function RouteListView({ snapshot: s }: ListProps) {
   return (
     <Block title="Routes" empty={items.length === 0} dataClass={LAYER_DATA_CLASS.routes}>
       {items.map((p) => (
-        <Row key={p.routeId} testId={`route-row-${p.routeId}`} kind="route" id={p.routeId} attrs={{ 'data-status': p.status, 'data-route-state': routeStateOf(s, p) }}
+        <Row key={p.routeId} testId={`route-row-${p.routeId}`} kind="route" id={p.routeId} attrs={{...((p as { synthetic?: boolean }).synthetic ? { 'data-class': 'synthetic' } : {}),  'data-status': p.status, 'data-route-state': routeStateOf(s, p) }}
           extra={p.refusal && p.status === 'unavailable' ? <ExplainBlock testId={`explain-refusal-${p.routeId}`} title="Why this route is refused" reason={p.refusal} {...(s ? { snapshot: s } : {})} /> : undefined}>
-          <span>
+          {(p as { synthetic?: boolean }).synthetic && <DataClassTag dataClass="SYNTHETIC" label="DEMO · SYNTHETIC" />}
+            <span>
             <strong>{p.routeId}</strong> {p.from}→{p.to} · <span data-testid={`route-eta-${p.routeId}`}>{formatIndicativeEta(p.etaMin)}</span>
             {p.replacesRouteId ? ` · replaces ${p.replacesRouteId}` : ''}
           </span>
@@ -118,7 +121,8 @@ export function ShelterListView({ snapshot: s }: ListProps) {
       {items.map((p) => {
         const info = shelterInfo(p);
         return (
-          <Row key={p.shelterId} testId={`shelter-row-${p.shelterId}`} kind="shelter" id={p.shelterId} attrs={{ 'data-open': String(p.open), 'data-shelter-status': shelterAttr(info) }}>
+          <Row key={p.shelterId} testId={`shelter-row-${p.shelterId}`} kind="shelter" id={p.shelterId} attrs={{...((p as { synthetic?: boolean }).synthetic ? { 'data-class': 'synthetic' } : {}),  'data-open': String(p.open), 'data-shelter-status': shelterAttr(info) }}>
+            {(p as { synthetic?: boolean }).synthetic && <DataClassTag dataClass="SYNTHETIC" label="DEMO · SYNTHETIC" />}
             <span><strong>{p.shelterId}</strong> {p.name} · {shelterCounts(info, p)}</span>
             <ShelterStatusBadge info={info} />
           </Row>

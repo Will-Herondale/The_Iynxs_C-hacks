@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { ProjectionSnapshot } from '@setu/contract';
-import { Badge, EmptyState, Panel } from '@setu/ui';
+import { Badge, EmptyState, Panel, DataClassTag } from '@setu/ui';
 import { useSelection } from '../../app';
 import { formatDeadline } from '../../app/time';
 import { useProjections } from '../../data';
@@ -67,9 +67,9 @@ export function SettlementsSectionView({ snapshot, now = Date.now() }: { snapsho
                 {view.map((r) => {
                   const isSel = selected?.kind === 'settlement' && selected.id === r.id;
                   return (
-                    <tr key={r.id} data-testid={`settlement-row-${r.id}`} data-accessibility={r.accessibility} data-status={r.status} data-route-state={r.routeState} aria-selected={isSel}
+                    <tr key={r.id} data-testid={`settlement-row-${r.id}`} data-accessibility={r.accessibility} data-status={r.status} data-route-state={r.routeState} {...(r.synthetic ? { 'data-class': 'synthetic' } : {})} aria-selected={isSel}
                       onClick={() => select({ kind: 'settlement', id: r.id })} className={isSel ? 'cmd-row--selected' : 'cmd-row'}>
-                      <td><button type="button" className="cmd-linkbtn" onClick={(e) => { e.stopPropagation(); select({ kind: 'settlement', id: r.id }); }} aria-pressed={isSel}>{r.name}</button> <MonoId>{r.id}</MonoId></td>
+                      <td><button type="button" className="cmd-linkbtn" onClick={(e) => { e.stopPropagation(); select({ kind: 'settlement', id: r.id }); }} aria-pressed={isSel}>{r.name}</button> <MonoId>{r.id}</MonoId>{r.synthetic && <> <DataClassTag dataClass="SYNTHETIC" label="DEMO · SYNTHETIC" /></>}</td>
                       <td><Badge tone={ACCESS_TONE[r.accessibility].tone} icon={ACCESS_TONE[r.accessibility].icon}>{label(r.accessibility)}</Badge></td>
                       <td data-testid={`segment-${r.id}`}>{r.criticalSegments.length ? r.criticalSegments.map((id) => <MonoId key={id}>{id}</MonoId>).flatMap((e, i) => (i ? [', ', e] : [e])) : '—'}</td>
                       <td>{r.deadline ? <time dateTime={r.deadline}>{formatDeadline(r.deadline, now)}</time> : '—'}</td>

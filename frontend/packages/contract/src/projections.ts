@@ -31,6 +31,8 @@ export const RoadPropsSchema = z.object({
   status: RoadStatusValueSchema,
   updatedAt: z.string().datetime({ offset: true }),
   sourceEventIds: z.array(z.string()),
+  /** Set by the backend (integration-handoff §8) on demo/fixture features. Absent = not flagged. */
+  synthetic: z.boolean().optional(),
   /** PROPOSED (frontend): bridges are passability features too. Absent means 'road'. */
   kind: z.enum(['road', 'bridge']).optional(),
   /** PROPOSED (frontend) */
@@ -52,6 +54,8 @@ export const SettlementPropsSchema = z.object({
   accessibility: AccessibilitySchema,
   households: z.number().int().nonnegative(),
   needs: z.array(z.string()),
+  /** Set by the backend (integration-handoff §8) on demo/fixture features. Absent = not flagged. */
+  synthetic: z.boolean().optional(),
   /** PROPOSED (frontend) */
   cutOffReason: ExplanationSchema.optional(),
   /** PROPOSED (frontend): ISO time by which evacuation must be complete. */
@@ -69,6 +73,8 @@ export const RoutePropsSchema = z.object({
   status: RouteStatusSchema,
   etaMin: z.number().nonnegative(),
   replacesRouteId: z.string().optional(),
+  /** Set by the backend (integration-handoff §8) on demo/fixture features. Absent = not flagged. */
+  synthetic: z.boolean().optional(),
   /** PROPOSED (frontend): set when status = unavailable. */
   refusal: ExplanationSchema.optional(),
 });
@@ -78,6 +84,8 @@ export const ShelterPropsSchema = z.object({
   capacity: z.number().int().nonnegative(),
   occupancy: z.number().int().nonnegative(),
   open: z.boolean(),
+  /** Set by the backend (integration-handoff §8) on demo/fixture features. Absent = not flagged. */
+  synthetic: z.boolean().optional(),
 });
 
 export const FloodExtentSchema = collection(PolygonGeom, FloodPropsSchema);

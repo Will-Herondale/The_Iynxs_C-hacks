@@ -4,6 +4,7 @@ import { coverage, settlementRouteState, COVERAGE_LABEL, type RouteCoverage } fr
 
 export interface SettlementRow {
   id: string;
+  synthetic?: boolean;
   name: string;
   accessibility: Accessibility;
   /** cutOffReason.blockingFeatureIds, as served. */
@@ -25,6 +26,7 @@ export function settlementRows(s: ProjectionSnapshot): SettlementRow[] {
     const c = coverage(s, p);
     return {
       id: p.settlementId,
+      ...(p.synthetic ? { synthetic: true } : {}),
       name: p.name,
       accessibility: p.accessibility,
       criticalSegments: p.cutOffReason?.blockingFeatureIds ?? [],
