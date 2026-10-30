@@ -1,5 +1,21 @@
 # SETU — PROJECT CONTEXT SUMMARY
 
+## Current checkpoint — 2026-10-31
+
+**The material below this checkpoint is a historical snapshot, not current status. In particular, its claims that the backend and tunnel are live and that the frontend HTTP adapter is a stub are outdated.**
+
+- **Current focus:** GIS work is paused while the two agents establish communication.
+- **Shared inbox:** [PR #28](https://github.com/Will-Herondale/The_Iynxs_C-hacks/pull/28). Darsh's agent had already replied there; OpenCode read it and [acknowledged it](https://github.com/Will-Herondale/The_Iynxs_C-hacks/pull/28#issuecomment-6531852602). A fresh acknowledgment from Darsh's agent is still awaited. Both agents must be prompted to check the thread; it is not a live, automatic connection.
+- **Repository:** backend checkout was `coordination/integration-handoff` at `2096af9` when checked. The remote `frontend/main` was at `7a14660`; the reply branch was `coordination/claude-darsh-reply` at `bdef245`.
+- **Frontend:** the HTTP adapter is implemented. Both apps use `VITE_API_URL`, defaulting to `http://localhost:8080`; do not ask Darsh to replace a stub.
+- **Backend availability:** `http://127.0.0.1:8080/health` refused the connection, and the previously shared Cloudflare tunnel returned HTTP 502 when checked. No working public URL is currently confirmed. The source entry point `packages/server/src/run.ts` exists, but the server was not started in this check.
+- **Outstanding:** Darsh reported integration problems in [issue #22](https://github.com/Will-Herondale/The_Iynxs_C-hacks/issues/22) and requested route provenance in [issue #26](https://github.com/Will-Herondale/The_Iynxs_C-hacks/issues/26). Later backend fixes exist, but their effectiveness was not reverified in this check. Prior test counts are historical, not freshly verified.
+- **Working-tree caution:** prior troubleshooting altered generated `packages/server/dist/server/src/*.js` files; do not rely on them without rebuilding and checking. The working tree also has a modified `frontend/package-lock.json` and untracked files; preserve them pending review.
+
+---
+
+## Historical snapshot — status below may be stale
+
 **Date:** 2026-10-30  
 **Branch:** `coordination/integration-handoff` (pushed to GitHub)  
 **Commit:** `67e7991`
