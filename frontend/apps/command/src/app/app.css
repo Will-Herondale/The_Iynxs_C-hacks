@@ -1,0 +1,20 @@
+html, body, #root { height: 100%; margin: 0; }
+body { background: var(--setu-bg); color: var(--setu-text); font-family: var(--setu-font); }
+.cmd-root { height: 100%; }
+.cmd-root .setu-app-shell {
+  display: grid; height: 100%;
+  grid-template-columns: 300px minmax(0, 1fr) 360px;
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas: 'header header header' 'nav main aside';
+}
+.cmd-root .setu-app-shell__header { grid-area: header; }
+.cmd-root .setu-app-shell__nav { grid-area: nav; overflow-y: auto; border-right: 1px solid var(--setu-border); padding: var(--setu-space-2); }
+.cmd-root .setu-app-shell__main { grid-area: main; position: relative; min-height: 0; padding: 0; }
+.cmd-root .setu-app-shell__aside { grid-area: aside; overflow-y: auto; border-left: 1px solid var(--setu-border); padding: var(--setu-space-2); display: flex; flex-direction: column; gap: var(--setu-space-2); }
+.cmd-header { display: flex; align-items: center; gap: var(--setu-space-4); padding: var(--setu-space-2) var(--setu-space-4); background: var(--setu-surface); border-bottom: 1px solid var(--setu-border); }
+.cmd-title { font-size: 1.1rem; margin: 0; flex: none; }
+.cmd-stats { display: flex; gap: var(--setu-space-4); margin: 0 auto 0 var(--setu-space-4); }
+.cmd-stats div { display: flex; flex-direction: column-reverse; }
+.cmd-stats dt { font-size: 0.75rem; color: var(--setu-text-muted); }
+.cmd-stats dd { margin: 0; font-size: 1.5rem; font-weight: 700; }
+.cmd-version { color: var(--setu-text-muted); font-variant-numeric: tabular-nums; }
