@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FieldEventSchema, ProjectionSnapshotSchema, type FieldEvent, type ProjectionSnapshot } from '@setu/contract';
-import { applyEvent, initialSnapshot, scenarioRules, FLOOD_A2_GROWN } from './index.js';
+import { applyEvent, initialSnapshot, scenarioRules, FLOOD_A2_GROWN, FLOOD_A2_B1_GROWN, B1_COORDS, pointInPolygon } from './index.js';
 
 let n = 0;
 const id = () => `00000000-0000-4000-8000-${String(++n).padStart(12, '0')}`;
@@ -151,10 +151,11 @@ describe('explanations (wave 3, issue #6 fields)', () => {
     const r = applyEvent(e, s0, { now: NOW });
     expect(r.changed).toBe(true);
     const b1 = road(r.snapshot, 'B1');
-    expect(b1).toMatchObject({ status: 'blocked', passability: 'impassable', reason: 'Submerged — volunteer report at 07:05 (cause: submerged)' });
+    expect(b1).toMatchObject({ status: 'blocked', passability: 'impassable', reason: 'Submerged — volunteer report at 12:35 IST (cause: submerged)' });
     expect(b1.sourceEventIds).toContain(e.clientEventId);
     expect(flood3(r.snapshot, 'A2').confidence).toBe('observed');
-    expect(flood(r.snapshot, 'A2').geometry.coordinates).toEqual(FLOOD_A2_GROWN.coordinates);
+    expect(flood(r.snapshot, 'A2').geometry.coordinates).toEqual(FLOOD_A2_B1_GROWN.coordinates);
+    for (const c of B1_COORDS) expect(pointInPolygon([c[0], c[1]], flood(r.snapshot, 'A2').geometry.coordinates)).toBe(true);
     const s4 = sett(r.snapshot, 'S4');
     expect(s4.accessibility).toBe('cut_off');
     expect(s4.cutOffReason).toEqual({
@@ -173,11 +174,11 @@ describe('explanations (wave 3, issue #6 fields)', () => {
 
   it('B1 full blockage with any cause cuts off S4; the deadline is deterministic', () => {
     const r = applyEvent(ev('B1', 'full', 'debris'), initialSnapshot());
-    expect(road(r.snapshot, 'B1').reason).toBe('Debris — volunteer report at 07:05 (cause: debris)');
+    expect(road(r.snapshot, 'B1').reason).toBe('Debris — volunteer report at 12:35 IST (cause: debris)');
     expect(sett(r.snapshot, 'S4').accessibility).toBe('cut_off');
     expect(sett(r.snapshot, 'S4').evacuationDeadline).toBe(DEADLINE);
     const none = applyEvent(ev('B1', 'full'), initialSnapshot());
-    expect(road(none.snapshot, 'B1').reason).toBe('Blocked — volunteer report at 07:05');
+    expect(road(none.snapshot, 'B1').reason).toBe('Blocked — volunteer report at 12:35 IST');
     expect(sett(none.snapshot, 'S4').cutOffReason!.summary).toContain('is blocked and EVAC-3');
   });
 
@@ -194,7 +195,7 @@ describe('explanations (wave 3, issue #6 fields)', () => {
     const blocked = applyEvent(ev('B1', 'full', 'submerged'), initialSnapshot()).snapshot;
     const clear = FieldEventSchema.parse({ ...base(26.13, 91.8), occurredAt: T, type: 'road_cleared', roadId: 'B1' });
     const r = applyEvent(clear, blocked).snapshot;
-    expect(road(r, 'B1')).toMatchObject({ status: 'open', passability: 'passable', reason: 'Cleared — volunteer report at 07:05' });
+    expect(road(r, 'B1')).toMatchObject({ status: 'open', passability: 'passable', reason: 'Cleared — volunteer report at 12:35 IST' });
     const s4 = sett(r, 'S4');
     expect(s4.accessibility).toBe('accessible');
     expect(s4.cutOffReason).toBeUndefined();
@@ -213,7 +214,7 @@ describe('explanations (wave 3, issue #6 fields)', () => {
   ])('%s blockage explains the cut-off of %s (and the refusal of %s)', (rid, sid, routeId, roadName) => {
     const e = ev(rid!, 'full', 'debris');
     const r = applyEvent(e, initialSnapshot()).snapshot;
-    expect(road(r, rid!)).toMatchObject({ passability: 'impassable', reason: 'Debris — volunteer report at 07:05 (cause: debris)' });
+    expect(road(r, rid!)).toMatchObject({ passability: 'impassable', reason: 'Debris — volunteer report at 12:35 IST (cause: debris)' });
     const st = sett(r, sid!);
     expect(st.cutOffReason).toMatchObject({ blockingFeatureIds: [rid], sourceEventIds: [e.clientEventId] });
     expect(st.cutOffReason!.summary).toContain(`${st.name} (${sid}) is cut off: ${roadName} (${rid}) is blocked by debris`);

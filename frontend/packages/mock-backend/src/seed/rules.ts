@@ -4,7 +4,7 @@
  */
 import type { FieldEvent, ProjectionSnapshot, RoadProps, RouteProps, SettlementProps } from '@setu/contract';
 import { distToLineM, haversineM, pointInPolygon, type Pos } from './geo.js';
-import { EVAC_1B_GEOMETRY, EVAC_2B_GEOMETRY, FLOOD_A2_GROWN, GAUGES } from './data.js';
+import { EVAC_1B_GEOMETRY, EVAC_2B_GEOMETRY, FLOOD_A2_B1_GROWN, FLOOD_A2_GROWN, GAUGES } from './data.js';
 
 export const ROAD_MATCH_RADIUS_M = 300;
 const SETTLEMENT_MATCH_RADIUS_M = 1500;
@@ -43,7 +43,8 @@ export const BLOCKAGE_SCRIPTS: Record<string, BlockageScript> = {
 const CAUSE_NOUN: Record<string, string> = { submerged: 'Submerged', debris: 'Debris', collapse: 'Collapsed', damage: 'Damaged', other: 'Blocked' };
 const CAUSE_VERB: Record<string, string> = { submerged: 'submerged', debris: 'blocked by debris', collapse: 'collapsed', damage: 'damaged', other: 'blocked' };
 
-const hhmm = (iso: string) => new Date(iso).toISOString().slice(11, 16);
+/** HH:MM in India Standard Time (UTC+5:30), labelled, so judges read local time. */
+const hhmm = (iso: string) => `${new Date(new Date(iso).getTime() + 5.5 * 3600_000).toISOString().slice(11, 16)} IST`;
 const deadlineOf = (occurredAt: string) => new Date(new Date(occurredAt).getTime() + EVACUATION_WINDOW_H * 3600_000).toISOString();
 
 export interface ApplyOptions {
@@ -163,8 +164,8 @@ function growA2(s: ProjectionSnapshot, effects: string[]): void {
   const a2 = s.flood.features.find((f) => f.properties.areaId === 'A2');
   if (!a2) return;
   a2.properties.confidence = 'observed';
-  if (JSON.stringify(a2.geometry.coordinates) !== JSON.stringify(FLOOD_A2_GROWN.coordinates)) {
-    a2.geometry = structuredClone(FLOOD_A2_GROWN);
+  if (JSON.stringify(a2.geometry.coordinates) !== JSON.stringify(FLOOD_A2_B1_GROWN.coordinates)) {
+    a2.geometry = structuredClone(FLOOD_A2_B1_GROWN);
     effects.push('flood A2 extent grown');
   }
 }
