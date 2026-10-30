@@ -117,3 +117,19 @@ A `road_blockage` with `roadId=B1`, `blockage=full`, `cause=submerged` (bridge "
 - EVAC-3 becomes `unavailable` with a `refusal` explaining that B1 is impassable.
 
 At least one flood polygon in the seed has `confidence=uncertain`.
+
+## Command v3 — Reports & Events + Audit (HELPER 3)
+| id | element | attributes |
+|---|---|---|
+| `events-section` | Reports & Events section (windowed chronological feed) | |
+| `events-count`, `events-scroll` | feed count / scroll container | |
+| `feed-item` | one event in the feed | `data-event-id`, `data-client-event-id`, `data-status`, `data-type` |
+| `feed-open-<eventId>` | opens the event drawer | |
+| `audit-filter-location`, `audit-filter-from`, `audit-filter-to` | audit filters (plus existing type/status) | |
+| `audit-scroll`, `audit-open-<eventId>` | windowed table container / open drawer | |
+| `event-drawer` | event detail drawer | `data-event-id` |
+| `event-drawer-id`, `event-drawer-status`, `event-drawer-close` | drawer header parts | |
+| `event-payload` | original payload, formatted JSON | |
+| `event-changes` | resulting changes block | |
+| `event-affected-<kind>-<id>` | feature citing this event via sourceEventIds | |
+| `event-diff`, `event-diff-item`, `event-diff-empty`, `event-diff-na` | snapshot diff at appliedAtVersion / none / not observed | |

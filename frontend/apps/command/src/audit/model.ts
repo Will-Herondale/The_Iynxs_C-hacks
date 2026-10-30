@@ -71,12 +71,49 @@ export function eventTypeLabel(type: FieldEventType): string {
 export interface AuditFilter {
   type?: FieldEventType;
   status?: FeedStatus;
+  /** Case-insensitive substring over settlement/feature ids the event names or affects. */
+  location?: string;
+  /** Inclusive bounds on receivedAt (ISO strings). */
+  from?: string;
+  to?: string;
 }
 
 export interface AuditRow {
   rec: EventRecord;
   status: FeedStatus;
   affected: Selection[];
+}
+
+/** Feature/settlement ids an event names itself (payload), for the location filter. */
+export function eventLocationIds(rec: EventRecord): string[] {
+  const e = rec.event;
+  switch (e.type) {
+    case 'road_blockage':
+      return e.roadId ? [e.roadId] : [];
+    case 'road_cleared':
+      return [e.roadId];
+    case 'flood_report':
+      return e.areaId ? [e.areaId] : [];
+    case 'household_registration':
+      return [e.settlementId, e.shelterId].filter((x): x is string => !!x);
+    case 'water_level':
+      return e.gaugeId ? [e.gaugeId] : [];
+  }
+}
+
+export function matchesFilter(row: AuditRow, filter: AuditFilter): boolean {
+  const { rec } = row;
+  if (filter.type && rec.event.type !== filter.type) return false;
+  if (filter.status && row.status !== filter.status) return false;
+  if (filter.location) {
+    const q = filter.location.trim().toLowerCase();
+    const ids = [...eventLocationIds(rec), ...row.affected.map((a) => a.id)];
+    if (q && !ids.some((id) => id.toLowerCase().includes(q))) return false;
+  }
+  const t = Date.parse(rec.receivedAt);
+  if (filter.from && t < Date.parse(filter.from)) return false;
+  if (filter.to && t > Date.parse(filter.to)) return false;
+  return true;
 }
 
 /** Newest first (by receivedAt), filtered. */
@@ -89,5 +126,5 @@ export function buildAuditRows(
   return [...events]
     .sort((a, b) => Date.parse(b.receivedAt) - Date.parse(a.receivedAt))
     .map((rec) => ({ rec, status: auditStatus(rec, snapshot?.version), affected: featuresAffectedBy(rec, index) }))
-    .filter((r) => (!filter.type || r.rec.event.type === filter.type) && (!filter.status || r.status === filter.status));
+    .filter((r) => matchesFilter(r, filter));
 }

@@ -6,8 +6,11 @@ export {
   featuresAffectedBy,
   delayLabel,
   eventCause,
+  eventLocationIds,
+  matchesFilter,
   AUDIT_STATUS_LABEL,
   type AuditRow,
   type AuditFilter,
   type AffectedIndex,
 } from './model';
+export { payloadJson, resultingChanges, type ResultingChanges } from './changes';
