@@ -70,6 +70,6 @@ describe('<App/> v3 shell', () => {
         <App />
       </ApiProvider>,
     );
-    expect(screen.getByTestId('offline-banner').textContent).toContain('saved on this device');
+    expect(screen.getByTestId('offline-banner').textContent).toContain('saved locally');
   });
 });
