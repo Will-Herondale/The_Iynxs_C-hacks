@@ -45,8 +45,10 @@ export function AuditView({ onShowFeature }: AuditViewProps) {
               data-testid="audit-filter-type"
               value={filter.type ?? ''}
               onChange={(e) => {
-                const { type: _t, ...rest } = filter;
-                setFilter(e.target.value ? { ...rest, type: e.target.value as FieldEventType } : rest);
+                const next: AuditFilter = { ...filter };
+                if (e.target.value) next.type = e.target.value as FieldEventType;
+                else delete next.type;
+                setFilter(next);
               }}
             >
               <option value="">All types</option>
@@ -61,8 +63,10 @@ export function AuditView({ onShowFeature }: AuditViewProps) {
               data-testid="audit-filter-status"
               value={filter.status ?? ''}
               onChange={(e) => {
-                const { status: _s, ...rest } = filter;
-                setFilter(e.target.value ? { ...rest, status: e.target.value as FeedStatus } : rest);
+                const next: AuditFilter = { ...filter };
+                if (e.target.value) next.status = e.target.value as FeedStatus;
+                else delete next.status;
+                setFilter(next);
               }}
             >
               <option value="">All statuses</option>
