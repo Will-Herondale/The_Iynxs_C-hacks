@@ -1,4 +1,5 @@
 import { FieldEventSchema, newClientEventId, type FieldEvent } from '@setu/contract';
+import { clearWriteFailure, reportWriteFailure } from '../offline/storage';
 import { db, type QueueItem } from './db';
 
 let kick: () => void = () => {};
@@ -11,21 +12,28 @@ export function setKick(fn: () => void): void {
 export async function enqueue(event: FieldEvent): Promise<QueueItem> {
   const valid = FieldEventSchema.parse(event);
   const now = Date.now();
-  const item = await db.transaction('rw', db.queue, async () => {
-    const existing = await db.queue.get(valid.clientEventId);
-    if (existing) return existing;
-    const created: QueueItem = {
-      clientEventId: valid.clientEventId,
-      type: valid.type,
-      event: valid,
-      status: 'queued',
-      attempts: 0,
-      createdAt: now,
-      updatedAt: now,
-    };
-    await db.queue.add(created);
-    return created;
-  });
+  let item: QueueItem;
+  try {
+    item = await db.transaction('rw', db.queue, async () => {
+      const existing = await db.queue.get(valid.clientEventId);
+      if (existing) return existing;
+      const created: QueueItem = {
+        clientEventId: valid.clientEventId,
+        type: valid.type,
+        event: valid,
+        status: 'queued',
+        attempts: 0,
+        createdAt: now,
+        updatedAt: now,
+      };
+      await db.queue.add(created);
+      return created;
+    });
+  } catch (err) {
+    // Nothing was stored: surface it (typed) so the form keeps its data and tells the user.
+    throw reportWriteFailure(err);
+  }
+  clearWriteFailure();
   kick();
   return item;
 }
@@ -66,12 +74,17 @@ async function supersede(id: string, next: FieldEvent): Promise<QueueItem> {
     createdAt: now,
     updatedAt: now,
   };
-  await db.transaction('rw', db.queue, db.archive, async () => {
-    const orig = await db.queue.get(id);
-    if (orig) await db.archive.put({ ...orig, supersededBy: valid.clientEventId, archivedAt: now });
-    await db.queue.delete(id);
-    await db.queue.put(created);
-  });
+  try {
+    // One transaction: if the new write fails the original stays untouched.
+    await db.transaction('rw', db.queue, db.archive, async () => {
+      const orig = await db.queue.get(id);
+      if (orig) await db.archive.put({ ...orig, supersededBy: valid.clientEventId, archivedAt: now });
+      await db.queue.delete(id);
+      await db.queue.put(created);
+    });
+  } catch (err) {
+    throw reportWriteFailure(err);
+  }
   kick();
   return created;
 }
