@@ -1,6 +1,9 @@
 html, body, #root { height: 100%; margin: 0; }
 body { background: var(--setu-bg); color: var(--setu-text); font-family: var(--setu-font); }
-.cmd-root { height: 100%; display: grid; grid-template-rows: auto auto minmax(0, 1fr); min-width: 0; }
+.cmd-root { height: 100%; display: flex; flex-direction: column; min-width: 0; }
+.cmd-root > * { flex: none; }
+/* The workspace always takes the remaining height, however many status strips (ApiStatus, summary) are above it. */
+.cmd-root > .cmd-workspace { flex: 1 1 0; min-height: 0; }
 .cmd-header { display: flex; align-items: center; gap: var(--setu-space-4); padding: 4px var(--setu-space-4); background: var(--setu-surface); border-bottom: 1px solid var(--setu-border); box-sizing: border-box; width: 100%; }
 .cmd-title { font-size: 1rem; margin: 0; flex: none; white-space: nowrap; }
 .cmd-stats { display: none; }

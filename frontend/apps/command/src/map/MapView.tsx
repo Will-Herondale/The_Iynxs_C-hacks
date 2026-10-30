@@ -260,7 +260,7 @@ export function MapView() {
       />
       <details
         open
-        style={{ position: 'absolute', top: 8, left: 8, zIndex: 2, maxWidth: 300, padding: '6px 10px', background: 'var(--setu-surface, #fff)', color: 'var(--setu-text, #111)', border: '1px solid var(--setu-border, #888)', borderRadius: 6, fontSize: 13 }}
+        style={{ position: 'absolute', top: 8, left: 8, zIndex: 2, maxWidth: 300, maxHeight: 'calc(100% - 16px)', overflowY: 'auto', padding: '6px 10px', background: 'var(--setu-surface, #fff)', color: 'var(--setu-text, #111)', border: '1px solid var(--setu-border, #888)', borderRadius: 6, fontSize: 13 }}
       >
         <summary style={{ cursor: 'pointer', fontWeight: 600 }}>Layers</summary>
         <MapLayerControls />
