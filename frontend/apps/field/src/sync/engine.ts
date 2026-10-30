@@ -1,6 +1,7 @@
 import {
   isConfirmedSynced,
   isRetryable,
+  NetworkError,
   type ApiClient,
   type EventStatus,
   type SubmitAck,
@@ -28,7 +29,7 @@ export async function recoverSending(): Promise<void> {
 /** Items waiting to be sent whose backoff has elapsed. Failed items without nextAttemptAt (non-retryable) never auto-retry. */
 export async function dueItems(now: number): Promise<QueueItem[]> {
   const rows = await db.queue.where('status').anyOf('queued', 'failed').sortBy('createdAt');
-  return rows.filter((it) => it.status === 'queued' || (it.nextAttemptAt !== undefined && it.nextAttemptAt <= now));
+  return rows.filter((it) => (it.status === 'queued' && (it.nextAttemptAt === undefined || it.nextAttemptAt <= now)) || (it.nextAttemptAt !== undefined && it.nextAttemptAt <= now));
 }
 
 function applyAck(it: QueueItem, ack: SubmitAck | undefined, now: number): void {
@@ -81,7 +82,9 @@ async function sendBatch(api: ApiClient, batch: QueueItem[], opts: Required<Engi
     await db.queue.where('clientEventId').anyOf(ids).modify((it) => {
       // Skip rows the user discarded/changed meanwhile.
       if (it.status !== 'sending') return;
-      it.status = 'failed';
+      // NetworkError: the request never reached the server, so the item just waits for connectivity ('queued').
+      // Server/Timeout errors may have been seen by the server, so those are 'failed'.
+      it.status = err instanceof NetworkError ? 'queued' : 'failed';
       it.attempts += 1;
       it.lastError = errMsg(err);
       it.updatedAt = now;

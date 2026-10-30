@@ -203,6 +203,19 @@ describe('failures and backoff', () => {
   });
 });
 
+describe('network errors', () => {
+  it("returns the item to 'queued' (waiting for connection) with backoff, not 'failed'", async () => {
+    const e = ev();
+    await enqueue(e);
+    const api = fakeApi({ submitEvents: vi.fn().mockRejectedValue(new NetworkError()) as never });
+    await runPass(api, fixed);
+    const it = await get(e.clientEventId);
+    expect(it?.status).toBe('queued');
+    expect(it?.attempts).toBe(1);
+    expect(it?.nextAttemptAt).toBeGreaterThan(Date.now() - 1000);
+  });
+});
+
 describe('startup recovery', () => {
   it("reverts 'sending' to queued", async () => {
     const e = ev();

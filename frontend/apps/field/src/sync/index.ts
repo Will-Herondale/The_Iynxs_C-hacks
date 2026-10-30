@@ -59,7 +59,7 @@ export function startSyncEngine(api: ApiClient): () => void {
     // Backoff exists to spare a flaky link; connectivity just returned, so retry now.
     void db.queue
       .where('status')
-      .equals('failed')
+      .anyOf('queued', 'failed')
       .modify((it) => {
         if (it.nextAttemptAt !== undefined) it.nextAttemptAt = Date.now();
       })
