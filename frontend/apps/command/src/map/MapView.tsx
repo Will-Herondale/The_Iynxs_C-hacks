@@ -12,6 +12,7 @@ import { selectionBounds } from './bounds';
 import { blockingByGroup, blockingIds, buildMarkers, type MarkerSpec } from './markers';
 import { observationsToGeoJSON, registerObservationIcons } from './observations';
 import { MapLayerControls, useMapLayers } from './toggles';
+import { syntheticBounds } from './demo';
 import { Legend } from './Legend';
 
 const CLICK_TOLERANCE_PX = 6;
@@ -248,6 +249,10 @@ export function MapView() {
     else map.fitBounds(b, { padding: 80, maxZoom: 14, duration: 600 });
   }, [ready, selected]);
 
+  const demoBox = syntheticBounds(snapshot);
+  const openDemo = () => { if (demoBox) mapRef.current?.fitBounds(demoBox, { padding: 90, maxZoom: 14, duration: 800 }); };
+  const showOverview = () => mapRef.current?.fitBounds(BASE_BOUNDS, { padding: 24, duration: 800 });
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: 320 }}>
       <div
@@ -263,6 +268,13 @@ export function MapView() {
         style={{ position: 'absolute', top: 8, left: 8, zIndex: 2, maxWidth: 300, maxHeight: 'calc(100% - 16px)', overflowY: 'auto', padding: '6px 10px', background: 'var(--setu-surface, #fff)', color: 'var(--setu-text, #111)', border: '1px solid var(--setu-border, #888)', borderRadius: 6, fontSize: 13 }}
       >
         <summary style={{ cursor: 'pointer', fontWeight: 600 }}>Layers</summary>
+        <div style={{ display: 'flex', gap: 6, margin: '6px 0' }}>
+          <button type="button" data-testid="open-demo-scenario" onClick={openDemo} disabled={!demoBox}
+            title={demoBox ? 'Zoom to the synthetic demo scenario (backend-flagged, not real data)' : 'No synthetic demo scenario in the current data'}>
+            ◇ Open demo scenario
+          </button>
+          <button type="button" data-testid="show-overview" onClick={showOverview}>Majuli overview</button>
+        </div>
         <MapLayerControls />
       </details>
       <Legend />

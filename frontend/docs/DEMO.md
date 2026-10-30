@@ -101,3 +101,16 @@ Routes and ETAs in the demo come from the scenario fixtures, not a router: they 
 ## 5. Automated check
 
 `cd frontend/e2e && npx playwright test` runs the whole story headlessly, including `demo-b1.spec.ts`, which also regenerates the four screenshots in `docs/demo/`.
+
+## Presenting the field app and command centre together
+
+```sh
+cd frontend
+VITE_API_URL=https://<current backend address> npm run demo     # starts both apps; Ctrl+C stops both
+```
+The backend address is never hard-coded (the tunnel is temporary). Open the Field app (`:5173`, phone width) and the Command centre (`:5174`) side by side.
+
+1. **Command → Live Map → "◇ Open demo scenario"** zooms to the synthetic demo subgraph (the features the backend flags `synthetic`, drawn with a purple halo and a `DEMO · SYNTHETIC` tag). "Majuli overview" zooms back out. The real data is never changed.
+2. **Field**: go offline (DevTools → Network → Offline). A banner says the device only knows what is saved on it and that this is *not* the district-wide situation; local reports read "Local (this device)", server-received ones "District (synced)".
+3. File a flood report → **Saved locally** → reload (still pending) → go online → **Accepted**; the Command centre updates from the live projection.
+4. **Before / after closure:** this needs a clean backend state (a reset or a scenario namespace from OpenCode). With the current backend, the closure has already been applied by earlier events, so only the "after" state is available. When OpenCode provides the clean setup: show the demo route, file the closure report, then show "no safe route".
