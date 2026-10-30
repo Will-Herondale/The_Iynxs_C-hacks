@@ -3,6 +3,7 @@
   "references": [
     { "path": "packages/contract" },
     { "path": "packages/api-client" },
+    { "path": "packages/geo" },
     { "path": "packages/mock-backend" },
     { "path": "packages/ui" }
   ]

@@ -11,6 +11,7 @@ export default defineConfig({
       '@setu/api-client': src('api-client'),
       '@setu/mock-backend': src('mock-backend'),
       '@setu/ui': src('ui'),
+      '@setu/geo': src('geo'),
     },
   },
   test: {
