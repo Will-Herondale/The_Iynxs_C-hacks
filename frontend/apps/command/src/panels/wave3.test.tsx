@@ -110,14 +110,14 @@ describe('provenance', () => {
   } as EventRecord);
 
   it('joins ids with records; synced only when version confirmed', () => {
-    expect(joinProvenance(['c-1'], [rec(5)], 5)[0]!.status).toBe('synced');
-    expect(joinProvenance(['c-1'], [rec(6)], 5)[0]!.status).toBe('accepted');
-    expect(joinProvenance(['c-1'], [rec(undefined, 'accepted')], 9)[0]!.status).toBe('accepted');
-    expect(joinProvenance(['zz'], [rec(5)], 5)[0]).toEqual({ clientEventId: 'zz' });
+    expect(joinProvenance(['c-1'], [rec(5)], {}, 5)[0]!.status).toBe('synced');
+    expect(joinProvenance(['c-1'], [rec(6)], {}, 5)[0]!.status).toBe('accepted');
+    expect(joinProvenance(['c-1'], [rec(undefined, 'accepted')], {}, 9)[0]!.status).toBe('accepted');
+    expect(joinProvenance(['zz'], [rec(5)], {}, 5)[0]).toEqual({ sourceId: 'zz', status: 'accepted' });
   });
 
   it('renders type, reporter, device and status badge', () => {
-    wrap(<ProvenanceView featureId="B1" items={joinProvenance(['c-1', 'zz'], [rec(5)], 5)} />);
+    wrap(<ProvenanceView featureId="B1" items={joinProvenance(['c-1', 'zz'], [rec(5)], {}, 5)} />);
     const p = screen.getByTestId('provenance-B1');
     expect(p.textContent).toContain('Road blockage');
     expect(p.textContent).toContain('vol-7');

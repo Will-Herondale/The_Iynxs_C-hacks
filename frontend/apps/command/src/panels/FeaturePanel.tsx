@@ -2,9 +2,9 @@ import type { ReactNode } from 'react';
 import type { EventRecord, ProjectionSnapshot } from '@setu/contract';
 import { Badge, EmptyState, Panel } from '@setu/ui';
 import { useSelection, type FeatureKind } from '../app';
-import { useEvents, useProjections } from '../data';
+import { featureSourceEventIds, joinProvenance, useEvents, useProjections, useProvenance, type ProvenanceItem } from '../data';
 import { ExplainBlock } from './Explain';
-import { ProvenanceView, joinProvenance } from './Provenance';
+import { ProvenanceView } from './Provenance';
 import { ACCESS_TONE, ROAD_TONE, ROUTE_TONE, findFeature, label } from './model';
 
 export interface FeaturePanelProps {
@@ -13,6 +13,8 @@ export interface FeaturePanelProps {
   records?: EventRecord[];
   /** Called when a source event link is activated (e.g. to scroll the feed). Links also point to #incident-<id>. */
   onSelectEvent?: (clientEventId: string) => void;
+  /** Pre-joined provenance (live panel supplies it with confirmed statuses from getEventStatus). */
+  provenance?: ProvenanceItem[];
 }
 
 const TITLES: Record<FeatureKind, string> = { road: 'Road', settlement: 'Settlement', route: 'Route', shelter: 'Shelter', flood: 'Flood area' };
@@ -34,10 +36,12 @@ function Props({ rows }: { rows: [string, ReactNode][] }) {
 export function FeaturePanel(props: Omit<FeaturePanelProps, 'snapshot'>) {
   const { snapshot } = useProjections();
   const { events } = useEvents();
-  return <FeaturePanelView snapshot={snapshot} records={events} {...props} />;
+  const { selected } = useSelection();
+  const { items } = useProvenance(selected?.id);
+  return <FeaturePanelView snapshot={snapshot} records={events} provenance={items} {...props} />;
 }
 
-export function FeaturePanelView({ snapshot, records, onSelectEvent }: FeaturePanelProps) {
+export function FeaturePanelView({ snapshot, records, onSelectEvent, provenance }: FeaturePanelProps) {
   const { selected, select } = useSelection();
 
   if (!selected) {
@@ -150,8 +154,8 @@ export function FeaturePanelView({ snapshot, records, onSelectEvent }: FeaturePa
     <div {...attrs}>
       <Panel title={`${TITLES[selected.kind]} ${selected.id}`}>
         {body}
-        {selected.kind === 'road' && (
-          <ProvenanceView featureId={selected.id} items={joinProvenance((found as import('@setu/contract').RoadProps).sourceEventIds, records ?? [], snapshot.version)} />
+        {(selected.kind === 'road' || selected.kind === 'settlement' || selected.kind === 'route') && (
+          <ProvenanceView featureId={selected.id} items={provenance ?? joinProvenance(featureSourceEventIds(snapshot, selected.id), records ?? [], {}, snapshot.version)} />
         )}
         <p style={{ marginBottom: 0 }}>{close}</p>
       </Panel>

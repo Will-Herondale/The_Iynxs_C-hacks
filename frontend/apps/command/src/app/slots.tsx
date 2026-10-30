@@ -1,5 +1,5 @@
 import { MapView } from '../map';
-import { FeaturePanel, RoadList, SettlementList, RouteList, ShelterList } from '../panels';
+import { FeaturePanel, RoadList, SettlementList, RouteList, ShelterList, EvacDeadlines } from '../panels';
 import { IncidentFeed, ChangesList } from '../feed';
 import { AuditView } from '../audit';
 import { useView } from './view';
@@ -19,6 +19,7 @@ export function MapSlot() {
 export const LeftSlot = () => (
   <>
     <LayerControls />
+    <EvacDeadlines />
     <SettlementList />
     <RoadList />
     <RouteList />
