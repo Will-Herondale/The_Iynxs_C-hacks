@@ -1,0 +1,40 @@
+{
+  "file": "hillshade.png",
+  "width": 1320,
+  "height": 528,
+  "bounds": [
+    [
+      93.59986111111111,
+      26.77986111111111
+    ],
+    [
+      94.70013888888889,
+      27.220138888888886
+    ]
+  ],
+  "coordinates": [
+    [
+      93.59986111111111,
+      27.220138888888886
+    ],
+    [
+      94.70013888888889,
+      27.220138888888886
+    ],
+    [
+      94.70013888888889,
+      26.77986111111111
+    ],
+    [
+      93.59986111111111,
+      26.77986111111111
+    ]
+  ],
+  "source": {
+    "branch": "data/karthik",
+    "commit": "dce5ec1372c17f2957a3b04bf5f30a19490e6e1e",
+    "file": "geo/data/out/majuli_dem_30m_wgs84.tif",
+    "licence": "Copernicus GLO-30 (DSM)"
+  },
+  "note": "Hillshade of a DSM (canopy/roof surface) for orientation only; vertical exaggeration applied. Not survey-grade terrain."
+}

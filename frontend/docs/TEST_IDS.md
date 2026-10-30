@@ -58,13 +58,22 @@ Mock failure toggles go through the URL, e.g. `?mock=offline`, `?mock=5xx:1`, `?
 
 The road/settlement/route lists are required. They make the projections testable and accessible without reading the map canvas. Clicking a row selects the feature and opens `feature-panel`, the same as clicking it on the map.
 
-## Scripted mock scenario (from `@setu/mock-backend` seed)
-- `road_blockage` with `roadId=R7` and `blockage=full`:
-  - R7 becomes `blocked`;
-  - S3 becomes `cut_off`;
-  - EVAC-2 becomes `unavailable`, and EVAC-2b appears as `recalculated`.
-- R4 full: S1 becomes `cut_off`; EVAC-1 is replaced by EVAC-1b.
-- R3 full: S5 becomes `cut_off`. R10 full: S6 becomes `cut_off`.
+## Scripted mock scenario (from `@setu/mock-backend` seed, Majuli, SYNTHETIC)
+IDs are Karthik's real ids: `roadId`/`settlementId` = `String(osm_id)`, `shelterId` = `shelter_id` (e.g. `MJ-SH-009`). Everything below is a
+scripted lookup, labelled SYNTHETIC (geo/SCENARIOS.md); flood polygons are an interim DEM-threshold mask, not a hydraulic simulation.
+Baseline flood is empty; shelters are `capacity:0 occupancy:0 open:false` (= "not published"); settlement `population:0` = "not published".
+- **S1** bridge `284824410` (deck ≈84.8 m, level 85.3 m): `road_blockage` (full) with `roadId=284824410`, or a `water_level` within 300 m of it:
+  - the bridge becomes `blocked`/`impassable`, with `reason` "Submerged — water level 85.3 m above deck ≈84.8 m (synthetic S1), reported at HH:MM IST";
+  - every route crossing it becomes `unavailable` with a `refusal`, and its precomputed alternate appears as `recalculated` (`replacesRouteId`);
+  - far-side settlements become `limited` with a `cutOffReason`;
+  - the flood switches to the 85.3 m polygons (`flood-s1-<nnn>`, `confidence=modelled`).
+- **S2** road `1074461062` (200 m closure near shelter `MJ-SH-009`): `road_blockage` full makes the road `blocked`, refuses the route to `MJ-SH-009`, and adds the alternate as `recalculated`.
+- **S4** Auniati `10692764768` (DEM 82.3 m, level 83.8 m): a `water_level` within 1.5 km with `levelCm >= 150` (read as depth above local ground; level = 82.3 m + levelCm/100):
+  - the flood switches to the 83.8 m polygons (`flood-s4-<nnn>`);
+  - Auniati becomes `cut_off`, with a `cutOffReason`, `evacuationDeadline` (event time + 3 h) and priority `critical`;
+  - EVERY route from Auniati becomes `unavailable`, with a `refusal`, and there are no alternates (the "no safe route" state);
+  - a later `water_level` below 150 cm there reverts S4.
+- `road_cleared` on a blocked road reverts it: road, settlements, routes (alternates become `unavailable`) and, unless S1/S4 still hold it, the flood.
 - The mock applies an event about 1500ms after accepting it (`?mock=delay:<ms>`).
 
 ## Wave 3 additions (submerged-bridge demo, camp, provenance)
@@ -110,13 +119,8 @@ Status vocabulary (design system, wave 5), shown by `SyncStatusBadge` / `StatusB
 | `map-legend` | legend: flooded / blocked / safe / uncertain | |
 
 ### Demo scenario (scripted in mock-backend; field names PROPOSED in issue #6)
-A `road_blockage` with `roadId=B1`, `blockage=full`, `cause=submerged` (bridge "Bharalu Bridge") does all of the following:
-- B1 becomes `blocked`, `passability=impassable`, with a `reason`.
-- Flood area A2 grows (`confidence=observed`).
-- S4 becomes `cut_off`, with a `cutOffReason` whose `blockingFeatureIds` includes B1 and that event, plus an `evacuationDeadline` and `evacuationPriority=critical`.
-- EVAC-3 becomes `unavailable` with a `refusal` explaining that B1 is impassable.
-
-At least one flood polygon in the seed has `confidence=uncertain`.
+Superseded by the Majuli S1/S2/S4 scenarios in "Scripted mock scenario" above (the Guwahati B1/S4/EVAC-3 demo is gone). Flood polygons carry
+`confidence=modelled` (synthetic DEM-threshold mask); the baseline snapshot has no flood.
 
 ## Field v3 (wave 5)
 

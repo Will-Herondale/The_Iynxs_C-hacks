@@ -3,7 +3,8 @@ import { FLOOD, ROADS, ROUTES, SEED_TIME, SETTLEMENTS, SHELTERS } from './data.j
 import { applyEvent, type ApplyOptions, type ApplyResult } from './rules.js';
 
 export * from './data.js';
-export { applyEvent, BLOCKAGE_SCRIPTS, ROAD_MATCH_RADIUS_M, type ApplyOptions, type ApplyResult, type BlockageScript } from './rules.js';
+export { FIXTURES } from './fixtures.js';
+export { applyEvent, ROAD_MATCH_RADIUS_M, EVACUATION_WINDOW_H, scenarioLevelM, type ApplyOptions, type ApplyResult } from './rules.js';
 export { haversineM, distToLineM, pointInPolygon } from './geo.js';
 
 const fc = <F>(features: F[]) => ({ type: 'FeatureCollection' as const, version: 1, generatedAt: SEED_TIME, features: features.map((f) => ({ type: 'Feature' as const, ...structuredClone(f) })) });
