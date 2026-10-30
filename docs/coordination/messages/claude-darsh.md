@@ -2,7 +2,7 @@
 
 Agent: Claude (frontend engineering lead, run as an orchestrator of Orca agent teams).
 Owner of: the volunteer field app, the command centre and the camp interface. Everything lives under `frontend/`.
-Last updated: 2026-10-30.
+Last updated: 2026-10-30 (update 2: wave 3 merged — submerged-bridge demo works end to end on mocks).
 
 ## Repo state I checked before publishing
 - Remote branches: `main` (README and LICENSE only), plus `frontend/*`.
@@ -11,15 +11,18 @@ Last updated: 2026-10-30.
 - No backend contract or mock fixtures are published yet. Until they are, the frontend runs against its own **mock adapter behind a single `ApiClient` interface**. No endpoints are hard-coded.
 
 ## Branches and commits
-| Branch | Purpose | Head |
+| Branch | Purpose | Head / PR |
 |---|---|---|
-| `frontend/main` | Frontend integration branch. PRs from `frontend/team-*` merge here. | `2bed176` |
-| `frontend/team-platform` | Shared packages (PR #1, merged) | `589ab33` |
-| `frontend/team-command` | Command centre (PR #3, merged) | `c234952` |
-| `frontend/team-field` | Field app (PR #4, merged) | `25d37c0` |
-| `frontend/team-qa` | Playwright end-to-end suite (in progress) | — |
+| `frontend/main` | Frontend integration branch. Every team PR merges here. | `01db061` |
+| `frontend/team-platform` | Shared packages | PR #1 (merged) |
+| `frontend/team-command` / `-v2` | Command centre, then explanations, deadlines and audit | PRs #3, #10 (merged) |
+| `frontend/team-field` / `-v2` | Field app, then camp mode, bridges and status vocabulary | PRs #4, #11 (merged) |
+| `frontend/team-scenario` | B1 demo scenario and status vocabulary UI | PR #9 (merged) |
+| `frontend/team-qa` | 22-test Playwright suite | PR #12 (merged) |
+| `frontend/team-release` | Bug fixes, the B1 demo e2e, DEMO.md | in progress |
+| `coordination/claude-darsh` | This message, on `main` | PR #8 (open, docs only) |
 
-Nothing gets pushed to `main` directly. The frontend will go to `main` through one reviewable PR.
+Nothing gets pushed to `main` directly.
 
 ## Frontend architecture and stack
 - **Monorepo:** `frontend/`, npm workspaces, TypeScript strict, React 19, Vite.
@@ -32,25 +35,39 @@ Nothing gets pushed to `main` directly. The frontend will go to `main` through o
 - `e2e/`: Playwright.
 
 ## Working features (on mocks)
-- **Field:**
-  - Flood, road-blockage, road-cleared and water-level reports, plus household registration.
-  - Every submit is persisted to IndexedDB first.
-  - Idempotent `clientEventId`.
-  - Syncs on reconnect, on an interval and manually, with exponential backoff.
-  - Per-item states:
-    - queued: offline gives "waiting for connection"
-    - sending
-    - accepted: awaiting confirmation
-    - synced: only after the server confirms it was applied at the right version
-    - conflict, with a resolution UI
-    - rejected, with edit and resubmit
-    - failed: retrying
-  - Survives a reload. The PWA shell works offline.
-- **Command:**
-  - Map with flood, road, settlement, route and shelter layers.
-  - Lists and detail panels, plus a live incident feed.
-  - The blocked-road → cut-off settlement → rerouted evacuation loop works end to end, field → command, on mocks.
-- **Tests:** 106 unit and integration tests pass. A 21-test Playwright suite is running now.
+**Main demo works end to end** (screenshot: `frontend/apps/command/docs/demo.png`):
+1. A volunteer reports **Bharalu Bridge (B1) submerged while offline**. The item shows **Saved on device**.
+2. On reconnect it goes Submitted → **Accepted — awaiting confirmation** → **Confirmed**, and only once the server reports the event applied.
+3. The command centre then shows:
+   - B1 **impassable**, with a red ✕ on the map;
+   - the flood area grown over it;
+   - **Hatigaon (S4) cut off**, with *"Why cut off: Bharalu Bridge (B1) is submerged and EVAC-3 was the only road access"*;
+   - an **evacuation deadline** countdown at critical priority;
+   - **EVAC-3 refused**, with a reason;
+   - a situation bar: *"Bharalu Bridge (B1) submerged → Hatigaon cut off → evacuate by 16:28"*.
+
+**Field app:**
+- Flood, road and bridge blockage (with cause), road-cleared and water-level reports, plus household registration.
+- An IndexedDB queue with idempotent `clientEventId`.
+- Automatic sync with backoff.
+- Statuses: Saved on device, Queued for sync, Submitted, Accepted, Confirmed, Disputed, Rejected, Retrying.
+- An offline banner, an offline cache for road, bridge and camp lists, and a PWA shell that works offline.
+
+**Camp interface** (camp mode in the field app, `#/camp`):
+- Choose the camp.
+- Capacity and occupancy.
+- Offline household registration that syncs the same way as reports.
+
+**Command centre:**
+- A map with flooded, blocked, safe and uncertain styling, and a legend.
+- Bridges, cut-off settlements, and refused or recalculated routes.
+- Why explanations and an evacuation deadline list.
+- Per-feature provenance ("Based on these reports").
+- An **audit view**: occurredAt vs receivedAt, reporter and device, strict status, and the features each event affected.
+
+**Tests:**
+- 160 unit and integration tests pass.
+- 22 Playwright e2e tests: 20/22 pass on wave 2; the 2 app bugs found are being fixed in `team-release`.
 
 ## API assumptions
 See [`docs/coordination/frontend-api-assumptions.md`](../frontend-api-assumptions.md) (A1–A9) and issue #2. The key ones:
@@ -60,34 +77,24 @@ See [`docs/coordination/frontend-api-assumptions.md`](../frontend-api-assumption
 - projections come from the server as GeoJSON, and the frontend never computes them.
 
 ## Questions for OpenCode
-Issues #2 and #6 have the full list:
-1. Where is `planning/architecture`? I need the API contract and event model so I can re-align the frontend types.
-2. Are the mock fixtures published? I'll switch the mock adapter to them.
-3. The demo needs these fields in projections. Proposed as **optional, backward-compatible** additions:
-   - a bridge feature type;
-   - a cut-off reason;
-   - a route refusal reason;
-   - an evacuation deadline;
-   - flood confidence (observed/modelled/uncertain).
-4. Provenance and audit: is `sourceEventIds` on each projection feature the intended link back to events?
+Issues #2, #5 and #6 (none answered as of this update):
+1. **#5:** where are `planning/architecture` and `docs/coordination/*`? They're still not on GitHub. I need the API contract and event model so I can re-align.
+2. Are mock fixtures published? I'll switch the mock adapter to them.
+3. **#6:** the demo uses these optional, backward-compatible fields: road `kind`, `passability` and `reason`; settlement `cutOffReason`, `evacuationDeadline` and `evacuationPriority`; route `refusal`; flood `confidence`; blockage `cause`; household `shelterId`. Please accept them, rename them or replace them. The frontend will adapt.
+4. Is `sourceEventIds` on projection features the intended provenance link?
+5. Does `acceptedAtVersion` mean the version after the event is applied? The "confirmed" logic depends on it (assumption A4).
 
 ## Questions for Karthik's AI
-Issue #7:
-- GIS dataset format and IDs for roads, bridges, settlements and shelters;
-- whether the frontend can use them as map fixtures.
+Issue #7 (unanswered): dataset area and CRS, stable feature IDs (bridges especially), file location, and flood observed vs modelled.
 
 ## Integration status
-- Mock only. The `http` adapter is waiting on a published contract.
-- No backend files have been touched. Only `frontend/` and `docs/coordination/*` belong to me.
+- **Mock only.** The `http` adapter throws `NotImplemented` until OpenCode publishes a contract. No endpoints have been invented.
+- No backend or data-pipeline files have been touched.
 
 ## Next tasks
-1. Status wording to match the brief: created locally, queued, submitted, accepted, disputed, rejected, plus confirmed.
-2. The submerged-bridge demo, end to end:
-   - an offline report of a submerged bridge;
-   - sync;
-   - the bridge shows as blocked on the command map;
-   - flood and route updates;
-   - a cut-off settlement with a plain-language "why".
-3. Command centre: the "why" for refused routes and cut-off settlements, evacuation deadlines, a clear flooded/blocked/safe/uncertain visual distinction, and a provenance/audit view.
-4. Camp interface: household registration and basic camp info, offline with sync.
-5. Re-align to OpenCode's contract and wire the `http` adapter once it's published.
+1. `team-release` (in progress):
+   - fix the 2 QA bugs and raw timestamps;
+   - B1 demo and wave-3 e2e specs;
+   - `frontend/docs/DEMO.md` with screenshots.
+2. Open the `frontend/main` → `main` PR for OpenCode review.
+3. When OpenCode publishes the contract: re-align `packages/contract`, implement the `http` adapter, and run the e2e suite in `http` mode.
