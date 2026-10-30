@@ -122,6 +122,62 @@ Status vocabulary (design system, wave 5), shown by `SyncStatusBadge` / `StatusB
 Superseded by the Majuli S1/S2/S4 scenarios in "Scripted mock scenario" above (the Guwahati B1/S4/EVAC-3 demo is gone). Flood polygons carry
 `confidence=modelled` (synthetic DEM-threshold mask); the baseline snapshot has no flood.
 
+At least one flood polygon in the seed has `confidence=uncertain`.
+
+## Command v3 — shell, navigation, Overview (LEAD)
+| id | element | attributes |
+|---|---|---|
+| `nav-overview`, `nav-map`, `nav-settlements`, `nav-routes`, `nav-events`, `nav-audit` | section navigation buttons | `aria-current="page"` on the active one |
+| `section-overview`, `section-events`, `section-audit`, `section-settlements`, `section-routes` | section containers (map stays mounted behind/beside them) | |
+| `situation-summary` | persistent compact strip (situation lines + counts) | `data-all-clear` |
+| `situation-more` | "+N more" link from the strip to Overview | |
+| `stat-cut-off`, `stat-blocked-roads`, `stat-active-routes` | counts inside the strip | text = number |
+| `overview` | Overview section root | |
+| `overview-district`, `overview-simtime`, `overview-scenario` | district / simulation time / active scripted scenario (`Not provided by backend` unless triggered; scenario carries a SYNTHETIC tag) | |
+| `overview-count-affected`, `-disconnected`, `-impassable`, `-pending`, `-evac` | clickable count tiles from projections | text includes the number |
+| `overview-alerts` / `overview-no-alerts` | critical alert list / all-clear | |
+| `overview-alert-<settlement-\|road-\|route-><id>` | one alert (click navigates + selects) | `data-severity` = critical\|warning, `data-new` |
+| `overview-recent` / `overview-event` | recent events list / one event | `data-event-id` |
+| `context-close` | closes the docked context panel (`feature-panel`) | |
+
+## Command v3 — Live Map, panels, Settlements, Routes (HELPERS 1–2)
+| id | element | attributes |
+|---|---|---|
+| `map` | map container (stays mounted; hidden on non-map sections) | |
+| `layer-toggle-<terrain\|rivers\|roads\|settlements\|shelters\|flood\|blocked\|cutoff\|observations\|routes>` | independent layer checkboxes | `checked` / `aria-checked` |
+| `map-layer-controls` | layer toggle group | |
+| `map-legend`, `map-legend-synthetic`, `map-legend-flood-caveat` | legend; SYNTHETIC tag and the DEM-threshold caveat | |
+| `feature-panel` | docked context panel (road/bridge, settlement, route, shelter, flood area, report) | `data-feature-kind`, `data-feature-id` |
+| `feature-panel-empty`, `feature-panel-report` | no selection / selected report | |
+| `not-provided-<field>` | "Not provided by backend (#15)" placeholder (travel time, depth, validity period, latest safe departure, first failing segment) | |
+| `road-reason-<roadId>`, `road-flood-confidence` | road reason / flood confidence | |
+| `flood-synthetic-note`, `flood-caveat` | GEO_PROVENANCE synthetic note / "DEM-threshold approximation — not a validated hydraulic simulation" | |
+| `blocking-link-<id>`, `link-<kind>-<id>`, `source-event-link`, `provenance-<featureId>` | navigation links inside the panel | |
+| `settlements-section`, `settlements-table`, `settlements-search`, `settlements-count`, `settlements-sort-<name\|accessibility\|segment\|deadline\|priority\|status>` | Settlements table controls | |
+| `settlement-row-<settlementId>` | settlement row; click selects + highlights on map | `data-accessibility`, `data-status` |
+| `segment-<settlementId>`, `priority-<settlementId>`, `na-<field>` | critical segment / priority / "—" (not in contract #15) cells | |
+| `routes-section`, `routes-filter-origin`, `routes-filter-destination`, `routes-count`, `routes-source-note` | Routes & Evacuation | |
+| `route-row-<routeId>` | route row | `data-status` = active\|recalculated\|unavailable |
+| `route-select-<routeId>`, `route-eta-<routeId>`, `route-replaces-<routeId>`, `route-alternative-<routeId>` | route actions / fields | |
+| `explain-refusal-<routeId>`, `refusal-missing-<routeId>` | why refused / refusal not provided | |
+| `no-safe-route-<settlementId>` | every route for the settlement is unavailable | |
+
+## Command v3 — Reports & Events + Audit (HELPER 3)
+| id | element | attributes |
+|---|---|---|
+| `events-section` | Reports & Events section (windowed chronological feed) | |
+| `events-count`, `events-scroll` | feed count / scroll container | |
+| `feed-item` | one event in the feed | `data-event-id`, `data-client-event-id`, `data-status`, `data-type` |
+| `feed-open-<eventId>` | opens the event drawer | |
+| `audit-filter-location`, `audit-filter-from`, `audit-filter-to` | audit filters (plus existing type/status) | |
+| `audit-scroll`, `audit-open-<eventId>` | windowed table container / open drawer | |
+| `event-drawer` | event detail drawer | `data-event-id` |
+| `event-drawer-id`, `event-drawer-status`, `event-drawer-close` | drawer header parts | |
+| `event-payload` | original payload, formatted JSON | |
+| `event-changes` | resulting changes block | |
+| `event-affected-<kind>-<id>` | feature citing this event via sourceEventIds | |
+| `event-diff`, `event-diff-item`, `event-diff-empty`, `event-diff-na` | snapshot diff at appliedAtVersion / none / not observed | |
+
 ## Field v3 (wave 5)
 
 Owned by Team Field v3 (`apps/field`). Routes are hash routes: `#/home` (default) `#/report` `#/map` `#/households` `#/sync`, plus

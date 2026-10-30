@@ -5,6 +5,7 @@ import { useSelection, type FeatureKind } from '../app';
 import { featureSourceEventIds, joinProvenance, useEvents, useProjections, useProvenance, type ProvenanceItem } from '../data';
 import { formatDateTime, formatDeadline } from '../app/time';
 import { ExplainBlock } from './Explain';
+import { FLOOD_CAVEAT, FLOOD_SYNTHETIC_NOTE, MonoId, NotProvided } from './NotProvided';
 import { ProvenanceView } from './Provenance';
 import { ACCESS_TONE, ROAD_TONE, ROUTE_TONE, findFeature, label } from './model';
 
@@ -18,7 +19,7 @@ export interface FeaturePanelProps {
   provenance?: ProvenanceItem[];
 }
 
-const TITLES: Record<FeatureKind, string> = { road: 'Road', settlement: 'Settlement', route: 'Route', shelter: 'Shelter', flood: 'Flood area' };
+const TITLES: Record<FeatureKind, string> = { road: 'Road', settlement: 'Settlement', route: 'Route', shelter: 'Shelter', flood: 'Flood area', report: 'Report' };
 
 function Props({ rows }: { rows: [string, ReactNode][] }) {
   return (
@@ -53,8 +54,18 @@ export function FeaturePanelView({ snapshot, records, onSelectEvent, provenance 
     );
   }
   const attrs = { 'data-testid': 'feature-panel', 'data-feature-kind': selected.kind, 'data-feature-id': selected.id } as const;
-  const found = snapshot ? findFeature(snapshot, selected.kind, selected.id) : undefined;
   const close = <button type="button" onClick={() => select(undefined)} aria-label="Close details">Close</button>;
+  if (selected.kind === 'report') {
+    return (
+      <div {...attrs}>
+        <Panel title={`Report ${selected.id}`}>
+          <p data-testid="feature-panel-report">Report details are shown in Reports &amp; Events.</p>
+          {close}
+        </Panel>
+      </div>
+    );
+  }
+  const found = snapshot ? findFeature(snapshot, selected.kind, selected.id) : undefined;
 
   if (!snapshot || !found) {
     return (
@@ -79,14 +90,24 @@ export function FeaturePanelView({ snapshot, records, onSelectEvent, provenance 
   switch (selected.kind) {
     case 'road': {
       const p = findFeature(snapshot, 'road', selected.id) as import('@setu/contract').RoadProps;
+      // Flood confidence is shown only when the server's own flood areas carry it; no spatial join is done here.
+      const confs = [...new Set(snapshot.flood.features.map((f) => f.properties.confidence).filter(Boolean))];
+      const roadFlood = p.status !== 'open' && confs.length ? (
+        <span data-testid="road-flood-confidence">{confs.join(' / ')} <small>(flood areas in snapshot)</small></span>
+      ) : undefined;
       body = (
         <Props rows={[
-          ['roadId', p.roadId], ['name', p.name],
+          ['roadId', <MonoId>{p.roadId}</MonoId>], ['name', p.name],
           ['status', <Badge tone={ROAD_TONE[p.status].tone} icon={ROAD_TONE[p.status].icon}>{label(p.status)}</Badge>],
           ...(p.kind ? [['kind', p.kind] as [string, ReactNode]] : []),
-          ...(p.passability ? [['passability', p.passability] as [string, ReactNode]] : []),
-          ...(p.reason ? [['reason', p.reason] as [string, ReactNode]] : []),
-          ['updatedAt', <time dateTime={p.updatedAt}>{formatDateTime(p.updatedAt)}</time>], ['sourceEventIds', events(p.sourceEventIds)],
+          ['passability', p.passability ?? <NotProvided field="passability" short />],
+          ['reason', p.reason ?? <NotProvided field="reason" short />],
+          ['original observation', events(p.sourceEventIds)],
+          ...(roadFlood ? [['flood confidence', roadFlood] as [string, ReactNode]] : []),
+          ['travel time', <NotProvided field="travel-time" />],
+          ['water depth', <NotProvided field="depth" />],
+          ['valid until', <NotProvided field="validity" />],
+          ['updatedAt', <time dateTime={p.updatedAt}>{formatDateTime(p.updatedAt)}</time>],
         ]} />
       );
       break;
@@ -98,13 +119,16 @@ export function FeaturePanelView({ snapshot, records, onSelectEvent, provenance 
       body = (
         <>
           <Props rows={[
-            ['settlementId', p.settlementId], ['name', p.name], ['population', p.population], ['households', p.households],
+            ['settlementId', <MonoId>{p.settlementId}</MonoId>], ['name', p.name], ['population', p.population], ['households', p.households],
             ['needs', p.needs.length ? p.needs.join(', ') : 'none'],
             ['accessibility', <Badge tone={ACCESS_TONE[p.accessibility].tone} icon={ACCESS_TONE[p.accessibility].icon}>{label(p.accessibility)}</Badge>],
             ['routes', serving.length ? serving.map((r) => <span key={r.routeId}>{link('route', r.routeId)}<small>({r.status}) </small></span>) : 'none'],
             ['shelters', shelterIds.length ? shelterIds.map((id) => link('shelter', id)) : 'none'],
-            ...(p.evacuationDeadline ? [['evacuationDeadline', <time dateTime={p.evacuationDeadline}>{formatDeadline(p.evacuationDeadline)}</time>] as [string, ReactNode]] : []),
-            ...(p.evacuationPriority ? [['evacuationPriority', p.evacuationPriority] as [string, ReactNode]] : []),
+            ['evacuationDeadline', p.evacuationDeadline ? <time dateTime={p.evacuationDeadline}>{formatDeadline(p.evacuationDeadline)}</time> : 'none set'],
+            ['evacuationPriority', p.evacuationPriority ?? 'none set'],
+            ['supporting observations', events(p.cutOffReason?.sourceEventIds ?? [])],
+            ['latest safe departure', <NotProvided field="latest-departure" short />],
+            ['first failing segment', <NotProvided field="first-failing-segment" short />],
           ]} />
           {p.cutOffReason && p.accessibility === 'cut_off' && (
             <ExplainBlock testId={`explain-cutoff-${p.settlementId}`} title="Why cut off" reason={p.cutOffReason} snapshot={snapshot} />
@@ -146,7 +170,18 @@ export function FeaturePanelView({ snapshot, records, onSelectEvent, provenance 
     }
     case 'flood': {
       const p = findFeature(snapshot, 'flood', selected.id) as import('@setu/contract').FloodProps;
-      body = <Props rows={[['areaId', p.areaId], ['depthCm', p.depthCm], ['severity', `${p.severity} / 5`], ...(p.confidence ? [['confidence', p.confidence] as [string, ReactNode]] : [])]} />;
+      body = (
+        <>
+          <Props rows={[
+            ['areaId', <MonoId>{p.areaId}</MonoId>], ['depthCm', p.depthCm], ['severity', `${p.severity} / 5`],
+            ['confidence', p.confidence
+              ? <Badge tone={p.confidence === 'observed' ? 'info' : 'warning'} icon={p.confidence === 'observed' ? '◉' : '◌'}>{p.confidence}</Badge>
+              : <NotProvided field="confidence" short />],
+          ]} />
+          <p data-testid="flood-synthetic-note" style={{ margin: '8px 0 0' }}><strong>SYNTHETIC</strong> — {FLOOD_SYNTHETIC_NOTE}</p>
+          <p data-testid="flood-caveat" style={{ margin: '4px 0 0', fontWeight: 600 }}>{FLOOD_CAVEAT}</p>
+        </>
+      );
       break;
     }
   }

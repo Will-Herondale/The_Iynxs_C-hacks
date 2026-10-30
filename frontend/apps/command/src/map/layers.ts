@@ -2,63 +2,101 @@ import type { ExpressionSpecification, LayerSpecification } from 'maplibre-gl';
 import type { ProjectionSnapshot } from '@setu/contract';
 import { SETU_MAP_COLORS } from '@setu/ui';
 import type { FeatureKind } from '../app';
-import type { LayerName } from '../app';
 
-/** Seed scenario centre (Guwahati), [lng, lat]. */
-export const MAP_CENTER: [number, number] = [91.73, 26.14];
-export const MAP_ZOOM = 11;
+/** Prefix of the registered observation icon images (one per server state). */
+export const OBS_ICON_PREFIX = 'setu-obs-';
 
-export const SOURCE_IDS = {
+/** Feature kinds the map can select ('report' = an observation; id is the server eventId). */
+export type MapFeatureKind = FeatureKind;
+/** Source groups fed by server data. */
+export type GroupName = 'flood' | 'roads' | 'settlements' | 'routes' | 'shelters' | 'observations';
+export const GROUP_NAMES: GroupName[] = ['flood', 'roads', 'settlements', 'routes', 'shelters', 'observations'];
+
+export const SOURCE_IDS: Record<GroupName, string> = {
   flood: 'src-flood',
   roads: 'src-roads',
   settlements: 'src-settlements',
   routes: 'src-routes',
   shelters: 'src-shelters',
-} as const satisfies Record<LayerName, string>;
+  observations: 'src-observations',
+};
 
-/** Property carrying the feature id, per layer group. */
-export const ID_PROPERTY: Record<LayerName, string> = {
+/** Property carrying the feature id, per source group. */
+export const ID_PROPERTY: Record<GroupName, string> = {
   flood: 'areaId',
   roads: 'roadId',
   settlements: 'settlementId',
   routes: 'routeId',
   shelters: 'shelterId',
+  observations: 'eventId',
 };
 
-export const LAYER_KIND: Record<LayerName, FeatureKind> = {
+export const GROUP_KIND: Record<GroupName, MapFeatureKind> = {
   flood: 'flood',
   roads: 'road',
   settlements: 'settlement',
   routes: 'route',
   shelters: 'shelter',
+  observations: 'report',
 };
 
-export const KIND_LAYER: Record<FeatureKind, LayerName> = {
+export const KIND_GROUP: Record<MapFeatureKind, GroupName> = {
   flood: 'flood',
   road: 'roads',
   settlement: 'settlements',
   route: 'routes',
   shelter: 'shelters',
+  report: 'observations',
 };
 
-/** Map-layer ids belonging to each toggle group (selection highlight layers included). */
-export const GROUP_LAYERS: Record<LayerName, string[]> = {
-  flood: ['flood-fill', 'flood-outline', 'flood-uncertain', 'flood-blocking', 'flood-selected'],
-  roads: ['roads-bridge-casing', 'roads-line', 'roads-blocked', 'roads-blocking', 'roads-selected'],
-  settlements: ['settlements-halo', 'settlements-circle', 'settlements-selected'],
-  routes: ['routes-recalc-glow', 'routes-line', 'routes-refused', 'routes-selected'],
-  shelters: ['shelters-circle', 'shelters-selected'],
+/** User-facing layer toggles (data-testid `layer-toggle-<id>`). */
+export const TOGGLE_IDS = ['terrain', 'rivers', 'roads', 'settlements', 'shelters', 'flood', 'blocked', 'cutoff', 'observations', 'routes'] as const;
+export type ToggleId = (typeof TOGGLE_IDS)[number];
+
+export const TOGGLE_LABELS: Record<ToggleId, string> = {
+  terrain: 'Terrain',
+  rivers: 'Rivers & water',
+  roads: 'Roads',
+  settlements: 'Settlements',
+  shelters: 'Shelters',
+  flood: 'Flood extent',
+  blocked: 'Blocked roads & bridges',
+  cutoff: 'Cut-off settlements',
+  observations: 'Observations (reports)',
+  routes: 'Routes',
 };
+
+/** Overlay (snapshot-driven) layer ids per toggle. Basemap layers are added by basemap.ts. */
+export const TOGGLE_LAYERS: Record<ToggleId, string[]> = {
+  terrain: [],
+  rivers: [],
+  roads: ['roads-bridge-casing', 'roads-line', 'roads-line-minor'],
+  settlements: ['settlements-circle'],
+  shelters: ['shelters-circle'],
+  flood: ['flood-fill', 'flood-outline', 'flood-outline-modelled', 'flood-uncertain'],
+  blocked: ['roads-blocked', 'roads-blocking', 'flood-blocking'],
+  cutoff: ['settlements-halo'],
+  observations: ['observations-symbol'],
+  routes: ['routes-recalc-glow', 'routes-line', 'routes-refused'],
+};
+
+/** Selection highlights stay visible whatever the toggles say, so a selected feature is never lost. */
+export const ALWAYS_LAYERS = ['flood-selected', 'roads-selected', 'routes-selected', 'settlements-selected', 'shelters-selected', 'observations-selected'];
 
 /** Layers that respond to click/hover (topmost first). */
-export const INTERACTIVE_LAYERS = ['settlements-circle', 'shelters-circle', 'routes-line', 'routes-refused', 'roads-blocked', 'roads-line', 'flood-fill'];
+export const INTERACTIVE_LAYERS = [
+  'observations-symbol', 'settlements-circle', 'shelters-circle', 'routes-line', 'routes-refused',
+  'roads-blocked', 'roads-line', 'roads-line-minor', 'flood-fill',
+];
 
-const LAYER_TO_GROUP: Record<string, LayerName> = {
+const LAYER_TO_GROUP: Record<string, GroupName> = {
+  'observations-symbol': 'observations',
   'settlements-circle': 'settlements',
   'shelters-circle': 'shelters',
   'routes-line': 'routes',
   'routes-refused': 'routes',
   'roads-line': 'roads',
+  'roads-line-minor': 'roads',
   'roads-blocked': 'roads',
   'flood-fill': 'flood',
 };
@@ -67,147 +105,156 @@ const LAYER_TO_GROUP: Record<string, LayerName> = {
 export function featureToSelection(
   layerId: string,
   properties: Record<string, unknown> | null | undefined,
-): { kind: FeatureKind; id: string } | undefined {
+): { kind: MapFeatureKind; id: string } | undefined {
   const group = LAYER_TO_GROUP[layerId];
   const id = group && properties?.[ID_PROPERTY[group]];
-  return group && typeof id === 'string' ? { kind: LAYER_KIND[group], id } : undefined;
+  return group && typeof id === 'string' ? { kind: GROUP_KIND[group], id } : undefined;
 }
 
 export { SETU_MAP_COLORS };
 
+/**
+ * Semantic colours (shared design system): blue water, red impassable, orange warning,
+ * green safe, grey disconnected/unavailable, purple requires review.
+ * warning/review fall back to local values until @setu/ui exports them.
+ */
+const palette = SETU_MAP_COLORS as Record<string, string>;
 export const COLORS = {
-  roadOpen: SETU_MAP_COLORS.safe,
-  roadPartial: SETU_MAP_COLORS.uncertain,
-  roadBlocked: SETU_MAP_COLORS.blocked,
-  roadUnknown: '#757575',
-  accessible: SETU_MAP_COLORS.safe,
-  limited: '#f9a825',
-  cutOff: SETU_MAP_COLORS.blocked,
-  evacuation: '#1565c0',
-  supply: '#6a1b9a',
-  recalculated: '#00acc1',
-  unavailable: '#9e9e9e',
+  water: palette.flooded ?? '#1e88e5',
+  critical: palette.blocked ?? '#c62828',
+  warning: palette.warning ?? '#ef6c00',
+  safe: palette.safe ?? '#2e7d32',
+  review: palette.review ?? '#7b1fa2',
+  grey: '#757575',
+  greyLight: '#9e9e9e',
+  observedFlood: '#0d47a1',
+  modelledFlood: '#64b5f6',
+  routeSupply: '#37474f',
   shelterOpen: '#00796b',
   shelterClosed: '#616161',
-  flood: SETU_MAP_COLORS.flooded,
-  floodUncertain: SETU_MAP_COLORS.uncertain,
   blocking: '#ff6d00',
   selected: '#ffea00',
+  observation: '#37474f',
 } as const;
 
-/** Fill colour by severity 1-5 (darker = deeper/more severe). */
-const floodColor: ExpressionSpecification = [
-  'interpolate', ['linear'], ['get', 'severity'],
-  1, '#90caf9', 3, '#1e88e5', 5, '#0d2c6c',
-];
-/** Opacity also rises with severity; uncertain areas stay faint so they read as "not confirmed". */
-const floodOpacity: ExpressionSpecification = [
-  'case',
-  ['==', ['get', 'confidence'], 'uncertain'], 0.14,
-  ['interpolate', ['linear'], ['get', 'severity'], 1, 0.25, 3, 0.45, 5, 0.65],
-];
-
-const roadStatus: ExpressionSpecification = [
-  'match', ['get', 'status'],
-  'open', COLORS.roadOpen,
-  'partial', COLORS.roadPartial,
-  'blocked', COLORS.roadBlocked,
-  COLORS.roadUnknown,
-];
-
 const isStatus = (s: string): ExpressionSpecification => ['==', ['get', 'status'], s];
+const confidenceIs = (c: string): ExpressionSpecification => ['==', ['get', 'confidence'], c];
 
 /** Blocked = server status 'blocked' or (proposed) passability 'impassable'. Read from properties, never derived. */
 const isBlocked: ExpressionSpecification = ['any', isStatus('blocked'), ['==', ['get', 'passability'], 'impassable']];
 const isBridge: ExpressionSpecification = ['==', ['get', 'kind'], 'bridge'];
-const isUncertainFlood: ExpressionSpecification = ['==', ['get', 'confidence'], 'uncertain'];
+const isPartial: ExpressionSpecification = isStatus('partial');
+/** Open/unknown roads are the bulk of the layer: drawn from zoom 12 only, so the island overview stays readable. */
+const isRoutine: ExpressionSpecification = ['any', isStatus('open'), isStatus('unknown')];
+
+export const MINOR_ROAD_MIN_ZOOM = 12;
+
+/** Flood fill: observed = solid strong blue; modelled = lighter blue; uncertain = faint orange; unstated = neutral. */
+const floodFill: ExpressionSpecification = [
+  'case',
+  confidenceIs('observed'), COLORS.observedFlood,
+  confidenceIs('modelled'), COLORS.modelledFlood,
+  confidenceIs('uncertain'), COLORS.warning,
+  '#90a4ae',
+];
+const floodOpacity: ExpressionSpecification = [
+  'case',
+  confidenceIs('uncertain'), 0.14,
+  confidenceIs('observed'), ['interpolate', ['linear'], ['get', 'severity'], 1, 0.4, 5, 0.75],
+  ['interpolate', ['linear'], ['get', 'severity'], 1, 0.2, 5, 0.5],
+];
+
+const roadStatusColor: ExpressionSpecification = [
+  'match', ['get', 'status'],
+  'open', COLORS.safe,
+  'partial', COLORS.warning,
+  'blocked', COLORS.critical,
+  COLORS.grey,
+];
 
 const routeColor: ExpressionSpecification = [
   'case',
-  isStatus('recalculated'), COLORS.recalculated,
-  ['==', ['get', 'kind'], 'supply'], COLORS.supply,
-  COLORS.evacuation,
+  ['==', ['get', 'kind'], 'supply'], COLORS.routeSupply,
+  COLORS.safe,
 ];
 
 const settlementColor: ExpressionSpecification = [
   'match', ['get', 'accessibility'],
-  'accessible', COLORS.accessible,
-  'limited', COLORS.limited,
-  'cut_off', COLORS.cutOff,
-  COLORS.roadUnknown,
+  'accessible', COLORS.safe,
+  'limited', COLORS.warning,
+  'cut_off', COLORS.grey,
+  COLORS.grey,
 ];
 
 const noMatch: ExpressionSpecification = ['==', ['get', 'none'], '__none__'];
 
 export const MAP_LAYERS: LayerSpecification[] = [
+  { id: 'flood-fill', type: 'fill', source: SOURCE_IDS.flood, paint: { 'fill-color': floodFill, 'fill-opacity': floodOpacity } },
   {
-    id: 'flood-fill', type: 'fill', source: SOURCE_IDS.flood,
-    paint: { 'fill-color': floodColor, 'fill-opacity': floodOpacity },
-  },
-  {
+    // Observed (and unstated) flood: solid outline.
     id: 'flood-outline', type: 'line', source: SOURCE_IDS.flood,
-    filter: ['!', isUncertainFlood],
-    paint: { 'line-color': '#0d47a1', 'line-width': 1.5 },
+    filter: ['!', ['any', confidenceIs('modelled'), confidenceIs('uncertain')]],
+    paint: { 'line-color': COLORS.observedFlood, 'line-width': ['case', confidenceIs('observed'), 2.5, 1] },
   },
   {
-    // Uncertain flood: amber dashed outline, faint fill.
-    id: 'flood-uncertain', type: 'line', source: SOURCE_IDS.flood,
-    filter: isUncertainFlood,
-    paint: { 'line-color': COLORS.floodUncertain, 'line-width': 3, 'line-dasharray': [2, 1.5] },
+    // Modelled flood: thin dashed outline, visibly different from observed.
+    id: 'flood-outline-modelled', type: 'line', source: SOURCE_IDS.flood, filter: confidenceIs('modelled'),
+    paint: { 'line-color': '#1e88e5', 'line-width': 1.5, 'line-dasharray': [3, 2] },
+  },
+  {
+    // Uncertain flood: orange dashed outline, faint fill.
+    id: 'flood-uncertain', type: 'line', source: SOURCE_IDS.flood, filter: confidenceIs('uncertain'),
+    paint: { 'line-color': COLORS.warning, 'line-width': 3, 'line-dasharray': [2, 1.5] },
   },
   {
     // Bridges get a dark casing so they read as a different symbol from roads.
-    id: 'roads-bridge-casing', type: 'line', source: SOURCE_IDS.roads,
-    filter: isBridge,
+    id: 'roads-bridge-casing', type: 'line', source: SOURCE_IDS.roads, filter: isBridge,
     layout: { 'line-cap': 'butt' },
     paint: { 'line-color': '#212121', 'line-width': 11 },
   },
   {
-    id: 'roads-line', type: 'line', source: SOURCE_IDS.roads,
-    filter: ['!', isBlocked],
+    id: 'roads-line-minor', type: 'line', source: SOURCE_IDS.roads, minzoom: MINOR_ROAD_MIN_ZOOM,
+    filter: ['all', ['!', isBlocked], isRoutine],
     layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: {
-      'line-color': roadStatus,
-      'line-width': ['case', isStatus('partial'), 4.5, 3.5],
-    },
+    paint: { 'line-color': roadStatusColor, 'line-width': ['interpolate', ['linear'], ['zoom'], 12, 1.5, 16, 4] },
   },
   {
-    id: 'roads-blocked', type: 'line', source: SOURCE_IDS.roads,
-    filter: isBlocked,
+    id: 'roads-line', type: 'line', source: SOURCE_IDS.roads,
+    filter: ['all', ['!', isBlocked], ['!', isRoutine]],
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: { 'line-color': roadStatusColor, 'line-width': ['case', isPartial, 4.5, 3.5] },
+  },
+  {
+    id: 'roads-blocked', type: 'line', source: SOURCE_IDS.roads, filter: isBlocked,
     layout: { 'line-cap': 'butt', 'line-join': 'round' },
-    paint: { 'line-color': COLORS.roadBlocked, 'line-width': 7, 'line-dasharray': [1.5, 1] },
+    paint: { 'line-color': COLORS.critical, 'line-width': 7, 'line-dasharray': [1.5, 1] },
   },
   {
     // Recalculated routes: soft glow underneath to make them stand out.
-    id: 'routes-recalc-glow', type: 'line', source: SOURCE_IDS.routes,
-    filter: isStatus('recalculated'),
+    id: 'routes-recalc-glow', type: 'line', source: SOURCE_IDS.routes, filter: isStatus('recalculated'),
     layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': COLORS.recalculated, 'line-width': 14, 'line-opacity': 0.3 },
+    paint: { 'line-color': COLORS.safe, 'line-width': 14, 'line-opacity': 0.3 },
   },
   {
-    id: 'routes-line', type: 'line', source: SOURCE_IDS.routes,
-    filter: ['!', isStatus('unavailable')],
+    id: 'routes-line', type: 'line', source: SOURCE_IDS.routes, filter: ['!', isStatus('unavailable')],
     layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: {
-      'line-color': routeColor,
-      'line-width': ['case', isStatus('recalculated'), 6, 4],
-    },
+    paint: { 'line-color': routeColor, 'line-width': ['case', isStatus('recalculated'), 6, 4] },
   },
   {
-    // Refused routes: red, dashed, faded.
-    id: 'routes-refused', type: 'line', source: SOURCE_IDS.routes,
-    filter: isStatus('unavailable'),
+    // Refused routes: grey, dashed, faded (unavailable). The blocking feature carries the red.
+    id: 'routes-refused', type: 'line', source: SOURCE_IDS.routes, filter: isStatus('unavailable'),
     layout: { 'line-cap': 'butt', 'line-join': 'round' },
-    paint: { 'line-color': COLORS.roadBlocked, 'line-width': 3, 'line-opacity': 0.5, 'line-dasharray': [2, 2] },
+    paint: { 'line-color': COLORS.grey, 'line-width': 3, 'line-opacity': 0.7, 'line-dasharray': [2, 2] },
   },
   {
+    // Disconnected = grey dot + red halo.
     id: 'settlements-halo', type: 'circle', source: SOURCE_IDS.settlements,
     filter: ['==', ['get', 'accessibility'], 'cut_off'],
     paint: {
       'circle-radius': 20,
-      'circle-color': COLORS.cutOff,
+      'circle-color': COLORS.critical,
       'circle-opacity': 0.3,
-      'circle-stroke-color': COLORS.cutOff,
+      'circle-stroke-color': COLORS.critical,
       'circle-stroke-width': 2,
       'circle-stroke-opacity': 0.8,
     },
@@ -215,7 +262,7 @@ export const MAP_LAYERS: LayerSpecification[] = [
   {
     id: 'settlements-circle', type: 'circle', source: SOURCE_IDS.settlements,
     paint: {
-      'circle-radius': 9,
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, 5, 13, 9],
       'circle-color': settlementColor,
       'circle-stroke-color': '#ffffff',
       'circle-stroke-width': 2,
@@ -231,20 +278,19 @@ export const MAP_LAYERS: LayerSpecification[] = [
       'circle-stroke-width': 2,
     },
   },
-  // Blocking-feature highlights: filter is replaced with the blockingFeatureIds of the selected settlement/route.
   {
-    id: 'flood-blocking', type: 'line', source: SOURCE_IDS.flood, filter: noMatch,
-    paint: { 'line-color': COLORS.blocking, 'line-width': 5 },
+    // Report locations (from listEvents). Icon shape encodes server state; images are registered in MapView.
+    id: 'observations-symbol', type: 'symbol', source: SOURCE_IDS.observations,
+    layout: { 'icon-image': ['concat', OBS_ICON_PREFIX, ['get', 'serverState']], 'icon-allow-overlap': true, 'icon-size': 1 },
   },
+  // Blocking-feature highlights: filter is replaced with the blockingFeatureIds of the selected settlement/route.
+  { id: 'flood-blocking', type: 'line', source: SOURCE_IDS.flood, filter: noMatch, paint: { 'line-color': COLORS.blocking, 'line-width': 5 } },
   {
     id: 'roads-blocking', type: 'line', source: SOURCE_IDS.roads, filter: noMatch,
     paint: { 'line-color': COLORS.blocking, 'line-width': 16, 'line-opacity': 0.55 },
   },
   // Selection highlights: filter is replaced when selection changes.
-  {
-    id: 'flood-selected', type: 'line', source: SOURCE_IDS.flood, filter: noMatch,
-    paint: { 'line-color': COLORS.selected, 'line-width': 4 },
-  },
+  { id: 'flood-selected', type: 'line', source: SOURCE_IDS.flood, filter: noMatch, paint: { 'line-color': COLORS.selected, 'line-width': 4 } },
   {
     id: 'roads-selected', type: 'line', source: SOURCE_IDS.roads, filter: noMatch,
     paint: { 'line-color': COLORS.selected, 'line-width': 9, 'line-opacity': 0.6 },
@@ -261,20 +307,24 @@ export const MAP_LAYERS: LayerSpecification[] = [
     id: 'shelters-selected', type: 'circle', source: SOURCE_IDS.shelters, filter: noMatch,
     paint: { 'circle-radius': 17, 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-color': COLORS.selected, 'circle-stroke-width': 4 },
   },
+  {
+    id: 'observations-selected', type: 'circle', source: SOURCE_IDS.observations, filter: noMatch,
+    paint: { 'circle-radius': 15, 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-color': COLORS.selected, 'circle-stroke-width': 4 },
+  },
 ];
 
-export function selectionFilter(group: LayerName, id: string | undefined): ExpressionSpecification {
+export function selectionFilter(group: GroupName, id: string | undefined): ExpressionSpecification {
   return id === undefined ? noMatch : ['==', ['get', ID_PROPERTY[group]], id];
 }
 
 /** Filter matching any of the given feature ids (blockingFeatureIds) within a layer group. */
-export function idsFilter(group: LayerName, ids: readonly string[]): ExpressionSpecification {
+export function idsFilter(group: GroupName, ids: readonly string[]): ExpressionSpecification {
   return ids.length === 0 ? noMatch : ['in', ['get', ID_PROPERTY[group]], ['literal', [...ids]]];
 }
 
 export const EMPTY_FC = { type: 'FeatureCollection' as const, features: [] };
 
-/** Source id -> GeoJSON for a server snapshot (rendered as-is; nothing is derived). */
-export function snapshotSources(s: ProjectionSnapshot): Record<LayerName, unknown> {
+/** Snapshot-driven sources -> GeoJSON (rendered as-is; nothing is derived). */
+export function snapshotSources(s: ProjectionSnapshot): Record<Exclude<GroupName, 'observations'>, unknown> {
   return { flood: s.flood, roads: s.roads, settlements: s.settlements, routes: s.routes, shelters: s.shelters };
 }

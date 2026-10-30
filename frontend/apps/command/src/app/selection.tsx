@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 
-export type FeatureKind = 'road' | 'settlement' | 'route' | 'shelter' | 'flood';
+/** 'report' = an event record; id is the server eventId. Bridges are 'road' (RoadProps.kind === 'bridge'). */
+export type FeatureKind = 'road' | 'settlement' | 'route' | 'shelter' | 'flood' | 'report';
 export interface Selection {
   kind: FeatureKind;
   id: string;
@@ -12,6 +13,7 @@ export interface SelectionApi {
 
 const Ctx = createContext<SelectionApi>({ select: () => {} });
 
+/** Selection shared by every section and by the map. */
 export function SelectionProvider({ children, initial }: { children: ReactNode; initial?: Selection }) {
   const [selected, setSelected] = useState<Selection | undefined>(initial);
   const select = useCallback((sel?: Selection) => setSelected(sel), []);

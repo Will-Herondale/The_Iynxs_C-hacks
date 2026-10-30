@@ -5,6 +5,9 @@ import type { ApiClient, EventRecord, ProjectionSnapshot } from '@setu/contract'
 import { ApiProvider } from '../data';
 import { SelectionProvider } from '../app';
 import { AuditView } from './AuditView';
+import { EventsFeed } from '../sections/events';
+import { recordSnapshot, resetSnapshotHistory } from '../feed/history';
+import { resultingChanges } from './changes';
 import { affectedIndex, auditStatus, buildAuditRows, delayLabel, featuresAffectedBy } from './model';
 
 afterEach(cleanup);
@@ -99,8 +102,58 @@ describe('AuditView', () => {
     expect(row.dataset.eventId).toBe('e-b1');
     expect(row.dataset.clientEventId).toBe('c-b1');
     expect(row.dataset.status).toBe('synced');
-    expect(within(row).getByText(/reported offline, arrived 12 min later/)).toBeTruthy();
     fireEvent.click(await within(row).findByTestId('audit-feature-settlement-S4'));
     expect(onShow).toHaveBeenCalledWith({ kind: 'settlement', id: 'S4' });
+  });
+});
+
+describe('filters', () => {
+  const a = rec('a', { receivedAt: '2026-01-01T01:00:00+00:00' });
+  const h = {
+    ...rec('h', { receivedAt: '2026-01-01T03:00:00+00:00' }),
+    event: { type: 'household_registration', clientEventId: 'c-h', occurredAt: '2026-01-01T02:59:00+00:00', reporterId: 'v', deviceId: 'd', location: { lat: 26.1, lng: 91.7 }, householdId: '5b6f3a42-8c4e-4d8e-9a43-0d8b1d1a9a11', headName: 'X', members: 2, vulnerable: { elderly: false, children: false, disabled: false, medical: false }, settlementId: 'AUNIATI', needs: [] },
+  } as unknown as EventRecord;
+  it('filters by location (payload or affected) and time range', () => {
+    expect(buildAuditRows([a, h], snap(), { location: 'auni' }).map((r) => r.rec.eventId)).toEqual(['e-h']);
+    expect(buildAuditRows([a, h], snap(), { location: 's4' }).map((r) => r.rec.eventId)).toEqual([]);
+    expect(buildAuditRows([a, h], snap(), { location: 'b1' }).map((r) => r.rec.eventId)).toEqual(['e-a']);
+    expect(buildAuditRows([a, h], snap(), { from: '2026-01-01T02:00:00+00:00' }).map((r) => r.rec.eventId)).toEqual(['e-h']);
+    expect(buildAuditRows([a, h], snap(), { to: '2026-01-01T02:00:00+00:00' }).map((r) => r.rec.eventId)).toEqual(['e-a']);
+  });
+});
+
+describe('resultingChanges', () => {
+  it('diffs held snapshots around appliedAtVersion; null when not observed', () => {
+    resetSnapshotHistory();
+    expect(resultingChanges(rec('b1'), snap(5)).diff).toBeNull();
+    const before = snap(4);
+    (before.roads.features[0] as { properties: { status: string } }).properties.status = 'open';
+    recordSnapshot(before);
+    recordSnapshot(snap(5));
+    const r = resultingChanges(rec('b1'), snap(5));
+    expect(r.diff?.map((c) => c.text)).toEqual(['B1 → blocked']);
+    expect(r.affected.map((f) => f.id)).toContain('B1');
+    expect(resultingChanges(rec('b1', { serverState: 'accepted' }), snap(5)).diff).toBeNull();
+  });
+});
+
+describe('EventsFeed', () => {
+  it('windows long histories and opens the drawer with payload', () => {
+    const many = Array.from({ length: 500 }, (_, i) =>
+      rec(`n${i}`, { receivedAt: new Date(Date.UTC(2026, 0, 1) + i * 60_000).toISOString() }),
+    );
+    render(
+      <SelectionProvider>
+        <EventsFeed events={many} snapshot={snap()} />
+      </SelectionProvider>,
+    );
+    const items = screen.getAllByTestId('feed-item');
+    expect(items.length).toBeLessThan(40);
+    expect(items[0]?.dataset.eventId).toBe('e-n499');
+    fireEvent.click(screen.getByTestId('feed-open-e-n499'));
+    expect(screen.getByTestId('event-payload').textContent).toContain('"clientEventId": "c-n499"');
+    expect(screen.getByTestId('event-changes')).toBeTruthy();
+    fireEvent.click(screen.getByTestId('event-drawer-close'));
+    expect(screen.queryByTestId('event-drawer')).toBeNull();
   });
 });

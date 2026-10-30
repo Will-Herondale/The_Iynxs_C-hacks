@@ -55,6 +55,7 @@ export function findFeature(s: ProjectionSnapshot, kind: FeatureKind, id: string
     case 'settlement': return s.settlements.features.find((f) => f.properties.settlementId === id)?.properties;
     case 'route': return s.routes.features.find((f) => f.properties.routeId === id)?.properties;
     case 'shelter': return s.shelters.features.find((f) => f.properties.shelterId === id)?.properties;
+    case 'report': return undefined;
     case 'flood': return s.flood.features.find((f) => f.properties.areaId === id)?.properties;
   }
 }

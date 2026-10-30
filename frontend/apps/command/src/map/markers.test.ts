@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ProjectionSnapshot } from '@setu/contract';
 import { blockingByGroup, blockingIds, buildMarkers } from './markers';
-import { idsFilter, MAP_LAYERS, GROUP_LAYERS } from './layers';
+import { idsFilter, MAP_LAYERS, TOGGLE_LAYERS } from './layers';
 
 const snap = {
   version: 3,
@@ -29,9 +29,21 @@ describe('map markers', () => {
   it('labels bridges (impassable flagged), cut-off settlements and shelters only', () => {
     const m = buildMarkers(snap);
     expect(m.map((x) => x.key)).toEqual(['bridge-B1', 'settlement-S4', 'shelter-SH1']);
-    expect(m[0]).toMatchObject({ label: 'Bharalu Bridge (B1)', impassable: true, lng: 2, lat: 2 });
+    expect(m[0]).toMatchObject({ label: 'Bharalu Bridge (B1) — IMPASSABLE', impassable: true, toggle: 'blocked', lng: 2, lat: 2 });
     expect(m[1]?.label).toContain('CUT OFF');
+    expect(m[1]?.toggle).toBe('cutoff');
+    expect(m[2]?.toggle).toBe('shelters');
     expect(m[2]?.label).toBe('Camp 10/100');
+  });
+  it('does not invent 0/0 capacity when the seed has none', () => {
+    const s2 = structuredClone(snap);
+    s2.shelters.features[0]!.properties.capacity = 0;
+    s2.shelters.features[0]!.properties.occupancy = 0;
+    expect(buildMarkers(s2).find((x) => x.kind === 'shelter')?.label).toBe('Camp');
+  });
+  it('does not label healthy bridges', () => {
+    const ok = { ...snap, roads: { ...snap.roads, features: [{ ...snap.roads.features[0], properties: { ...snap.roads.features[0]!.properties, status: 'open', passability: 'passable' } }] } } as ProjectionSnapshot;
+    expect(buildMarkers(ok).some((x) => x.kind === 'bridge')).toBe(false);
   });
   it('degrades without PROPOSED fields (plain road, no bridge marker)', () => {
     const plain = { ...snap, roads: { ...snap.roads, features: [snap.roads.features[1]] } } as ProjectionSnapshot;
@@ -57,6 +69,6 @@ describe('blocking highlight', () => {
   it('has highlight layers registered in toggle groups', () => {
     const ids = MAP_LAYERS.map((l) => l.id);
     expect(ids).toContain('roads-blocking');
-    expect(GROUP_LAYERS.flood).toContain('flood-blocking');
+    expect(TOGGLE_LAYERS.blocked).toContain('flood-blocking');
   });
 });

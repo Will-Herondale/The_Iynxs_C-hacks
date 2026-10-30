@@ -4,8 +4,7 @@ import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { afterEach } from 'vitest';
 import type { ApiClient, EventRecord, ProjectionSnapshot } from '@setu/contract';
 import { ApiProvider } from '../data';
-import { SelectionProvider, LayerProvider, useSelection } from '../app';
-import { LayerControls } from '../controls';
+import { SelectionProvider, useSelection } from '../app';
 import { IncidentFeed } from './IncidentFeed';
 import { diffSnapshots } from './diff';
 import { feedStatus } from './status';
@@ -111,20 +110,5 @@ describe('IncidentFeed', () => {
     expect(by('bad').getAttribute('data-status')).toBe('conflict');
     fireEvent.click(screen.getAllByTestId('incident-link-road-R7')[0]!);
     expect(screen.getByTestId('sel').textContent).toBe('road:R7');
-  });
-});
-
-describe('LayerControls', () => {
-  it('toggles layers', () => {
-    render(
-      <LayerProvider>
-        <LayerControls />
-      </LayerProvider>,
-    );
-    const box = screen.getByTestId('layer-toggle-flood') as HTMLInputElement;
-    expect(box.checked).toBe(true);
-    fireEvent.click(box);
-    expect(box.checked).toBe(false);
-    expect(box.getAttribute('aria-checked')).toBe('false');
   });
 });

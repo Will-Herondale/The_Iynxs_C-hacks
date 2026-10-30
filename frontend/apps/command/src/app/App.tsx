@@ -1,34 +1,25 @@
-import { AppShell } from '@setu/ui';
 import type { ApiClient } from '@setu/contract';
 import { ApiProvider } from '../data';
 import { SelectionProvider } from './selection';
-import { LayerProvider } from './layers';
 import { ViewProvider } from './view';
 import { SituationSummary } from './SituationSummary';
 import { Header } from './Header';
-import { FeaturePanelSlot, FeedSlot, LeftSlot, MapSlot } from './slots';
+import { Workspace } from './slots';
+import { ChangesProvider } from './changes';
 
 export function App({ client }: { client?: ApiClient } = {}) {
   return (
     <ApiProvider {...(client ? { client } : {})}>
       <SelectionProvider>
         <ViewProvider>
-        <LayerProvider>
-          <div className="cmd-root">
-            <AppShell
-              header={<><Header /><SituationSummary /></>}
-              nav={<LeftSlot />}
-              main={<MapSlot />}
-              aside={
-                <>
-                  <FeaturePanelSlot />
-                  <FeedSlot />
-                </>
-              }
-            />
-          </div>
-        </LayerProvider>
-      </ViewProvider>
+          <ChangesProvider>
+            <div className="cmd-root">
+              <Header />
+              <SituationSummary />
+              <Workspace />
+            </div>
+          </ChangesProvider>
+        </ViewProvider>
       </SelectionProvider>
     </ApiProvider>
   );
