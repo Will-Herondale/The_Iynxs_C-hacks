@@ -41,6 +41,7 @@ export interface GeoArtifacts {
     edgeId: string;
     name: string;
     geometry: { type: 'LineString'; coordinates: number[][] };
+    synthetic?: boolean;
   }>;
   /** Graph edges for routing, with real fromNode/toNode connectivity. */
   routeEdges: RouteEdge[];

@@ -419,6 +419,7 @@ export async function loadGeoArtifacts(): Promise<GeoArtifacts> {
     return {
       edgeId: e.edgeId,
       name: e.edgeId.includes('bridge') ? 'Demo Bridge Road' : 'Demo Access Road',
+      synthetic: true,
       geometry: {
         type: 'LineString' as const,
         coordinates: [
