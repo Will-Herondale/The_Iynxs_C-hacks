@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { FieldEvent } from '@setu/contract';
+import type { FieldEvent, ProjectionSnapshot } from '@setu/contract';
 import { ReportScreen } from './ReportForm.js';
+import { FALLBACK_ROADS, roadOptions } from './roadOptions.js';
 import { buildReportEvent, EMPTY_REPORT } from './buildEvent.js';
 
 const tid = (id: string) => screen.getByTestId(id) as HTMLInputElement;
@@ -54,5 +55,33 @@ describe('ReportScreen', () => {
     fireEvent.click(tid('report-submit'));
     await new Promise((r) => setTimeout(r, 120));
     expect(submit).toHaveBeenCalledTimes(1);
+  });
+
+  it('quick action preselects road_blockage/full; cause and bridge options work offline', async () => {
+    const submit = vi.fn(async (e: FieldEvent) => (void e, undefined));
+    render(<ReportScreen submit={submit} />);
+    fireEvent.click(tid('quick-blocked'));
+    const road = (await screen.findByTestId('field-roadId')) as HTMLSelectElement;
+    expect(Array.from(road.options).map((o) => o.value)).toEqual(expect.arrayContaining(['R1', 'R10', 'B1']));
+    expect(screen.getByText('Bridge: B1')).toBeTruthy();
+    expect(tid('field-blockage').value).toBe('full');
+    fireEvent.change(road, { target: { value: 'B1' } });
+    fireEvent.change(tid('field-cause'), { target: { value: 'submerged' } });
+    fireEvent.change(tid('field-lat'), { target: { value: '26.14' } });
+    fireEvent.change(tid('field-lng'), { target: { value: '91.73' } });
+    fireEvent.click(tid('report-submit'));
+    await waitFor(() => expect(submit).toHaveBeenCalledTimes(1));
+    expect(submit.mock.calls[0]![0]).toMatchObject({ type: 'road_blockage', roadId: 'B1', blockage: 'full', cause: 'submerged' });
+  });
+});
+
+describe('roadOptions', () => {
+  it('labels bridges from the cached snapshot', () => {
+    const snap = { roads: { features: [
+      { properties: { roadId: 'R1', name: 'Main Rd' } },
+      { properties: { roadId: 'B9', name: 'Bharalu Bridge', kind: 'bridge' } },
+    ] } } as unknown as ProjectionSnapshot;
+    expect(roadOptions(snap).map((o) => o.label)).toEqual(['R1 — Main Rd', 'Bridge: Bharalu Bridge (B9)']);
+    expect(roadOptions(undefined)).toBe(FALLBACK_ROADS);
   });
 });
