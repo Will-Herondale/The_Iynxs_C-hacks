@@ -3,3 +3,4 @@ export { useProjections, POLL_MS, PROJECTIONS_KEY, EVENTS_KEY, type ConnectionSt
 export { useEvents, type EventsResult } from './useEvents';
 export { useEventStatuses } from './useEventStatuses';
 export { useProvenance, joinProvenance, featureSourceEventIds, type ProvenanceItem } from './useProvenance';
+export { usePeople, PEOPLE_KEY, type PeopleResult } from './usePeople';

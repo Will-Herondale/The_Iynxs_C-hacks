@@ -2,6 +2,7 @@ export * from './errors.js';
 export * from './events.js';
 export * from './sync.js';
 export * from './projections.js';
+export * from './people.js';
 export * from './api.js';
 
 import type { ClientSyncStatus } from './sync.js';

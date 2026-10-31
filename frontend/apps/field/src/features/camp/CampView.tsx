@@ -3,6 +3,7 @@ import type { ProjectionSnapshot } from '@setu/contract';
 import { Badge, Button, EmptyState, Panel, SyncStatusBadge } from '@setu/ui';
 import { HouseholdScreen, DuplicateReviewPlaceholder, campSummary, householdsFromQueue } from '../household/index.js';
 import '../household/household.css';
+import { PersonCheckinScreen } from '../people/index.js';
 import { DataAsOf, StaleWarning } from '../status/index.js';
 import { useQueue } from '../../sync/index.js';
 import type { QueueItem } from '../../sync/index.js';
@@ -41,6 +42,10 @@ export function campHouseholds(items: QueueItem[], shelterId: string): QueueItem
   return items.filter((i) => i.event.type === 'household_registration' && i.event.shelterId === shelterId);
 }
 
+export function campPeople(items: QueueItem[], campId: string): QueueItem[] {
+  return items.filter((i) => i.event.type === 'person_checkin' && i.event.campId === campId);
+}
+
 function CampInfo({ shelter, asOf, online }: { shelter: ProjectionSnapshot['shelters']['features'][number]['properties']; asOf?: string; online: boolean }) {
   const st = shelterStatus(shelter);
   const counts = shelterCounts(shelter);
@@ -69,6 +74,7 @@ export function CampView({ snapshot, cachedAt, online, items, onOpenReport }: Ca
 
   const chosen = shelters.find((s) => s.shelterId === camp);
   const rows = camp ? campHouseholds(queue, camp) : [];
+  const peopleRows = camp ? campPeople(queue, camp) : [];
   const summary = campSummary(householdsFromQueue(queue), camp || undefined);
   const asOf = cachedAt !== undefined ? time(cachedAt) : snapshot ? time(Date.parse(snapshot.generatedAt)) : undefined;
 
@@ -94,12 +100,31 @@ export function CampView({ snapshot, cachedAt, online, items, onOpenReport }: Ca
             <dl className="camp-summary" data-testid="camp-summary">
               <div><dt>Registered households</dt><dd data-testid="camp-summary-households">{summary.households}</dd></div>
               <div><dt>Registered people</dt><dd data-testid="camp-summary-people">{summary.people}</dd></div>
+              <div><dt>Individual check-ins</dt><dd data-testid="camp-summary-individuals">{peopleRows.length}</dd></div>
               <div><dt>Pending (not yet accepted)</dt><dd data-testid="camp-summary-pending">{summary.pending}</dd></div>
               <div><dt>Awaiting review (conflict)</dt><dd data-testid="camp-summary-review">{summary.awaitingReview}</dd></div>
             </dl>
             {summary.rejected > 0 && <p role="status" data-testid="camp-summary-rejected">{summary.rejected} rejected: open Households to edit and resubmit.</p>}
           </Panel>
           <HouseholdScreen snapshot={snapshot} shelterId={camp} title={`Register household at ${chosen?.name ?? camp}`} formTestId="camp-household-form" />
+          <PersonCheckinScreen snapshot={snapshot} campId={camp} title={`Check in a person at ${chosen?.name ?? camp}`} formTestId="camp-person-form" />
+          <Panel title="Individual check-ins at this camp from this device">
+            {peopleRows.length === 0 && <EmptyState title="No individual check-ins yet" />}
+            <ul data-testid="camp-person-list" className="camp-household-list">
+              {peopleRows.map((i) => {
+                const person = i.event.type === 'person_checkin' ? i.event : undefined;
+                return (
+                  <li key={i.clientEventId} data-testid="camp-person-row" data-client-event-id={i.clientEventId} data-status={i.status}>
+                    <strong>{person?.name}</strong>
+                    {person?.ageBand ? ` · ${person.ageBand}` : ''}
+                    {person?.householdId ? ` · household ${person.householdId}` : ''}{' '}
+                    <SyncStatusBadge status={i.status} {...{ online }} />
+                    {onOpenReport && <> <Button onClick={() => onOpenReport(i.clientEventId)} data-testid="camp-open-person-report">View report</Button></>}
+                  </li>
+                );
+              })}
+            </ul>
+          </Panel>
           <Panel title="Registered at this camp from this device">
             {rows.length === 0 && <EmptyState title="No households yet" />}
             {(

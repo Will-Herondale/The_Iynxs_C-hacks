@@ -2,6 +2,7 @@ import { MapLayersProvider, MapView } from '../map';
 import { FeaturePanel } from '../panels';
 import { AuditView } from '../audit';
 import { SettlementsSection } from '../sections/settlements';
+import { CampsPeopleSection } from '../sections/people';
 import { RoutesSection } from '../sections/routes';
 import { EventsSection } from '../sections/events';
 import { OverviewSection } from '../sections/overview';
@@ -9,7 +10,7 @@ import { useGoTo, useView, type ViewName } from './view';
 import { useSelection } from './selection';
 
 /** Sections that render beside the map (split layout): the table drives map highlighting. */
-const SPLIT: ViewName[] = ['settlements', 'routes'];
+const SPLIT: ViewName[] = ['settlements', 'people', 'routes'];
 
 /**
  * The map stays mounted for the whole session (WebGL is not recreated). It is full-width on
@@ -27,7 +28,7 @@ export function Workspace() {
     <div className="cmd-workspace" data-view={view}>
       {split && (
         <section className="cmd-section cmd-section--split" aria-label={view} data-testid={`section-${view}`}>
-          {view === 'settlements' ? <SettlementsSection /> : <RoutesSection />}
+          {view === 'settlements' ? <SettlementsSection /> : view === 'people' ? <CampsPeopleSection /> : <RoutesSection />}
         </section>
       )}
       <div className="cmd-map-wrap" hidden={!showMap}>

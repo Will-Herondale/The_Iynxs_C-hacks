@@ -78,6 +78,30 @@ describe('route honesty states', () => {
     }
     expect(screen.getByTestId('routes-source-note').textContent).toContain('cannot confirm');
   });
+  it('shows "Route calculated" only when the backend marks the computation verified', () => {
+    const s = structuredClone(seed);
+    const r = s.routes.features[0]!.properties;
+    r.status = 'active';
+    r.computation = { method: 'road_graph', verified: true, distanceM: 2400, segmentCount: 56, speedMps: 1.3, windowMin: 45 };
+    wrap(<RoutesSectionView snapshot={s} />);
+    const card = screen.getByTestId(`route-row-${r.routeId}`);
+    expect(card.getAttribute('data-route-state')).toBe('calculated');
+    expect(card.textContent).toContain('Route calculated');
+    expect(card.textContent).toContain('calculated on the road network');
+    expect(card.textContent).not.toContain('indicative, source unconfirmed');
+    expect(settlementRows(s).find((row) => row.id === r.from)?.statusLabel).toBe('Route calculated');
+  });
+  it('keeps unverified active routes labelled "not verified"', () => {
+    const s = structuredClone(seed);
+    const r = s.routes.features[0]!.properties;
+    r.status = 'active';
+    r.computation = { method: 'road_graph', verified: false };
+    wrap(<RoutesSectionView snapshot={s} />);
+    const card = screen.getByTestId(`route-row-${r.routeId}`);
+    expect(card.getAttribute('data-route-state')).toBe('not-verified');
+    expect(card.textContent).toContain('Route not verified');
+    expect(card.textContent).toContain('indicative, source unconfirmed');
+  });
   it('all routes unavailable -> No safe route; no routes -> No route data (not "no safe route")', () => {
     const s = cutOff();
     const id = s.settlements.features[0]!.properties.settlementId;

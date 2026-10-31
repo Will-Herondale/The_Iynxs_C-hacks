@@ -70,10 +70,19 @@ export function shelterStatus(p: ShelterLike): ShelterStatusInfo {
 export type RouteState = 'calculated' | 'not-verified' | 'no-safe-route' | 'unreachable' | 'no-route-data' | 'refused';
 export type RouteTone = 'neutral' | 'warn' | 'critical';
 
-export interface RouteLike { status: 'active' | 'recalculated' | 'unavailable'; refusal?: unknown }
+export interface RouteComputationLike {
+  method?: string;
+  verified?: boolean;
+}
+export interface RouteLike {
+  status: 'active' | 'recalculated' | 'unavailable';
+  refusal?: unknown;
+  /** Backend provenance. Only a verified road-graph computation counts. */
+  computation?: RouteComputationLike;
+}
 export interface RouteContext {
   /** All routes of the settlement (any status). Empty/undefined = none. */
-  settlementRoutes?: readonly { status: RouteLike['status'] }[];
+  settlementRoutes?: readonly RouteLike[];
   /** Reserved: only a future verified backend signal may set this. The frontend never does. */
   destinationUnreachable?: boolean;
 }
@@ -93,19 +102,34 @@ export function routeState(route: RouteLike | null | undefined, context: RouteCo
   const all = context.settlementRoutes ?? [];
   if (!route) {
     if (all.length === 0) return 'no-route-data';
-    return all.every((r) => r.status === 'unavailable') ? 'no-safe-route' : 'not-verified';
+    if (all.every((r) => r.status === 'unavailable')) return 'no-safe-route';
+    return all.some((r) => r.status !== 'unavailable' && r.computation?.verified === true)
+      ? 'calculated'
+      : 'not-verified';
   }
   if (route.status === 'unavailable') return route.refusal ? 'refused' : 'no-safe-route';
   if (context.destinationUnreachable === true) return 'unreachable';
-  return 'not-verified'; // 'calculated' is never returned until a verified signal exists
+  // Only the backend's own road-graph provenance can promote a route to
+  // 'calculated'. Geometry shape or an ETA alone is never enough.
+  return route.computation?.verified === true ? 'calculated' : 'not-verified';
 }
 
 export const INDICATIVE_ETA_NOTE = 'indicative, source unconfirmed';
+export const CALCULATED_ETA_NOTE = 'calculated on the road network';
 
-/** ETA wording: always labelled indicative; never a bare "45 min". */
-export function formatIndicativeEta(etaMin: number | null | undefined): string {
-  if (etaMin == null || !Number.isFinite(etaMin) || etaMin < 0) return `ETA unavailable (${INDICATIVE_ETA_NOTE})`;
+function formatEta(etaMin: number | null | undefined, note: string, unavailable: string): string {
+  if (etaMin == null || !Number.isFinite(etaMin) || etaMin < 0) return `ETA unavailable (${unavailable})`;
   const m = Math.round(etaMin);
   const t = m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ''}` : `${m} min`;
-  return `~${t} (${INDICATIVE_ETA_NOTE})`;
+  return `~${t} (${note})`;
+}
+
+/** ETA wording when the route is not verified: always labelled indicative, never a bare "45 min". */
+export function formatIndicativeEta(etaMin: number | null | undefined): string {
+  return formatEta(etaMin, INDICATIVE_ETA_NOTE, INDICATIVE_ETA_NOTE);
+}
+
+/** ETA wording when the backend computed the route over real road segments. */
+export function formatCalculatedEta(etaMin: number | null | undefined): string {
+  return formatEta(etaMin, CALCULATED_ETA_NOTE, 'route distance not published');
 }

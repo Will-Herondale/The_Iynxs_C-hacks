@@ -5,6 +5,7 @@ export type ConnectivityState = 'online' | 'offline' | 'backend-unreachable' | '
 export function deriveConnectivity(i: { online: boolean; syncing: boolean; backendReachable: boolean }): ConnectivityState {
   if (!i.online) return 'offline';
   if (i.syncing) return 'syncing';
+  if (!i.backendReachable) return 'backend-unreachable';
   return 'online';
 }
 

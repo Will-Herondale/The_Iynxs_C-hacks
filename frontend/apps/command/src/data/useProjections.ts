@@ -85,7 +85,7 @@ export function useProjections(): ProjectionsResult {
   });
 
   const connection: ConnectionState =
-    !online ? 'offline' : subscribed ? 'live' : 'polling';
+    !online ? 'offline' : q.isError ? 'unavailable' : subscribed ? 'live' : 'polling';
   return {
     snapshot: q.data,
     version: q.data?.version,

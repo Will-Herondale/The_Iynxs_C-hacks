@@ -47,6 +47,7 @@ export const LEGEND_ROWS: { title: string; items: Item[] }[] = [
   {
     title: 'Routes',
     items: [
+      { label: 'Route calculated (road network)', color: COLORS.safe, swatch: 'line', routeState: 'calculated' },
       { label: '? Route (not verified)', color: COLORS.unverified, swatch: 'unverified', routeState: 'not-verified' },
       { label: 'Refused / unavailable ✕', color: COLORS.grey, swatch: 'dashed', routeState: 'refused' },
     ],

@@ -5,11 +5,14 @@ import {
 } from './layers';
 
 describe('route honesty styling', () => {
-  it('draws non-refused routes dashed amber, never solid green', () => {
-    const l = MAP_LAYERS.find((x) => x.id === 'routes-line') as { paint: Record<string, unknown> };
+  it('draws unverified routes dashed amber, and only computed routes solid', () => {
+    const l = MAP_LAYERS.find((x) => x.id === 'routes-line') as { paint: Record<string, unknown>; filter: unknown };
     expect(l.paint['line-color']).toBe(COLORS.unverified);
     expect(l.paint['line-dasharray']).toBeTruthy();
-    expect(JSON.stringify(MAP_LAYERS.filter((x) => x.id.startsWith('routes-')))).not.toContain(COLORS.safe);
+    expect(JSON.stringify(l.filter)).toContain('computation');
+    const verified = MAP_LAYERS.find((x) => x.id === 'routes-verified') as { paint: Record<string, unknown>; filter: unknown };
+    expect(verified.paint['line-color']).toBe(COLORS.safe);
+    expect(JSON.stringify(verified.filter)).toContain('computation');
   });
 });
 

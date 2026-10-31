@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LAYER_DATA_CLASS, dataClassOf, formatIndicativeEta, routeState, shelterStatus, ROUTE_STATE_META } from './honesty.js';
+import { LAYER_DATA_CLASS, dataClassOf, formatCalculatedEta, formatIndicativeEta, routeState, shelterStatus, ROUTE_STATE_META } from './honesty.js';
 
 describe('LAYER_DATA_CLASS', () => {
   it('classifies', () => {
@@ -34,9 +34,30 @@ describe('shelterStatus', () => {
 
 describe('routeState', () => {
   const active = { status: 'active' as const };
-  it('active/recalculated -> not-verified, never calculated', () => {
+  it('active/recalculated without a verified computation stay not-verified, never calculated', () => {
     expect(routeState(active)).toBe('not-verified');
     expect(routeState({ status: 'recalculated' }, { settlementRoutes: [active] })).toBe('not-verified');
+    expect(routeState({ status: 'active', computation: { verified: false } })).toBe('not-verified');
+  });
+  it('only a verified road-graph computation -> calculated', () => {
+    expect(routeState({ status: 'active', computation: { method: 'road_graph', verified: true } })).toBe('calculated');
+    expect(routeState({ status: 'recalculated', computation: { method: 'road_graph', verified: true } })).toBe('calculated');
+    expect(
+      routeState(undefined, {
+        settlementRoutes: [
+          { status: 'unavailable' },
+          { status: 'active', computation: { method: 'road_graph', verified: true } },
+        ],
+      }),
+    ).toBe('calculated');
+    expect(
+      routeState(undefined, {
+        settlementRoutes: [
+          { status: 'unavailable' },
+          { status: 'active', computation: { method: 'road_graph', verified: false } },
+        ],
+      }),
+    ).toBe('not-verified');
   });
   it('unavailable with refusal -> refused', () => {
     expect(routeState({ status: 'unavailable', refusal: { title: 'x' } })).toBe('refused');
@@ -58,6 +79,14 @@ describe('routeState', () => {
   it('meta exists for every state with an icon', () => {
     for (const m of Object.values(ROUTE_STATE_META)) expect(m.icon && m.label && m.explanation).toBeTruthy();
     expect(ROUTE_STATE_META['not-verified'].label).toBe('Route not verified');
+  });
+});
+
+describe('formatCalculatedEta', () => {
+  it('labels the road-network computation', () => {
+    expect(formatCalculatedEta(31)).toBe('~31 min (calculated on the road network)');
+    expect(formatCalculatedEta(75)).toBe('~1 h 15 min (calculated on the road network)');
+    expect(formatCalculatedEta(undefined)).toMatch(/^ETA unavailable/);
   });
 });
 

@@ -3,6 +3,7 @@ import {
   EventStatusSchema,
   FieldEventSchema,
   NetworkError,
+  PeopleSnapshotSchema,
   ProjectionSnapshotSchema,
   ServerError,
   SubmitAckSchema,
@@ -12,6 +13,7 @@ import {
   type EventStatus,
   type FieldEvent,
   type ListEventsParams,
+  type PeopleSnapshot,
   type ProjectionSnapshot,
   type SubmitAck,
 } from '@setu/contract';
@@ -137,8 +139,12 @@ export function createHttpApiClient(opts: HttpApiClientOptions = {}): ApiClient 
     return snap;
   }
 
-  async function listEvents(params: ListEventsParams = {}): Promise<EventRecord[]> {
-    const q = new URLSearchParams();
+  async function getPeople(): Promise<PeopleSnapshot> {
+    const res = await request('/api/v1/people');
+    return json(res, PeopleSnapshotSchema);
+  }
+
+  async function listEvents(params: ListEventsParams = {}): Promise<EventRecord[]> {    const q = new URLSearchParams();
     if (params.sinceVersion !== undefined) q.set('sinceVersion', String(params.sinceVersion));
     if (params.limit !== undefined) q.set('limit', String(params.limit));
     if (params.type !== undefined) q.set('type', params.type);
@@ -265,5 +271,5 @@ export function createHttpApiClient(opts: HttpApiClientOptions = {}): ApiClient 
     };
   }
 
-  return { submitEvents, getEventStatus, getProjections, listEvents, subscribe };
+  return { submitEvents, getEventStatus, getProjections, getPeople, listEvents, subscribe };
 }

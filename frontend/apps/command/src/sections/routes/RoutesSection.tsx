@@ -26,6 +26,7 @@ export function RoutesSectionView({ snapshot }: { snapshot?: ProjectionSnapshot 
   const [destination, setDestination] = useState('');
 
   const routes = useMemo(() => (snapshot ? allRoutes(snapshot) : []), [snapshot]);
+  const verifiedCount = routes.filter((r) => r.status !== 'unavailable' && r.computation?.verified === true).length;
   const settlements = snapshot?.settlements.features.map((f) => f.properties) ?? [];
   const shelters = snapshot?.shelters.features.map((f) => f.properties) ?? [];
   const nameOf = (id: string) => settlements.find((s) => s.settlementId === id)?.name ?? id;
@@ -39,7 +40,9 @@ export function RoutesSectionView({ snapshot }: { snapshot?: ProjectionSnapshot 
   return (
     <div data-testid="routes-section" className="cmd-section">
       <Panel title="Routes & Evacuation">
-        <p style={{ ...small, margin: '0 0 8px' }} data-testid="routes-source-note"><DataClassTag dataClass={LAYER_DATA_CLASS.routes} />{' '}Routes shown are scenario data. The frontend cannot confirm they were computed on the road network, so none is a verified or safe evacuation route. Travel times are the server&apos;s etaMin: indicative, source unconfirmed.</p>
+        <p style={{ ...small, margin: '0 0 8px' }} data-testid="routes-source-note"><DataClassTag dataClass={LAYER_DATA_CLASS.routes} />{' '}{verifiedCount > 0
+          ? <>Routes marked <strong>Route calculated</strong> were computed by the backend over OSM road segments (distance, segment count and 1.3 m/s walking speed). Routes still marked <em>not verified</em> are scenario data the frontend cannot confirm.</>
+          : <>Routes shown are scenario data. The frontend cannot confirm they were computed on the road network, so none is a verified or safe evacuation route. Travel times are the server&apos;s etaMin: indicative, source unconfirmed.</>}</p>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
           <label>Origin settlement{' '}
             <select data-testid="routes-filter-origin" value={origin} onChange={(e) => setOrigin(e.target.value)}>

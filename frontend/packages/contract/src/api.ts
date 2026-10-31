@@ -1,4 +1,5 @@
 import type { EventRecord, FieldEvent, FieldEventType } from './events.js';
+import type { PeopleSnapshot } from './people.js';
 import type { ProjectionSnapshot } from './projections.js';
 import type { EventStatus, SubmitAck } from './sync.js';
 
@@ -18,6 +19,11 @@ export interface ApiClient {
   getEventStatus(clientEventIds: string[]): Promise<EventStatus[]>;
   getProjections(sinceVersion?: number): Promise<ProjectionSnapshot>;
   listEvents(params?: ListEventsParams): Promise<EventRecord[]>;
+  /**
+   * Per-camp people counts and duplicate suggestions. Optional: clients that
+   * predate the people view simply do not expose it.
+   */
+  getPeople?(): Promise<PeopleSnapshot>;
   /** Notifies when the projection/event feed version changes. Returns unsubscribe. */
   subscribe(onChange: (snapshotVersion: number) => void): () => void;
 }

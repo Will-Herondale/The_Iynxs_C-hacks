@@ -46,6 +46,17 @@ export const ExplanationSchema = z.object({
   blockingFeatureIds: z.array(z.string()),
   sourceEventIds: z.array(z.string()).optional(),
 });
+/** Backend provenance for a route geometry: was it computed on the road graph? */
+export const RouteComputationSchema = z.object({
+  method: z.enum(['road_graph']),
+  verified: z.boolean(),
+  distanceM: z.number().nonnegative().optional(),
+  segmentCount: z.number().int().nonnegative().optional(),
+  unknownSegmentCount: z.number().int().nonnegative().optional(),
+  speedMps: z.number().positive().optional(),
+  windowMin: z.number().positive().optional(),
+});
+export type RouteComputation = z.infer<typeof RouteComputationSchema>;
 export const AccessibilitySchema = z.enum(['accessible', 'limited', 'cut_off']);
 export const SettlementPropsSchema = z.object({
   settlementId: z.string(),
@@ -77,6 +88,8 @@ export const RoutePropsSchema = z.object({
   synthetic: z.boolean().optional(),
   /** PROPOSED (frontend): set when status = unavailable. */
   refusal: ExplanationSchema.optional(),
+  /** Backend provenance; `verified` means computed over real road segments. */
+  computation: RouteComputationSchema.optional(),
 });
 export const ShelterPropsSchema = z.object({
   shelterId: z.string(),

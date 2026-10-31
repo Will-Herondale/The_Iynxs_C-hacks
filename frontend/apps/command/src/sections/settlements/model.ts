@@ -24,6 +24,7 @@ export function settlementRows(s: ProjectionSnapshot): SettlementRow[] {
   return s.settlements.features.map((f) => {
     const p = f.properties;
     const c = coverage(s, p);
+    const state = settlementRouteState(s, p);
     return {
       id: p.settlementId,
       ...(p.synthetic ? { synthetic: true } : {}),
@@ -33,8 +34,8 @@ export function settlementRows(s: ProjectionSnapshot): SettlementRow[] {
       ...(p.evacuationDeadline ? { deadline: p.evacuationDeadline } : {}),
       ...(p.evacuationPriority ? { priority: p.evacuationPriority } : {}),
       status: c,
-      statusLabel: COVERAGE_LABEL[c],
-      routeState: settlementRouteState(s, p),
+      statusLabel: state === 'calculated' ? 'Route calculated' : COVERAGE_LABEL[c],
+      routeState: state,
     };
   });
 }

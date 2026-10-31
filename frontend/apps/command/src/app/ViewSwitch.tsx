@@ -4,6 +4,7 @@ export const SECTIONS: { id: ViewName; label: string; testId: string }[] = [
   { id: 'overview', label: 'Overview', testId: 'nav-overview' },
   { id: 'map', label: 'Live Map', testId: 'nav-map' },
   { id: 'settlements', label: 'Settlements', testId: 'nav-settlements' },
+  { id: 'people', label: 'Camps & People', testId: 'nav-people' },
   { id: 'routes', label: 'Routes & Evacuation', testId: 'nav-routes' },
   { id: 'events', label: 'Reports & Events', testId: 'nav-events' },
   { id: 'audit', label: 'Audit', testId: 'nav-audit' },

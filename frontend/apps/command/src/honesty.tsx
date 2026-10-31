@@ -1,5 +1,5 @@
 import type { ProjectionSnapshot, RouteProps, ShelterProps } from '@setu/contract';
-import { ROUTE_STATE_META, formatIndicativeEta, routeState, shelterStatus, type RouteState, type ShelterStatusInfo } from '@setu/geo';
+import { ROUTE_STATE_META, formatCalculatedEta, formatIndicativeEta, routeState, shelterStatus, type RouteState, type ShelterStatusInfo } from '@setu/geo';
 import { Badge, type BadgeTone } from '@setu/ui';
 
 /** Display adapters over the shared honesty rules (@setu/geo). Nothing here computes a route or an ETA. */
@@ -38,8 +38,9 @@ export function shelterCounts(info: ShelterStatusInfo, p: ShelterProps): string 
 }
 
 /** ETA text: an unavailable route has no ETA (the backend sends etaMin 0, which would read as 'arrives instantly'). */
-export function routeEtaText(p: { status: string; etaMin?: number | null }): string {
-  return p.status === 'unavailable' ? 'No ETA (route unavailable)' : formatIndicativeEta(p.etaMin);
+export function routeEtaText(p: { status: string; etaMin?: number | null; computation?: { verified?: boolean } }): string {
+  if (p.status === 'unavailable') return 'No ETA (route unavailable)';
+  return p.computation?.verified === true ? formatCalculatedEta(p.etaMin) : formatIndicativeEta(p.etaMin);
 }
 
-export { formatIndicativeEta, ROUTE_STATE_META };
+export { formatCalculatedEta, formatIndicativeEta, ROUTE_STATE_META };

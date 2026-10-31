@@ -93,7 +93,7 @@ export const TOGGLE_LAYERS: Record<ToggleId, string[]> = {
   blocked: ['roads-blocked', 'roads-blocking', 'flood-blocking'],
   cutoff: ['settlements-halo'],
   observations: ['observations-symbol'],
-  routes: ['routes-recalc-glow', 'routes-line', 'routes-refused', 'routes-synthetic'],
+  routes: ['routes-recalc-glow', 'routes-verified', 'routes-line', 'routes-refused', 'routes-synthetic'],
 };
 
 /** Selection highlights stay visible whatever the toggles say, so a selected feature is never lost. */
@@ -101,7 +101,7 @@ export const ALWAYS_LAYERS = ['flood-selected', 'roads-selected', 'routes-select
 
 /** Layers that respond to click/hover (topmost first). */
 export const INTERACTIVE_LAYERS = [
-  'observations-symbol', 'settlements-circle', 'shelters-circle', 'routes-line', 'routes-refused',
+  'observations-symbol', 'settlements-circle', 'shelters-circle', 'routes-verified', 'routes-line', 'routes-refused',
   'roads-blocked', 'roads-line', 'roads-line-minor', 'flood-fill',
 ];
 
@@ -109,6 +109,7 @@ const LAYER_TO_GROUP: Record<string, GroupName> = {
   'observations-symbol': 'observations',
   'settlements-circle': 'settlements',
   'shelters-circle': 'shelters',
+  'routes-verified': 'routes',
   'routes-line': 'routes',
   'routes-refused': 'routes',
   'roads-line': 'roads',
@@ -251,8 +252,16 @@ export const MAP_LAYERS: LayerSpecification[] = [
     paint: { 'line-color': COLORS.unverified, 'line-width': 14, 'line-opacity': 0.25 },
   },
   {
+    // Computed on the real road graph by the backend: safe to draw solid.
+    id: 'routes-verified', type: 'line', source: SOURCE_IDS.routes,
+    filter: ['all', ['!', isStatus('unavailable')], ['has', 'computation']],
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: { 'line-color': COLORS.safe, 'line-width': 4.5 },
+  },
+  {
     // Not verified: the frontend cannot tell a route was computed, so it is never drawn solid green.
-    id: 'routes-line', type: 'line', source: SOURCE_IDS.routes, filter: ['!', isStatus('unavailable')],
+    id: 'routes-line', type: 'line', source: SOURCE_IDS.routes,
+    filter: ['all', ['!', isStatus('unavailable')], ['!', ['has', 'computation']]],
     layout: { 'line-cap': 'butt', 'line-join': 'round' },
     paint: { 'line-color': COLORS.unverified, 'line-width': ['case', isStatus('recalculated'), 6, 4], 'line-dasharray': [2, 1.5] },
   },

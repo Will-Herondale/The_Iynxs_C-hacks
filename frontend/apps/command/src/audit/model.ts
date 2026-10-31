@@ -96,6 +96,8 @@ export function eventLocationIds(rec: EventRecord): string[] {
       return e.areaId ? [e.areaId] : [];
     case 'household_registration':
       return [e.settlementId, e.shelterId].filter((x): x is string => !!x);
+    case 'person_checkin':
+      return [e.settlementId, e.campId, e.householdId].filter((x): x is string => !!x);
     case 'water_level':
       return e.gaugeId ? [e.gaugeId] : [];
   }

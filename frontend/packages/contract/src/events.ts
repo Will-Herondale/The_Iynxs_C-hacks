@@ -81,12 +81,36 @@ export const HouseholdRegistrationSchema = z.object({
   needs: z.array(z.string()),
 });
 
+export const AgeBandSchema = z.enum(['0-4', '5-12', '13-17', '18-59', '60+']);
+export type AgeBand = z.infer<typeof AgeBandSchema>;
+
+/**
+ * One person checking in at a camp. A household registration is a declared
+ * group with a member count; this is a single human at a specific camp.
+ */
+export const PersonCheckinSchema = z.object({
+  ...base,
+  type: z.literal('person_checkin'),
+  /** Present when this is a repeat check-in of an already-known person. */
+  personId: z.string().optional(),
+  name: z.string().min(1),
+  ageBand: AgeBandSchema.optional(),
+  sex: z.enum(['f', 'm', 'o', 'u']).optional(),
+  /** Camp/shelter where the person is physically present. */
+  campId: z.string().min(1),
+  settlementId: z.string().optional(),
+  householdId: z.string().optional(),
+  vulnerable: VulnerableFlagsSchema.optional(),
+  needs: z.array(z.string()).optional(),
+});
+
 export const FieldEventSchema = z.discriminatedUnion('type', [
   FloodReportSchema,
   RoadBlockageSchema,
   RoadClearedSchema,
   WaterLevelSchema,
   HouseholdRegistrationSchema,
+  PersonCheckinSchema,
 ]);
 
 export type FloodReport = z.infer<typeof FloodReportSchema>;
@@ -94,6 +118,7 @@ export type RoadBlockage = z.infer<typeof RoadBlockageSchema>;
 export type RoadCleared = z.infer<typeof RoadClearedSchema>;
 export type WaterLevel = z.infer<typeof WaterLevelSchema>;
 export type HouseholdRegistration = z.infer<typeof HouseholdRegistrationSchema>;
+export type PersonCheckin = z.infer<typeof PersonCheckinSchema>;
 export type FieldEvent = z.infer<typeof FieldEventSchema>;
 export type FieldEventType = FieldEvent['type'];
 

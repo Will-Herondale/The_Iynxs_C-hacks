@@ -34,6 +34,12 @@ const row = (id: string, shelterId: string | undefined, status: string): QueueIt
     event: { type: 'household_registration', headName: `Head ${id}`, members: 3, shelterId },
   }) as unknown as QueueItem;
 
+const personRow = (id: string, campId: string | undefined, status: string): QueueItem =>
+  ({
+    clientEventId: id, type: 'person_checkin', status, attempts: 0, createdAt: 1, updatedAt: 1,
+    event: { type: 'person_checkin', name: `Person ${id}`, ageBand: '18-59', campId },
+  }) as unknown as QueueItem;
+
 const store = new Map<string, string>();
 const storage = {
   getItem: (k: string) => store.get(k) ?? null,
@@ -97,8 +103,35 @@ describe('CampView', () => {
     expect(enqueue.mock.calls[0]![0]).toMatchObject({ type: 'household_registration', headName: 'Asha', shelterId: 'SH1' });
   });
 
-  it('lists only this camp\'s households with their status', () => {
+  it('checks in an individual person at the selected camp', async () => {
     window.localStorage.setItem(CAMP_KEY, 'SH1');
+    render(<CampView snapshot={snapshot} online />);
+    fireEvent.change(screen.getByTestId('person-name'), { target: { value: 'Anita Das' } });
+    fireEvent.change(screen.getByTestId('person-ageBand'), { target: { value: '60+' } });
+    fireEvent.change(screen.getByTestId('person-sex'), { target: { value: 'f' } });
+    fireEvent.change(screen.getByTestId('person-lat'), { target: { value: '26.14' } });
+    fireEvent.change(screen.getByTestId('person-lng'), { target: { value: '91.73' } });
+    fireEvent.click(screen.getByTestId('person-submit'));
+    await waitFor(() => expect(enqueue).toHaveBeenCalledTimes(1));
+    expect(enqueue.mock.calls[0]![0]).toMatchObject({
+      type: 'person_checkin',
+      name: 'Anita Das',
+      campId: 'SH1',
+      ageBand: '60+',
+      sex: 'f',
+    });
+  });
+
+  it('lists only this camp\'s individual check-ins and counts them', () => {
+    window.localStorage.setItem(CAMP_KEY, 'SH1');
+    state.items = [personRow('p1', 'SH1', 'queued'), personRow('p2', 'SH2', 'synced')];
+    render(<CampView snapshot={snapshot} online={false} />);
+    const rows = screen.getAllByTestId('camp-person-row');
+    expect(rows.map((r) => r.getAttribute('data-client-event-id'))).toEqual(['p1']);
+    expect(screen.getByTestId('camp-summary-individuals').textContent).toBe('1');
+  });
+
+  it('lists only this camp\'s households with their status', () => {    window.localStorage.setItem(CAMP_KEY, 'SH1');
     state.items = [row('a', 'SH1', 'queued'), row('b', 'SH2', 'synced'), row('c', undefined, 'synced'), row('d', 'SH1', 'synced')];
     render(<CampView snapshot={snapshot} online={false} />);
     const rows = screen.getAllByTestId('camp-household-row');

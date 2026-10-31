@@ -1,8 +1,8 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { useSelection, type Selection } from './selection';
 
-export type ViewName = 'overview' | 'map' | 'settlements' | 'routes' | 'events' | 'audit';
-export const VIEW_NAMES: ViewName[] = ['overview', 'map', 'settlements', 'routes', 'events', 'audit'];
+export type ViewName = 'overview' | 'map' | 'settlements' | 'people' | 'routes' | 'events' | 'audit';
+export const VIEW_NAMES: ViewName[] = ['overview', 'map', 'settlements', 'people', 'routes', 'events', 'audit'];
 export interface ViewApi {
   view: ViewName;
   setView(v: ViewName): void;
