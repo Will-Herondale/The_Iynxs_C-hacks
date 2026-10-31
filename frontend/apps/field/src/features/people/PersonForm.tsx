@@ -16,6 +16,7 @@ const STEPS = ['Person', 'Needs', 'Location'];
 const stepForField = (k: string) => (['name', 'ageBand', 'sex', 'settlementId', 'householdId'].includes(k) ? 0 : ['lat', 'lng', 'note'].includes(k) ? 2 : 1);
 
 const VULNERABLE = ['elderly', 'children', 'disabled', 'medical'] as const;
+const VULNERABLE_LABEL: Record<(typeof VULNERABLE)[number], string> = { elderly: 'Elderly', children: 'Child', disabled: 'Has a disability', medical: 'Needs medical care' };
 
 const AGE_BANDS: AgeBand[] = ['0-4', '5-12', '13-17', '18-59', '60+'];
 const SEXES = [
@@ -205,9 +206,9 @@ export function PersonCheckinScreen({ campId, editing, onDone, title, formTestId
         <div className="wizard-step" hidden={w.step !== 0}>
         <Field label="Full name" data-testid="person-name" error={err('name')} {...register('name')} />
         <div className="setu-field">
-          <label className="setu-field__label" htmlFor="p-age">Age band</label>
+          <label className="setu-field__label" htmlFor="p-age">Age band (years)</label>
           <select id="p-age" className="setu-field__control household-control" data-testid="person-ageBand" {...register('ageBand')}>
-            {AGE_BANDS.map((b) => <option key={b} value={b}>{b}</option>)}
+            {AGE_BANDS.map((b) => <option key={b} value={b}>{b} years</option>)}
           </select>
         </div>
         <div className="setu-field">
@@ -231,7 +232,7 @@ export function PersonCheckinScreen({ campId, editing, onDone, title, formTestId
           <legend>Assistance requirements</legend>
           {VULNERABLE.map((k) => (
             <label key={k} className="household-check">
-              <input type="checkbox" data-testid={`person-vulnerable-${k}`} {...register(k)} /> {k}
+              <input type="checkbox" data-testid={`person-vulnerable-${k}`} {...register(k)} /> {VULNERABLE_LABEL[k]}
             </label>
           ))}
         </fieldset>

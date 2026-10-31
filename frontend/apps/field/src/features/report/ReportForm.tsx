@@ -12,7 +12,7 @@ import {
   EMPTY_REPORT, buildReportEvent, fieldKeyForPath, freshId, toLocalInput, valuesFromEvent,
 } from './buildEvent.js';
 import type { ReportValues } from './buildEvent.js';
-import { BLOCKED_15, CATEGORIES, categoryDef } from './categories.js';
+import { CATEGORIES, categoryDef } from './categories.js';
 import type { ReportCategory } from './categories.js';
 import { loadGeoLayer } from '@setu/geo';
 import { filterRoadOptions, geoBridgeOptions, roadOptions, withGeoBridges } from './roadOptions.js';
@@ -23,6 +23,7 @@ import { advanceOnEnter, SearchSelect, useWizard, WizardNav, WizardProgress } fr
 import './report.css';
 
 const CAUSES = ['debris', 'collapse', 'damage', 'other'];
+const CAUSE_LABEL: Record<string, string> = { debris: 'Debris', collapse: 'Collapsed', damage: 'Damaged', other: 'Other' };
 const SELECT = 'setu-field__control';
 const STEPS = ['Report type', 'Details', 'Location', 'Notes'];
 /** Which step a validation error belongs to, so a failed submit jumps to the field that needs fixing. */
@@ -228,8 +229,8 @@ export function ReportScreen({
           <div className="setu-field">
             <label className="setu-field__label" htmlFor="f-blockage">How blocked</label>
             <select id="f-blockage" className={SELECT} data-testid="field-blockage" {...register('blockage')}>
-              <option value="full">Fully blocked (full)</option>
-              <option value="partial">Partly passable (partial)</option>
+              <option value="full">Fully blocked</option>
+              <option value="partial">Partly passable</option>
             </select>
           </div>
         )}
@@ -238,7 +239,7 @@ export function ReportScreen({
             <label className="setu-field__label" htmlFor="f-cause">Obstruction type</label>
             <select id="f-cause" className={SELECT} data-testid="field-cause" {...register('cause')}>
               <option value="">Not sure</option>
-              {CAUSES.map((c) => <option key={c} value={c}>{c}</option>)}
+              {CAUSES.map((c) => <option key={c} value={c}>{CAUSE_LABEL[c] ?? c}</option>)}
             </select>
           </div>
         )}
@@ -246,7 +247,7 @@ export function ReportScreen({
         {category === 'flooded_road' && (
           <>
             <Field label="Severity (1 = minor, 5 = severe)" type="number" inputMode="numeric" min={1} max={5} data-testid="field-severity" error={err('severity')} {...register('severity')} />
-            <Field label="Water depth, cm (optional)" type="number" inputMode="decimal" min={0} data-testid="field-depthCm" error={err('depthCm')} {...register('depthCm')} />
+            <Field label="Water depth (cm, optional)" type="number" inputMode="decimal" min={0} data-testid="field-depthCm" error={err('depthCm')} {...register('depthCm')} />
             <Field label="Area ID (optional)" data-testid="field-areaId" {...register('areaId')} />
           </>
         )}
@@ -258,11 +259,11 @@ export function ReportScreen({
             </div>
             <p className="report-hint-disabled" data-testid="estimate-hint">Estimated vs measured is not recorded yet: the backend has no field for it.</p>
             <div className="setu-field">
-              <label className="setu-field__label" htmlFor="f-trend">Trend</label>
+              <label className="setu-field__label" htmlFor="f-trend">Water level trend</label>
               <select id="f-trend" className={SELECT} data-testid="field-trend" {...register('trend')}>
-                <option value="rising">rising</option>
-                <option value="steady">steady</option>
-                <option value="falling">falling</option>
+                <option value="rising">Rising</option>
+                <option value="steady">Steady</option>
+                <option value="falling">Falling</option>
               </select>
             </div>
             <Field label="Gauge ID (optional)" data-testid="field-gaugeId" {...register('gaugeId')} />

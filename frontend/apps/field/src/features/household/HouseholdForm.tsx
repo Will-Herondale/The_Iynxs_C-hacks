@@ -13,6 +13,7 @@ import { DEFAULT_LOCATION, useGeolocation } from '../report/location.js';
 import { advanceOnEnter, SearchSelect, useWizard, WizardNav, WizardProgress } from '../wizard/index.js';
 
 const VULNERABLE = ['elderly', 'children', 'disabled', 'medical'] as const;
+const VULNERABLE_LABEL: Record<(typeof VULNERABLE)[number], string> = { elderly: 'Elderly members', children: 'Children', disabled: 'Members with a disability', medical: 'Members needing medical care' };
 const STEPS = ['Household', 'Needs', 'Location'];
 /** Which step a validation error belongs to, so a failed submit jumps to the field that needs fixing. */
 const stepForField = (k: string) => (['headName', 'members', 'settlementId', 'shelterId'].includes(k) ? 0 : ['lat', 'lng', 'note'].includes(k) ? 2 : 1);
@@ -169,7 +170,7 @@ export function HouseholdScreen({ editing, onDone, submit = defaultSubmit, shelt
         <div className="wizard-step" hidden={w.step !== 0}>
         <Field label={individual ? 'Full name' : 'Head of household'} data-testid="household-headName" error={err('headName')} {...register('headName')} />
         <div hidden={individual}>
-          <Field label="Members" type="number" min={1} data-testid="household-members" error={err('members')} {...register('members')} />
+          <Field label="Number of members (people)" type="number" min={1} data-testid="household-members" error={err('members')} {...register('members')} />
           <p className="household-note" data-testid="household-member-names-blocked" aria-disabled="true">
             Member names are not recorded yet: only the number of members is saved.
           </p>
@@ -210,7 +211,7 @@ export function HouseholdScreen({ editing, onDone, submit = defaultSubmit, shelt
           <legend>Assistance requirements: vulnerable members</legend>
           {VULNERABLE.map((k) => (
             <label key={k} className="household-check">
-              <input type="checkbox" data-testid={`household-vulnerable-${k}`} {...register(k)} /> {k}
+              <input type="checkbox" data-testid={`household-vulnerable-${k}`} {...register(k)} /> {VULNERABLE_LABEL[k]}
             </label>
           ))}
         </fieldset>
