@@ -59,7 +59,7 @@ export function RoutesSectionView({ snapshot }: { snapshot?: ProjectionSnapshot 
           <span data-testid="routes-count" aria-live="polite">{shown.length} of {routes.length} routes</span>
         </div>
 
-        {settlements.filter((p) => !origin || p.settlementId === origin).filter((p) => !routes.some((r) => r.from === p.settlementId && r.kind === 'evacuation') && p.accessibility !== 'accessible').map((p) => (
+        {settlements.filter((p) => !origin || p.settlementId === origin).filter((p) => !routes.some((r) => r.from === p.settlementId && r.kind === 'evacuation')).map((p) => (
           <div key={p.settlementId} data-testid={`no-route-data-${p.settlementId}`} data-route-state="no-route-data" style={{ ...small, margin: '4px 0' }}>– No route data — {p.name} (<MonoId>{p.settlementId}</MonoId>): none provided. This is not the same as &quot;no safe route&quot;.</div>
         ))}
         {noSafe.map((p) => <NoSafeRoute key={p.settlementId} settlementId={p.settlementId} name={p.name} />)}

@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
-import type { ProjectionSnapshot } from '@setu/contract';
+import type { PeopleSnapshot, ProjectionSnapshot } from '@setu/contract';
 import { Badge, EmptyState, Panel, DataClassTag } from '@setu/ui';
 import { useSelection } from '../../app';
 import { formatDeadline } from '../../app/time';
-import { useProjections } from '../../data';
+import { usePeople, useProjections } from '../../data';
 import { MonoId } from '../../panels/NotProvided';
 import { ACCESS_TONE, label } from '../../panels/model';
 import { accessRank, matches, priorityRank, settlementRows, type SettlementRow } from './model';
@@ -22,11 +22,11 @@ const COLS: Col[] = [
 const NOT_IN_CONTRACT = 'not in contract (#15)';
 const Dash = ({ what }: { what: string }) => <span title={NOT_IN_CONTRACT} aria-label={`${what}: ${NOT_IN_CONTRACT}`} data-testid={`na-${what}`}>—</span>;
 
-export function SettlementsSectionView({ snapshot, now = Date.now() }: { snapshot?: ProjectionSnapshot; now?: number }) {
+export function SettlementsSectionView({ snapshot, people, now = Date.now() }: { snapshot?: ProjectionSnapshot; people?: PeopleSnapshot; now?: number }) {
   const { selected, select } = useSelection();
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'accessibility', dir: 1 });
-  const rows = useMemo(() => (snapshot ? settlementRows(snapshot) : []), [snapshot]);
+  const rows = useMemo(() => (snapshot ? settlementRows(snapshot, people) : []), [snapshot, people]);
   const view = useMemo(() => {
     const col = COLS.find((c) => c.key === sort.key)!;
     return rows.filter((r) => matches(r, q)).sort((a, b) => {
@@ -40,6 +40,9 @@ export function SettlementsSectionView({ snapshot, now = Date.now() }: { snapsho
   return (
     <div data-testid="settlements-section">
       <Panel title="Settlements">
+        <p style={{ margin: '0 0 8px', fontSize: '0.85em', opacity: 0.85 }} data-testid="settlements-source-note">
+          Flood access and mapped households come from the settlement projection. Field registrations are live server data and are shown separately.
+        </p>
         <div style={{ display: 'flex', gap: 12, marginBottom: 8, alignItems: 'center' }}>
           <label>Search{' '}
             <input type="search" className="setu-table__search" aria-label="Search settlements" data-testid="settlements-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="name, id, segment…" />
@@ -60,6 +63,7 @@ export function SettlementsSectionView({ snapshot, now = Date.now() }: { snapsho
                       </button>
                     </th>
                   ))}
+                  <th scope="col">Field registrations</th>
                   <th scope="col">Shelter · travel · latest departure</th>
                 </tr>
               </thead>
@@ -76,6 +80,9 @@ export function SettlementsSectionView({ snapshot, now = Date.now() }: { snapsho
                       <td>{r.priority ?? '—'}</td>
                       <td>
                         {r.status === 'no-safe-route' ? <Badge tone="danger" icon="✕">{r.statusLabel}</Badge> : r.status === 'no-route-listed' ? <Badge tone="neutral" icon="–">{r.statusLabel}</Badge> : <Badge tone="warning" icon="?">{r.statusLabel}</Badge>}
+                      </td>
+                      <td data-testid={`settlement-field-counts-${r.id}`}>
+                        {r.fieldCheckins === undefined ? 'not loaded' : `${r.fieldPeople} people · ${r.fieldHouseholds} households`}
                       </td>
                       <td className="cmd-settlements__na">
                         <Dash what="nearest-shelter" /> · <Dash what="travel-time" /> · <Dash what="latest-departure" />
@@ -94,5 +101,6 @@ export function SettlementsSectionView({ snapshot, now = Date.now() }: { snapsho
 
 export function SettlementsSection() {
   const { snapshot } = useProjections();
-  return <SettlementsSectionView {...(snapshot ? { snapshot } : {})} />;
+  const { snapshot: people } = usePeople();
+  return <SettlementsSectionView {...(snapshot ? { snapshot } : {})} {...(people ? { people } : {})} />;
 }

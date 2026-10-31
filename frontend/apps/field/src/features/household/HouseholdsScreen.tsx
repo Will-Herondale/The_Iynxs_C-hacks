@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { ProjectionSnapshot } from '@setu/contract';
+import type { PeopleSnapshot, ProjectionSnapshot } from '@setu/contract';
 import { Badge, Button, EmptyState, Panel, SyncStatusBadge } from '@setu/ui';
 import { useQueue, useSyncState } from '../../sync/index.js';
 import type { QueueItem } from '../../sync/index.js';
@@ -10,6 +10,8 @@ import './household.css';
 
 export interface HouseholdsScreenProps {
   snapshot?: ProjectionSnapshot;
+  people?: PeopleSnapshot;
+  peopleUnavailable?: boolean;
   /** Overridable for tests; defaults to the live local queue. */
   items?: QueueItem[];
   online?: boolean;
@@ -57,7 +59,7 @@ function HistoryList({ record, online, onOpenReport }: { record: HouseholdRecord
   );
 }
 
-export function HouseholdsScreen({ snapshot, items, online: onlineProp, onOpenReport, startRegistering }: HouseholdsScreenProps) {
+export function HouseholdsScreen({ snapshot, people, peopleUnavailable, items, online: onlineProp, onOpenReport, startRegistering }: HouseholdsScreenProps) {
   const live = useQueue();
   const sync = useSyncState();
   const queue = items ?? live;
@@ -70,6 +72,9 @@ export function HouseholdsScreen({ snapshot, items, online: onlineProp, onOpenRe
 
   const records = useMemo(() => householdsFromQueue(queue), [queue]);
   const rows = useMemo(() => searchHouseholds(records, query, names), [records, query, names]);
+  const serverHouseholds = people?.checkins.filter((r) => r.kind === 'household') ?? [];
+  const localClientIds = new Set(records.map((r) => r.current.clientEventId));
+  const remoteOnlyHouseholds = serverHouseholds.filter((r) => !r.clientEventId || !localClientIds.has(r.clientEventId));
 
   return (
     <div data-testid="households-screen">
@@ -94,7 +99,7 @@ export function HouseholdsScreen({ snapshot, items, online: onlineProp, onOpenRe
           <label className="setu-field__label" htmlFor="households-search">Search by name, village or camp</label>
           <input id="households-search" type="search" className="setu-field__control household-search" data-testid="households-search" value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
-        <p className="household-note">Only households registered from this device are searched. Server-side households are not provided to this app.</p>
+        <p className="household-note">This list is registrations from this device. Server-confirmed households from all devices are shown below when available.</p>
         {records.length === 0 && <EmptyState title="No households registered yet" />}
         {records.length > 0 && rows.length === 0 && <p role="status" data-testid="households-no-match">No household matches “{query}”.</p>}
         <ul className="household-list" data-testid="households-list">
@@ -132,6 +137,22 @@ export function HouseholdsScreen({ snapshot, items, online: onlineProp, onOpenRe
           })}
         </ul>
       </Panel>
+      {people && (
+        <Panel title={`Server-confirmed households (${serverHouseholds.length})`}>
+          <p className="household-note" data-testid="households-server-note">These records are accepted by the backend and may have been submitted from another device. Local synced duplicates are shown only once above.</p>
+          {remoteOnlyHouseholds.length === 0 ? <EmptyState title="No additional server households" /> : (
+            <ul className="household-list" data-testid="households-server-list">
+              {remoteOnlyHouseholds.map((r) => (
+                <li key={r.eventId} className="household-row" data-testid="household-server-row" data-client-event-id={r.clientEventId ?? ''} data-status="synced">
+                  <div className="household-row__head"><strong>{r.displayName}</strong><SyncStatusBadge status="synced" online={online} /></div>
+                  <p>{r.members} {r.members === 1 ? 'person' : 'people'} · Village: {r.settlementId ?? 'Unknown'} · Camp: {r.campName ?? r.campId ?? 'Not in a camp'}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+      )}
+      {peopleUnavailable && !people && <p role="status" data-testid="households-server-unavailable">Shared household data is unavailable; showing this device&apos;s records.</p>}
       <Panel title="Household details not yet supported">
         <p className="household-blocked" data-testid="household-member-names-blocked-summary">Member names: Blocked: #15.</p>
         <DuplicateReviewPlaceholder />

@@ -129,11 +129,12 @@ export function FeaturePanelView({ snapshot, records, onSelectEvent, provenance,
       const shelterIds = [...new Set(serving.map((r) => r.to))];
       const fieldRecords = people?.checkins.filter((r) => r.settlementId === p.settlementId) ?? [];
       const fieldPeople = fieldRecords.reduce((n, r) => n + r.members, 0);
+      const fieldHouseholds = fieldRecords.filter((r) => r.kind === 'household').length;
       body = (
         <>
           <Props rows={[
             ['settlementId', <MonoId>{p.settlementId}</MonoId>], ['name', p.name], ['population', p.population], ['mapped households', p.households],
-            ...(people ? [['field check-ins', fieldRecords.length] as [string, ReactNode], ['field people', fieldPeople] as [string, ReactNode]] : []),
+            ...(people ? [['field check-ins', fieldRecords.length] as [string, ReactNode], ['field households', fieldHouseholds] as [string, ReactNode], ['field people', fieldPeople] as [string, ReactNode]] : []),
             ['needs', p.needs.length ? p.needs.join(', ') : 'none'],
             ['flood access', <Badge tone={ACCESS_TONE[p.accessibility].tone} icon={ACCESS_TONE[p.accessibility].icon}>{label(p.accessibility)}</Badge>],
             ['routes', serving.length ? serving.map((r) => <span key={r.routeId}>{link('route', r.routeId)}<small>({r.status}) </small></span>) : 'none'],
