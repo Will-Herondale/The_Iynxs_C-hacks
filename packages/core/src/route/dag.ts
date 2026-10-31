@@ -9,6 +9,8 @@ export type Slot = number; // index into time slots
 
 export interface RouteEdge {
   edgeId: string;
+  /** Raw road/network ID used by observations; omitted for synthetic edges. */
+  sourceRoadId?: string;
   fromNode: string;
   toNode: string;
   lengthM: number;

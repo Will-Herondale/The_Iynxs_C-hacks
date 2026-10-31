@@ -99,6 +99,7 @@ function buildRouteEdges(
 
       edges.push({
         edgeId: `${osmId}-${edgeIndex}`,
+        sourceRoadId: osmId,
         fromNode,
         toNode,
         lengthM,

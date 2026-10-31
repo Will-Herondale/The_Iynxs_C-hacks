@@ -1,8 +1,10 @@
 import { startServer } from './server.js';
 
 async function main() {
-  const server = await startServer(8080);
-  console.log('Server running on port 8080');
+  // startServer's default reads SETU_PORT, allowing isolated demo instances
+  // without changing the production default of 8080.
+  const server = await startServer();
+  console.log(`Server running on port ${process.env.SETU_PORT || 8080}`);
 
   process.on('SIGINT', async () => {
     await server.close();

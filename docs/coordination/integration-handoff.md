@@ -137,9 +137,12 @@ Server-Sent Events stream for projection version bumps.
 data: {"type":"version","version":5}
 ```
 
-### 3.6 GET /api/v1/health
+### 3.6 GET /health (canonical; `/api/v1/health` compatibility alias)
 
 **Response (200):** `{ "ok": true, "eventCount": 150, "projectionVersion": 5 }`
+
+The backend currently serves both `/health` and `/api/v1/health`; new clients
+should probe `/health` at the configured backend base URL.
 
 ---
 

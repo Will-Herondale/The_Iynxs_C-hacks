@@ -195,11 +195,20 @@ export interface SettlementProps {
   households: number;
   needs: string[];
   synthetic?: boolean;
+  cutOffReason?: Explanation;
 }
 
 export type RouteKind = 'evacuation' | 'supply';
 
 export type RouteStatus = 'active' | 'recalculated' | 'unavailable';
+
+/** Structured explanation shared by cut-off settlements and refused routes. */
+export interface Explanation {
+  summary: string;
+  /** IDs of the features that block the route (road/bridge IDs). */
+  blockingFeatureIds: string[];
+  sourceEventIds?: string[];
+}
 
 export interface RouteProps {
   routeId: string;
@@ -210,7 +219,12 @@ export interface RouteProps {
   etaMin: number;
   replacesRouteId?: string;
   synthetic?: boolean;
-  /** Human-readable reason when route is unavailable or recalculated. */
+  /**
+   * Structured reason when status is unavailable. The Command Centre renders
+   * this as "Why this route is refused" with links to the blocking features.
+   */
+  refusal?: Explanation;
+  /** Plain-text mirror for older clients. */
   reason?: string;
 }
 

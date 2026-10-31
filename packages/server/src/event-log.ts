@@ -14,6 +14,7 @@ export class EventLog {
   private readonly path: string;
   private entries: Envelope[] = [];
   private idIndex = new Map<string, Envelope>(); // event id → envelope
+  private appliedVersionIndex = new Map<string, number>(); // event id → 1-based applied version
   private originSeqIndex = new Map<string, Map<number, Envelope>>(); // origin → seq → envelope
   private hwm = new Map<string, number>(); // origin → highest contiguous seq
   private closed = false;
@@ -47,6 +48,10 @@ export class EventLog {
   private addEntry(env: Envelope): void {
     this.entries.push(env);
     this.idIndex.set(env.id, env);
+    // The server bumps the projection version once per accepted event, and
+    // rebuilds it from the log length on startup. The append position is
+    // therefore the event's historical applied version, even after restart.
+    this.appliedVersionIndex.set(env.id, this.entries.length);
 
     const originSeqs = this.originSeqIndex.get(env.origin) ?? new Map();
     originSeqs.set(env.seq, env);
@@ -82,6 +87,11 @@ export class EventLog {
   /** Get an event by id. */
   getEvent(id: string): Envelope | undefined {
     return this.idIndex.get(id);
+  }
+
+  /** Historical version at which the event was applied (1-based). */
+  getAppliedVersion(id: string): number | undefined {
+    return this.appliedVersionIndex.get(id);
   }
 
   /** Get event by origin + seq. */

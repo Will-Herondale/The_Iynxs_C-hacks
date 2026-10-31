@@ -1,0 +1,19 @@
+{
+  "clientEventId": "6631682c-0ba1-4e0b-a651-d59f9ea64ede",
+  "eventId": "06GRYFKR5X3KE1DHWDFTK1FJMR",
+  "acceptedAtVersion": 1,
+  "duplicateResult": "duplicate",
+  "duplicateEventId": "06GRYFKR5X3KE1DHWDFTK1FJMR",
+  "eventCount": 1,
+  "projectionVersion": 1,
+  "bridge": "blocked",
+  "settlement": "cut_off",
+  "route": "unavailable",
+  "refusal": {
+    "summary": "No safe route: Demo Bridge Road (syn-bridge-1) is blocked.",
+    "blockingFeatureIds": [
+      "syn-bridge-1"
+    ]
+  },
+  "verifiedAt": "2026-10-30T23:56:40.6283004Z"
+}

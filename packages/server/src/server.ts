@@ -109,11 +109,21 @@ async function handleEventsBatch(
   const vv = log.getVersionVector();
 
   for (const event of body.events) {
+    const clientEventId = typeof event?.clientEventId === 'string' ? event.clientEventId : '';
+    if (!isValidUuid(clientEventId)) {
+      acks.push({
+        clientEventId,
+        result: 'rejected',
+        errors: [{ path: 'clientEventId', message: 'Must be a UUID v4' }],
+      });
+      continue;
+    }
+
     // Idempotency: check if clientEventId already known
-    const existingEventId = clientEventMappings.get(event.clientEventId);
+    const existingEventId = clientEventMappings.get(clientEventId);
     if (existingEventId) {
       acks.push({
-        clientEventId: event.clientEventId,
+        clientEventId,
         result: 'duplicate',
         eventId: existingEventId,
       });
@@ -126,7 +136,7 @@ async function handleEventsBatch(
       envInput = translateEvent(event);
     } catch (err) {
       acks.push({
-        clientEventId: event.clientEventId,
+        clientEventId,
         result: 'rejected',
         errors: [
           { path: 'type', message: `Translation failed: ${(err as Error).message}` },
@@ -145,7 +155,7 @@ async function handleEventsBatch(
     const existing = log.getEventByOriginSeq(origin, envInput.seq);
     if (existing) {
       acks.push({
-        clientEventId: event.clientEventId,
+        clientEventId,
         result: 'conflict',
         eventId: existing.id,
         reason: `Origin ${origin} already has event at seq ${envInput.seq}`,
@@ -159,7 +169,7 @@ async function handleEventsBatch(
       appended = await log.append(envInput);
     } catch (err) {
       acks.push({
-        clientEventId: event.clientEventId,
+        clientEventId,
         result: 'rejected',
         errors: [
           { path: 'payload', message: `Append failed: ${(err as Error).message}` },
@@ -169,23 +179,24 @@ async function handleEventsBatch(
     }
 
     // Record mapping
-    clientEventMappings.set(event.clientEventId, appended.id);
-    eventIdToClientEventId.set(appended.id, event.clientEventId);
+    clientEventMappings.set(clientEventId, appended.id);
+    eventIdToClientEventId.set(appended.id, clientEventId);
 
-    // The event is accepted; it will be applied to projections on next read
-    // acceptedAtVersion = version AFTER apply (we assign at apply time)
+    // The event is accepted; it will be applied to projections on next read.
+    // One accepted event = one version bump, so the projection version always
+    // equals the number of applied events (and stays monotonic across restarts).
+    projectionVersion++;
     acks.push({
-      clientEventId: event.clientEventId,
+      clientEventId,
       result: 'accepted',
       eventId: appended.id,
-      acceptedAtVersion: projectionVersion + 1,
+      acceptedAtVersion: projectionVersion,
     });
   }
 
-  // Bump projection version if any events were accepted
+  // Notify subscribers once per batch, after all events in it were appended.
   const acceptedCount = acks.filter((a) => a.result === 'accepted').length;
   if (acceptedCount > 0) {
-    projectionVersion++;
     broadcastVersion(projectionVersion);
   }
 
@@ -240,7 +251,7 @@ async function handleEventsStatus(
       clientEventId,
       eventId,
       state: 'applied',
-      projectionVersion: projectionVersion,
+      projectionVersion: log.getAppliedVersion(eventId) ?? projectionVersion,
     });
   }
 
@@ -324,7 +335,7 @@ function translateEnvelopeToWire(env: Envelope): { event: FieldEvent; eventId: s
           type: 'flood_report',
           severity: typeof p.severity === 'number' ? p.severity : 3,
           ...(typeof p.depth_dm === 'number'
-            ? { depthCm: Math.round(p.depth_dm / 10) }
+            ? { depthCm: Math.round(p.depth_dm * 10) }
             : {}),
           ...(typeof p.area_id === 'string' ? { areaId: p.area_id } : {}),
         } as unknown as FieldEvent,
@@ -342,10 +353,10 @@ function translateEnvelopeToWire(env: Envelope): { event: FieldEvent; eventId: s
       };
     }
     default:
-      return {
-        eventId: env.id,
-        event: base as unknown as FieldEvent,
-      };
+      // Internal registry/matching events are not part of the v1 FieldEvent
+      // wire contract. Do not emit a malformed discriminant or fabricate
+      // household fields merely to make legacy records parse.
+      return null;
     }
 }
 
@@ -388,28 +399,38 @@ async function handleListEvents(
       filtered = filtered.filter((e) => e.type === internalType);
     }
   }
-  filtered = filtered.slice(0, limit);
+  const omittedByType: Record<string, number> = {};
+  const records: Array<{
+    eventId: string;
+    event: FieldEvent;
+    serverState: 'applied';
+    receivedAt: string;
+    appliedAtVersion: number;
+  }> = [];
 
-  const records = filtered
-    .map((env) => {
-      const translated = translateEnvelopeToWire(env);
-      if (!translated) return null;
-      return {
-        eventId: env.id,
-        event: translated.event,
-        serverState: 'applied' as const,
-        receivedAt: new Date(env.at).toISOString(),
-        appliedAtVersion: projectionVersion,
-      };
-    })
-    .filter((r): r is NonNullable<typeof r> => r !== null);
-
-  console.error(`DEBUG handleListEvents: totalEvents=${events.length}, filtered=${filtered.length}, records=${records.length}, typeFilter=${type}`);
-  for (const env of filtered.slice(0, 5)) {
-    console.error(`  event id=${env.id} type=${env.type} payload.keys=${Object.keys(env.payload || {}).join(',')} client_event_id=${(env.payload as Record<string, unknown>).client_event_id}`);
+  // Translate before applying the page limit. Unsupported internal events must
+  // not consume slots that should contain valid v1 audit records.
+  for (const env of filtered) {
+    const translated = translateEnvelopeToWire(env);
+    if (!translated) {
+      omittedByType[env.type] = (omittedByType[env.type] ?? 0) + 1;
+      continue;
+    }
+    if (records.length >= limit) continue;
+    records.push({
+      eventId: env.id,
+      event: translated.event,
+      serverState: 'applied',
+      receivedAt: new Date(env.at).toISOString(),
+      appliedAtVersion: log!.getAppliedVersion(env.id) ?? projectionVersion,
+    });
   }
 
-  sendJson(res, 200, { events: records });
+  const omittedTotal = Object.values(omittedByType).reduce((sum, count) => sum + count, 0);
+  sendJson(res, 200, {
+    events: records,
+    omitted: omittedTotal > 0 ? { total: omittedTotal, byType: omittedByType } : undefined,
+  });
 }
 
 function handleStream(
@@ -508,7 +529,9 @@ async function handleRequest(
       return;
     }
 
-    if (req.method === 'GET' && url === '/health') {
+    // /api/v1/health is the path the field app probes; /health stays for
+    // backwards compatibility with earlier scripts.
+    if (req.method === 'GET' && (url === '/health' || url === '/api/v1/health')) {
       sendJson(res, 200, {
         ok: true,
         eventCount: log ? log.count : 0,
@@ -528,13 +551,47 @@ async function handleRequest(
 
 // ── Server lifecycle ───────────────────────────────────────────────────
 
+export interface StartServerOptions {
+  /** Directory holding log.jsonl. Defaults to SETU_LOG_DIR or ./data. */
+  logDir?: string;
+}
+
+/**
+ * Rebuild runtime state that is derived from the event log after loading it.
+ * Without this, a restart forgets clientEventId → eventId idempotency mappings
+ * and reports projectionVersion 0 even though events were recovered.
+ */
+function restoreStateFromLog(): void {
+  if (!log) return;
+
+  clientEventMappings.clear();
+  eventIdToClientEventId.clear();
+
+  for (const env of log.getAllEvents()) {
+    const clientEventId = (env.payload as Record<string, unknown> | null)
+      ?.client_event_id;
+    if (typeof clientEventId !== 'string' || clientEventId.length === 0) {
+      continue;
+    }
+    clientEventMappings.set(clientEventId, env.id);
+    eventIdToClientEventId.set(env.id, clientEventId);
+  }
+
+  // One accepted event = one version bump in handleEventsBatch, so the event
+  // count is a monotonic projection version after a restart. It can never be
+  // lower than the previous process's batch count.
+  projectionVersion = log.count;
+}
+
 export async function startServer(
   port: number = PORT,
   geoArtifacts?: GeoArtifacts,
+  options: StartServerOptions = {},
 ): Promise<Server> {
   artifacts = geoArtifacts ?? (await loadGeoArtifacts());
-  log = new EventLog(LOG_DIR);
+  log = new EventLog(options.logDir ?? LOG_DIR);
   await log.load();
+  restoreStateFromLog();
 
   const server = createServer(handleRequest);
   await new Promise<void>((resolve, reject) => {

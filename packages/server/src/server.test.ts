@@ -2,14 +2,20 @@
 // Tests run against an in-memory server instance.
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { startServer, stopServer } from './server';
 import { type Server } from 'node:http';
 
 let server: Server;
 let baseUrl: string;
+let logDir: string;
 
 beforeAll(async () => {
-  server = await startServer(0); // port 0 = random available port
+  // Isolate test events from the live backend log.
+  logDir = await mkdtemp(join(tmpdir(), 'setu-server-test-'));
+  server = await startServer(0, undefined, { logDir }); // port 0 = random available port
   const addr = server.address();
   const port = typeof addr === 'object' && addr ? addr.port : 0;
   baseUrl = `http://localhost:${port}`;
@@ -17,6 +23,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   if (server) await stopServer(server);
+  if (logDir) await rm(logDir, { recursive: true, force: true });
 });
 
 async function fetchJson(
@@ -49,7 +56,7 @@ describe('SETU server endpoints', () => {
 
   describe('POST /api/v1/events:batch', () => {
     it('accepts a valid flood_report event', async () => {
-      const ceid = 'test-valid-001';
+      const ceid = '550e8400-e29b-41d4-a716-446655440001';
       const { status, body } = await fetchJson('/api/v1/events:batch', {
         method: 'POST',
         body: {
@@ -74,6 +81,34 @@ describe('SETU server endpoints', () => {
       expect(acks.length).toBe(1);
       expect(acks[0].result).toBe('accepted');
       expect(acks[0].eventId).toBeDefined();
+
+      // The event list round-trips decimetres back to centimetres.
+      const listed = await fetchJson('/api/v1/events?type=flood_report');
+      const record = (listed.body as { events: Array<{ event: { clientEventId: string; depthCm?: number } }> })
+        .events.find((e) => e.event.clientEventId === ceid);
+      expect(record?.event.depthCm).toBe(50);
+    });
+
+    it('rejects invalid clientEventId before appending', async () => {
+      const { status, body } = await fetchJson('/api/v1/events:batch', {
+        method: 'POST',
+        body: {
+          events: [{
+            clientEventId: 'not-a-uuid',
+            type: 'flood_report',
+            occurredAt: '2026-10-30T14:03:31.074723+00:00',
+            reporterId: 'volunteer-invalid-id',
+            deviceId: 'device-invalid-id',
+            location: { lat: 26.9586, lng: 94.1622 },
+            severity: 3,
+          }],
+        },
+      });
+      expect(status).toBe(200);
+      expect(body).toMatchObject({ acks: [{ clientEventId: 'not-a-uuid', result: 'rejected' }] });
+      const listed = await fetchJson('/api/v1/events');
+      expect((listed.body as { events: Array<{ event: { clientEventId: string } }> }).events
+        .some((e) => e.event.clientEventId === 'not-a-uuid')).toBe(false);
     });
 
     it('rejects invalid JSON body', async () => {
@@ -93,7 +128,7 @@ describe('SETU server endpoints', () => {
     });
 
     it('rejects duplicate clientEventId', async () => {
-      const ceid = 'test-dup-001';
+      const ceid = '550e8400-e29b-41d4-a716-446655440002';
       const event = {
         clientEventId: ceid,
         type: 'flood_report',
@@ -137,7 +172,7 @@ describe('SETU server endpoints', () => {
 
   describe('POST /api/v1/events/status', () => {
     it('returns status for known clientEventId', async () => {
-      const ceid = 'test-status-001';
+      const ceid = '550e8400-e29b-41d4-a716-446655440003';
       const event = {
         clientEventId: ceid,
         type: 'flood_report',
@@ -228,6 +263,37 @@ describe('SETU server endpoints', () => {
       const events = (body as { events: Array<{ event: { type: string; areaId?: string; clientEventId: string } }> }).events;
       expect(events.length).toBeGreaterThanOrEqual(1);
       expect(events.find((e) => e.event.clientEventId === ceid)).toBeDefined();
+    });
+
+    it('does not emit unsupported person.register records as FieldEvents', async () => {
+      const ceid = '550e8400-e29b-41d4-a716-446655440004';
+      const first = await fetchJson('/api/v1/events:batch', {
+        method: 'POST',
+        body: {
+          events: [{
+            clientEventId: ceid,
+            type: 'household_registration',
+            occurredAt: '2026-10-30T14:03:31.074723+00:00',
+            reporterId: 'volunteer-household',
+            deviceId: 'device-household',
+            location: { lat: 26.9586, lng: 94.1622 },
+            householdId: '550e8400-e29b-41d4-a716-446655440005',
+            headName: 'Demo Household',
+            members: 2,
+            vulnerable: { elderly: false, children: true, disabled: false, medical: false },
+            needs: ['water'],
+          }],
+        },
+      });
+      expect(first.status).toBe(200);
+
+      const listed = await fetchJson('/api/v1/events?limit=1');
+      const body = listed.body as {
+        events: Array<{ event: { type: string } }>;
+        omitted?: { total: number; byType: Record<string, number> };
+      };
+      expect(body.events.every((record) => record.event.type !== 'person.register')).toBe(true);
+      expect(body.omitted?.byType['person.register']).toBeGreaterThanOrEqual(1);
     });
   });
 

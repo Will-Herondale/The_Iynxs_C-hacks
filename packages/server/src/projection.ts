@@ -281,6 +281,7 @@ function buildRoadStatus(
 function buildSettlements(
   settlements: GeoArtifacts['settlements'],
   cutOff: Set<string>,
+  cutOffSourceEventIds: string[] = [],
 ): Settlement {
   const now = new Date().toISOString();
   const features: Settlement['features'] = [];
@@ -302,6 +303,15 @@ function buildSettlements(
         households: s.households,
         needs: s.needs,
         synthetic: (s as { synthetic?: boolean }).synthetic ?? false,
+        ...(cutOff.has(s.settlementId)
+          ? {
+              cutOffReason: {
+                summary: `${s.name} is cut off by the current flood projection.`,
+                blockingFeatureIds: [],
+                ...(cutOffSourceEventIds.length > 0 ? { sourceEventIds: cutOffSourceEventIds } : {}),
+              },
+            }
+          : {}),
       },
     });
   }
@@ -329,6 +339,163 @@ function buildSettlements(
  * @param shelters - Shelter lookup by ID (for nodeId)
  * @param t0 - Departure epoch ms
  */
+interface RouteFailureExplanation {
+  summary: string;
+  blockingFeatureIds: string[];
+  sourceEventIds?: string[];
+}
+
+function sourceEventIdMap(events: Envelope[]): Map<string, string> {
+  const result = new Map<string, string>();
+  for (const env of events) {
+    const payload = env.payload as Record<string, unknown>;
+    const clientId = typeof payload.client_event_id === 'string' ? payload.client_event_id : undefined;
+    result.set(`${env.origin}:${env.seq}`, clientId ?? env.id);
+  }
+  return result;
+}
+
+function roadLabel(edgeId: string, roadNames: Map<string, string>): string {
+  const name = roadNames.get(edgeId);
+  return name ? `${name} (${edgeId})` : edgeId;
+}
+
+/**
+ * Expand raw-road network passability onto the graph's route-edge IDs.
+ *
+ * Real graph segments have synthetic edge IDs (for example, `${osmId}-246`)
+ * but observations and road status are keyed by the raw road ID. Synthetic
+ * route edges omit sourceRoadId and therefore continue to use their own IDs.
+ * Missing network data is represented explicitly as unknown so it cannot be
+ * mistaken for a blocked edge by refusal explanation.
+ */
+function mapRoutePassability(
+  routeEdges: RouteEdge[],
+  networkPassability: EdgePassability[],
+  asOf: number,
+): Map<string, EdgePassability> {
+  const bySourceRoadId = new Map(networkPassability.map((p) => [p.edgeId, p]));
+  const mapped = new Map<string, EdgePassability>();
+
+  for (const edge of routeEdges) {
+    const sourceRoadId = edge.sourceRoadId ?? edge.edgeId;
+    const networkPass = bySourceRoadId.get(sourceRoadId);
+    mapped.set(edge.edgeId, networkPass
+      ? { ...networkPass, edgeId: edge.edgeId }
+      : {
+          edgeId: edge.edgeId,
+          state: 'unknown',
+          depthDm: null,
+          disputed: false,
+          sourceEventIds: [],
+          validFrom: asOf,
+          validUntil: null,
+        });
+  }
+
+  return mapped;
+}
+
+/**
+ * Explain a routing failure from the same passability graph the router used.
+ *
+ * findFastestPath only returns an empty path, so we distinguish:
+ * - an endpoint with no road edges (not in the network);
+ * - a shelter that is reachable over passable roads but outside the 10-minute
+ *   time-expanded horizon;
+ * - blocked/disputed edges on the boundary of the settlement's reachable
+ *   component (the actual cut);
+ * - a genuine network disconnection with no blocked boundary edge.
+ */
+function explainRouteFailure(
+  settlement: GeoArtifacts['settlements'][number],
+  shelter: GeoArtifacts['shelters'][number],
+  routeEdges: RouteEdge[],
+  passByEdge: Map<string, EdgePassability>,
+  roadNames: Map<string, string>,
+): RouteFailureExplanation {
+  const settlementHasEdges = routeEdges.some(
+    (e) => e.fromNode === settlement.nodeId || e.toNode === settlement.nodeId,
+  );
+  if (!settlementHasEdges) {
+    return {
+      summary: `${settlement.name} is not connected to the road network.`,
+      blockingFeatureIds: [],
+    };
+  }
+
+  const shelterHasEdges = routeEdges.some(
+    (e) => e.fromNode === shelter.nodeId || e.toNode === shelter.nodeId,
+  );
+  if (!shelterHasEdges) {
+    return {
+      summary: `${shelter.name} is not connected to the road network.`,
+      blockingFeatureIds: [],
+    };
+  }
+
+  const passableAdj = new Map<string, string[]>();
+  const addEdge = (a: string, b: string) => {
+    const list = passableAdj.get(a) ?? [];
+    list.push(b);
+    passableAdj.set(a, list);
+  };
+  for (const e of routeEdges) {
+    const p = passByEdge.get(e.edgeId);
+    if (!p || p.state === 'blocked' || p.state === 'disputed') continue;
+    addEdge(e.fromNode, e.toNode);
+    addEdge(e.toNode, e.fromNode);
+  }
+
+  const reachable = new Set<string>([settlement.nodeId]);
+  const queue = [settlement.nodeId];
+  while (queue.length > 0) {
+    const node = queue.shift()!;
+    for (const next of passableAdj.get(node) ?? []) {
+      if (!reachable.has(next)) {
+        reachable.add(next);
+        queue.push(next);
+      }
+    }
+  }
+
+  if (reachable.has(shelter.nodeId)) {
+    return {
+      summary: `No route reaches ${shelter.name} from ${settlement.name} within the 10-minute evacuation window.`,
+      blockingFeatureIds: [],
+    };
+  }
+
+  // A blocked or disputed edge crossing the reachable/unreachable boundary is
+  // the actual cut that prevents the route. Interior blocked edges do not
+  // explain the failure because the settlement can route around them.
+  const blockingIds = [...new Set(
+    routeEdges
+      .filter((e) => {
+        const p = passByEdge.get(e.edgeId);
+        const blocked = !p || p.state === 'blocked' || p.state === 'disputed';
+        if (!blocked) return false;
+        return reachable.has(e.fromNode) !== reachable.has(e.toNode);
+      })
+      .map((e) => e.edgeId),
+  )];
+
+  if (blockingIds.length > 0) {
+    const labels = blockingIds.map((id) => roadLabel(id, roadNames));
+    const sourceEventIds = [...new Set(blockingIds.flatMap((id) => passByEdge.get(id)?.sourceEventIds ?? []))];
+    return {
+      summary: `No safe route: ${labels.join(', ')} ${labels.length === 1 ? 'is' : 'are'} blocked.`,
+      blockingFeatureIds: blockingIds,
+      ...(sourceEventIds.length > 0 ? { sourceEventIds } : {}),
+    };
+  }
+
+  return {
+    summary: `No road connection exists between ${settlement.name} and ${shelter.name} in the loaded network.`,
+    blockingFeatureIds: [],
+  };
+}
+
 function buildRoutes(
   routes: GeoArtifacts['routes'],
   routeEdges: RouteEdge[],
@@ -336,6 +503,7 @@ function buildRoutes(
   settlementsById: Map<string, GeoArtifacts['settlements'][number]>,
   sheltersById: Map<string, GeoArtifacts['shelters'][number]>,
   t0: number,
+  roadNames: Map<string, string>,
 ): Route {
   const now = new Date().toISOString();
   const features: Route['features'] = [];
@@ -372,6 +540,8 @@ function buildRoutes(
     const shelter = sheltersById.get(r.to);
 
     if (!settlement || !shelter) {
+      const endpoint = !settlement ? r.from : r.to;
+      const summary = `Route endpoint ${endpoint} is not connected to the road network.`;
       features.push({
         type: 'Feature',
         id: `route-${featureId++}`,
@@ -385,7 +555,8 @@ function buildRoutes(
           etaMin: 0,
           replacesRouteId: undefined,
           synthetic: (r as { synthetic?: boolean }).synthetic ?? false,
-          reason: 'Settlement or shelter not in road network',
+          refusal: { summary, blockingFeatureIds: [] },
+          reason: summary,
         },
       });
       continue;
@@ -400,25 +571,18 @@ function buildRoutes(
 
     let status: Route['features'][number]['properties']['status'];
     let etaMin: number;
-    let reason: string | undefined;
+    let refusal: RouteFailureExplanation | undefined;
 
     if (result.path.length === 0 || result.etaS === 0) {
       status = 'unavailable';
       etaMin = 0;
-      // Determine why no path exists
-      const settlementNode = settlement.nodeId;
-      const shelterNode = shelter.nodeId;
-      const settlementHasEdges = routeEdges.some(
-        (e) => e.fromNode === settlementNode || e.toNode === settlementNode,
+      refusal = explainRouteFailure(
+        settlement,
+        shelter,
+        routeEdges,
+        passByEdge,
+        roadNames,
       );
-      const shelterHasEdges = routeEdges.some(
-        (e) => e.fromNode === shelterNode || e.toNode === shelterNode,
-      );
-      if (!settlementHasEdges || !shelterHasEdges) {
-        reason = 'No connected path between settlement and shelter';
-      } else {
-        reason = 'No route available — all roads blocked';
-      }
     } else {
       status = 'active';
       etaMin = Math.ceil(result.etaS / 60);
@@ -437,7 +601,7 @@ function buildRoutes(
         etaMin,
         replacesRouteId: undefined,
         synthetic: (r as { synthetic?: boolean }).synthetic ?? false,
-        ...(reason ? { reason } : {}),
+        ...(refusal ? { refusal, reason: refusal.summary } : {}),
       },
     });
   }
@@ -613,19 +777,36 @@ export function projectSnapshot(
   const settlementsById = new Map(artifacts.settlements.map((s) => [s.settlementId, s]));
   const sheltersById = new Map(artifacts.shelters.map((s) => [s.shelterId, s]));
 
-  const passByEdge = new Map(networkProjection.map((p) => [p.edgeId, p]));
+  // Core passability uses origin:seq keys. The wire contract and frontend audit
+  // join by clientEventId/eventId, so translate provenance once at the boundary.
+  const sourceIds = sourceEventIdMap(sortedEvents);
+  const networkWithWireSourceIds = networkProjection.map((p) => ({
+    ...p,
+    sourceEventIds: p.sourceEventIds.map((id) => sourceIds.get(id) ?? id),
+  }));
 
   const flood = buildFloodExtent({ ...floodProjection, cells: floodCells });
-  const roads = buildRoadStatus(artifacts.roads, networkProjection);
-  const settlements = buildSettlements(artifacts.settlements, cutOff);
+  const roads = buildRoadStatus(artifacts.roads, networkWithWireSourceIds);
+  const cutOffSourceEventIds = [...new Set(
+    waterObs.map((obs) => sourceIds.get(`${obs.origin}:${obs.seq}`)).filter((id): id is string => !!id),
+  )];
+  const settlements = buildSettlements(artifacts.settlements, cutOff, cutOffSourceEventIds);
   const shelters = buildShelters(artifacts.shelters);
+  const roadNames = new Map(artifacts.roads.map((road) => [road.edgeId, road.name]));
+  const routeRoadNames = new Map(
+    artifacts.routeEdges.map((edge) => [
+      edge.edgeId,
+      roadNames.get(edge.sourceRoadId ?? edge.edgeId) ?? roadNames.get(edge.edgeId) ?? edge.edgeId,
+    ]),
+  );
   const routes = buildRoutes(
     artifacts.routes,
     artifacts.routeEdges,
-    passByEdge,
+    new Map(mapRoutePassability(artifacts.routeEdges, networkWithWireSourceIds, asOf)),
     settlementsById,
     sheltersById,
     Date.now(),
+    routeRoadNames,
   );
 
   const now = new Date(asOf).toISOString();
