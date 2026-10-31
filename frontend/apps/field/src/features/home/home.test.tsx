@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto';
 import { afterEach, describe, expect, it } from 'vitest';
-import { render, screen, cleanup, waitFor } from '@testing-library/react';
+import { render, screen, cleanup, waitFor, act } from '@testing-library/react';
+import { reportBackendResult } from '../status/index.js';
 import { newClientEventId } from '@setu/contract';
 import { enqueue } from '../../sync/index.js';
 import { db } from '../../sync/db.js';
@@ -9,6 +10,7 @@ import { HomeScreen, homeCounts } from './HomeScreen.js';
 
 afterEach(async () => {
   cleanup();
+  act(() => reportBackendResult(true));
   await db.queue.clear();
 });
 
@@ -48,5 +50,14 @@ describe('<HomeScreen/>', () => {
     await waitFor(() => expect(screen.getAllByTestId('home-recent-item').length).toBe(1));
     expect(screen.getByRole('link', { name: /Water-level observation/ }).getAttribute('href')).toBe(`#/report/${id}`);
     expect(screen.getByTestId('home-count-pending').textContent).toContain('1');
+  });
+
+  it('does not say plain "Online" while the server is not responding (matches the header indicator)', () => {
+    render(<HomeScreen />);
+    expect(screen.getByTestId('home-connectivity').textContent).toContain('Online');
+    act(() => reportBackendResult(false));
+    const row = screen.getByTestId('home-connectivity');
+    expect(row.getAttribute('data-state')).toBe('backend-unreachable');
+    expect(row.textContent).toContain('server is not responding');
   });
 });

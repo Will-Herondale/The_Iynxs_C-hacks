@@ -76,3 +76,4 @@
   .report-cat[aria-checked='true'] { animation: none; }
   .home__big:active, .report-cat:active, .setu-button:active, .field-nav a:active { transform: none; }
 }
+.home__status-row[data-state='backend-unreachable'] .home__status-value { color: #8a4b00; }

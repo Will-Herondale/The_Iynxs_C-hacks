@@ -1,7 +1,7 @@
 import { Button } from '@setu/ui';
 import { SyncStatusBadge } from '@setu/ui';
 import type { QueueItem } from '../../sync/index.js';
-import { DataAsOf, OriginBadge, StaleWarning } from '../status/index.js';
+import { DataAsOf, deriveConnectivity, OriginBadge, StaleWarning, useBackendReachable } from '../status/index.js';
 import { syncNow, useQueue, useSyncState } from '../../sync/index.js';
 
 export const EVENT_TYPE_LABEL: Record<string, string> = {
@@ -36,6 +36,8 @@ const fmt = (ms: number) => new Date(ms).toLocaleString('en-IN', { timeZone: 'As
 
 export function HomeScreen({ district, cachedAt }: { district?: string; cachedAt?: number }) {
   const { online, syncing, lastSyncedAt } = useSyncState();
+  // Same source as the header indicator, so the two never contradict each other.
+  const conn = deriveConnectivity({ online, syncing, backendReachable: useBackendReachable() });
   const items = useQueue();
   const counts = homeCounts(items);
   const recent = items.slice(0, 5);
@@ -53,11 +55,11 @@ export function HomeScreen({ district, cachedAt }: { district?: string; cachedAt
       </h1>
 
       <div className="home__status" data-testid="home-status">
-        <div className="home__status-row" data-testid="home-connectivity" data-online={online ? 'true' : 'false'}>
+        <div className="home__status-row" data-testid="home-connectivity" data-online={online ? 'true' : 'false'} data-state={conn}>
           <span className="home__status-label">Connection</span>
           <span className="home__status-value">
-            <span aria-hidden="true">{online ? '●' : '○'}</span> {online ? 'Online' : 'Offline'}
-            {syncing ? ' · Synchronising' : ''}
+            <span aria-hidden="true">{conn === 'offline' ? '○' : conn === 'backend-unreachable' ? '⚠' : '●'}</span>{' '}
+            {conn === 'offline' ? 'Offline' : conn === 'backend-unreachable' ? 'Online, but the server is not responding' : conn === 'syncing' ? 'Online · Synchronising' : 'Online'}
           </span>
         </div>
         <div className="home__status-row" data-testid="home-sync-state" data-synced={items.length > 0 && counts.pending === 0 && counts.attention === 0 ? 'true' : 'false'}>
