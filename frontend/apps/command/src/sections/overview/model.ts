@@ -16,6 +16,7 @@ export interface OverviewCounts {
   affectedSettlements: number;
   disconnected: number;
   impassableSegments: number;
+  unavailableRoutes: number;
   pendingReports: number;
   evacuationActions: number;
 }
@@ -28,6 +29,7 @@ export function overviewCounts(snap: ProjectionSnapshot | undefined, events: Eve
     affectedSettlements: s.filter((p) => p.accessibility !== 'accessible').length,
     disconnected: s.filter((p) => p.accessibility === 'cut_off').length,
     impassableSegments: snap.roads.features.filter((f) => (f.properties.passability ?? (f.properties.status === 'blocked' ? 'impassable' : 'passable')) === 'impassable').length,
+    unavailableRoutes: snap.routes.features.filter((f) => f.properties.kind === 'evacuation' && f.properties.status === 'unavailable').length,
     pendingReports: events.filter((e) => feedStatus(e, snap.version) === 'accepted').length,
     evacuationActions: s.filter((p) => !!p.evacuationDeadline).length,
   };
@@ -81,10 +83,9 @@ export function criticalAlerts(snap: ProjectionSnapshot | undefined, batches: Ch
       isNew: changed.has(`road:${p.roadId}`),
     });
   }
-  const evacSettlements = new Set(snap.settlements.features.filter((f) => f.properties.accessibility !== 'accessible').map((f) => f.properties.settlementId));
   for (const f of snap.routes.features) {
     const p = f.properties;
-    if (p.status !== 'unavailable' || p.kind !== 'evacuation' || !evacSettlements.has(p.from)) continue;
+    if (p.status !== 'unavailable' || p.kind !== 'evacuation') continue;
     out.push({
       key: `route-${p.routeId}`,
       severity: 'warning',

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { ProjectionSnapshot } from '@setu/contract';
+import type { PeopleSnapshot, ProjectionSnapshot } from '@setu/contract';
 import { Badge, Button, EmptyState, Panel, SyncStatusBadge } from '@setu/ui';
 import { HouseholdScreen, DuplicateReviewPlaceholder, campSummary, householdsFromQueue } from '../household/index.js';
 import '../household/household.css';
@@ -31,6 +31,9 @@ export interface CampViewProps {
   snapshot?: ProjectionSnapshot;
   cachedAt?: number;
   online: boolean;
+  /** Server-confirmed records from all devices; local queue rows are layered on top. */
+  people?: PeopleSnapshot;
+  peopleUnavailable?: boolean;
   /** Overridable for tests; defaults to the live local queue. */
   items?: QueueItem[];
   onOpenReport?: (clientEventId: string) => void;
@@ -62,7 +65,7 @@ function CampInfo({ shelter, asOf, online }: { shelter: ProjectionSnapshot['shel
   );
 }
 
-export function CampView({ snapshot, cachedAt, online, items, onOpenReport }: CampViewProps) {
+export function CampView({ snapshot, cachedAt, online, items, people, peopleUnavailable, onOpenReport }: CampViewProps) {
   const shelters = snapshot?.shelters.features.map((f) => f.properties) ?? [];
   const [camp, setCamp] = useState(readCamp);
   const live = useQueue();
@@ -76,6 +79,21 @@ export function CampView({ snapshot, cachedAt, online, items, onOpenReport }: Ca
   const rows = camp ? campHouseholds(queue, camp) : [];
   const peopleRows = camp ? campPeople(queue, camp) : [];
   const summary = campSummary(householdsFromQueue(queue), camp || undefined);
+  const remoteCamp = people?.camps.find((c) => c.campId === camp);
+  const remoteRecords = people?.checkins.filter((r) => r.campId === camp) ?? [];
+  const remoteClientIds = new Set(remoteRecords.map((r) => r.clientEventId).filter((id): id is string => !!id));
+  const localOnlyHouseholds = rows.filter((i) => i.status !== 'rejected' && !remoteClientIds.has(i.clientEventId));
+  const localOnlyPeople = peopleRows.filter((i) => i.status !== 'rejected' && !remoteClientIds.has(i.clientEventId));
+  const serverBacked = !!people;
+  const householdCount = serverBacked
+    ? (remoteCamp?.households ?? remoteRecords.filter((r) => r.kind === 'household').length) + localOnlyHouseholds.length
+    : summary.households;
+  const personCount = serverBacked
+    ? (remoteCamp?.people ?? remoteRecords.reduce((n, r) => n + r.members, 0)) + localOnlyHouseholds.reduce((n, i) => n + (i.event.type === 'household_registration' ? i.event.members : 0), 0) + localOnlyPeople.length
+    : summary.people;
+  const individualCount = serverBacked
+    ? remoteRecords.filter((r) => r.kind === 'person').length + localOnlyPeople.length
+    : peopleRows.length;
   const asOf = cachedAt !== undefined ? time(cachedAt) : snapshot ? time(Date.parse(snapshot.generatedAt)) : undefined;
 
   return (
@@ -96,11 +114,13 @@ export function CampView({ snapshot, cachedAt, online, items, onOpenReport }: Ca
       {chosen && <CampInfo shelter={chosen} asOf={asOf} online={online} />}
       {camp ? (
         <>
-          <Panel title="Camp summary (registered from this device)">
+          <Panel title={serverBacked ? 'Camp summary (all synced devices)' : 'Camp summary (registered from this device)'}>
+            {serverBacked && <p role="note" data-testid="camp-people-source">Includes server-confirmed registrations from all devices, plus this device&apos;s unsynced queue.</p>}
+            {peopleUnavailable && !serverBacked && <p role="status" data-testid="camp-people-unavailable">Shared people data is unavailable; showing this device&apos;s queue.</p>}
             <dl className="camp-summary" data-testid="camp-summary">
-              <div><dt>Registered households</dt><dd data-testid="camp-summary-households">{summary.households}</dd></div>
-              <div><dt>Registered people</dt><dd data-testid="camp-summary-people">{summary.people}</dd></div>
-              <div><dt>Individual check-ins</dt><dd data-testid="camp-summary-individuals">{peopleRows.length}</dd></div>
+              <div><dt>Registered households</dt><dd data-testid="camp-summary-households">{householdCount}</dd></div>
+              <div><dt>Registered people</dt><dd data-testid="camp-summary-people">{personCount}</dd></div>
+              <div><dt>Individual check-ins</dt><dd data-testid="camp-summary-individuals">{individualCount}</dd></div>
               <div><dt>Pending (not yet accepted)</dt><dd data-testid="camp-summary-pending">{summary.pending}</dd></div>
               <div><dt>Awaiting review (conflict)</dt><dd data-testid="camp-summary-review">{summary.awaitingReview}</dd></div>
             </dl>
@@ -108,10 +128,16 @@ export function CampView({ snapshot, cachedAt, online, items, onOpenReport }: Ca
           </Panel>
           <HouseholdScreen snapshot={snapshot} shelterId={camp} title={`Register household at ${chosen?.name ?? camp}`} formTestId="camp-household-form" />
           <PersonCheckinScreen snapshot={snapshot} campId={camp} title={`Check in a person at ${chosen?.name ?? camp}`} formTestId="camp-person-form" />
-          <Panel title="Individual check-ins at this camp from this device">
-            {peopleRows.length === 0 && <EmptyState title="No individual check-ins yet" />}
+          <Panel title={serverBacked ? 'Individual check-ins at this camp' : 'Individual check-ins at this camp from this device'}>
+            {individualCount === 0 && <EmptyState title="No individual check-ins yet" />}
             <ul data-testid="camp-person-list" className="camp-household-list">
+              {serverBacked && remoteRecords.filter((r) => r.kind === 'person').map((r) => (
+                <li key={r.eventId} data-testid="camp-person-row" data-source="server" data-client-event-id={r.clientEventId ?? ''} data-status="synced">
+                  <strong>{r.displayName}</strong>{r.ageBand ? ` · ${r.ageBand}` : ''}{r.householdId ? ` · household ${r.householdId}` : ''} <SyncStatusBadge status="synced" {...{ online }} />
+                </li>
+              ))}
               {peopleRows.map((i) => {
+                if (serverBacked && !localOnlyPeople.some((x) => x.clientEventId === i.clientEventId)) return null;
                 const person = i.event.type === 'person_checkin' ? i.event : undefined;
                 return (
                   <li key={i.clientEventId} data-testid="camp-person-row" data-client-event-id={i.clientEventId} data-status={i.status}>
@@ -125,11 +151,17 @@ export function CampView({ snapshot, cachedAt, online, items, onOpenReport }: Ca
               })}
             </ul>
           </Panel>
-          <Panel title="Registered at this camp from this device">
-            {rows.length === 0 && <EmptyState title="No households yet" />}
+          <Panel title={serverBacked ? 'Registered households at this camp' : 'Registered at this camp from this device'}>
+            {householdCount === 0 && <EmptyState title="No households yet" />}
             {(
               <ul data-testid="camp-household-list" className="camp-household-list">
+                {serverBacked && remoteRecords.filter((r) => r.kind === 'household').map((r) => (
+                  <li key={r.eventId} data-testid="camp-household-row" data-source="server" data-client-event-id={r.clientEventId ?? ''} data-status="synced">
+                    <strong>{r.displayName}</strong> · {r.members} {r.members === 1 ? 'person' : 'people'} <SyncStatusBadge status="synced" {...{ online }} />
+                  </li>
+                ))}
                 {rows.map((i) => {
+                  if (serverBacked && !localOnlyHouseholds.some((x) => x.clientEventId === i.clientEventId)) return null;
                   const h = i.event.type === 'household_registration' ? i.event : undefined;
                   return (
                     <li key={i.clientEventId} data-testid="camp-household-row" data-client-event-id={i.clientEventId} data-status={i.status}>

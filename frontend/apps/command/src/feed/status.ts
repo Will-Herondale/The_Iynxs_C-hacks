@@ -31,7 +31,7 @@ export const EVENT_META: Record<EventRecord['event']['type'], { icon: string; la
   road_cleared: { icon: '✅', label: 'Road cleared' },
   water_level: { icon: '📏', label: 'Water level' },
   household_registration: { icon: '🏠', label: 'Household registered' },
-  person_checkin: { icon: '??', label: 'Person checked in' },
+  person_checkin: { icon: '👤', label: 'Person checked in' },
 };
 
 /** Short human summary of the event payload. */
@@ -47,7 +47,7 @@ export function eventSummary(rec: EventRecord): string {
     case 'water_level':
       return `${e.levelCm} cm, ${e.trend}`;
     case 'household_registration':
-      return `${e.headName}, ${e.members} members`;
+      return `${e.headName}, ${e.members} members${e.shelterId ? ` at ${e.shelterId}` : ''}`;
     case 'person_checkin':
       return `${e.name} at ${e.campId}`;
   }
@@ -64,7 +64,10 @@ export function affectedFeatures(rec: EventRecord): Selection[] {
     case 'flood_report':
       return e.areaId ? [{ kind: 'flood', id: e.areaId }] : [];
     case 'household_registration':
-      return e.settlementId ? [{ kind: 'settlement', id: e.settlementId }] : [];
+      return [
+        ...(e.settlementId ? [{ kind: 'settlement' as const, id: e.settlementId }] : []),
+        ...(e.shelterId ? [{ kind: 'shelter' as const, id: e.shelterId }] : []),
+      ];
     case 'person_checkin':
       return [
         ...(e.settlementId ? [{ kind: 'settlement' as const, id: e.settlementId }] : []),

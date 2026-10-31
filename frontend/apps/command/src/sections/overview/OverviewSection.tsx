@@ -18,6 +18,7 @@ function whereOf(rec: EventRecord, snap?: ProjectionSnapshot): string {
   const name =
     link.kind === 'road' ? snap.roads.features.find((f) => f.properties.roadId === link.id)?.properties.name
     : link.kind === 'settlement' ? snap.settlements.features.find((f) => f.properties.settlementId === link.id)?.properties.name
+    : link.kind === 'shelter' ? snap.shelters.features.find((f) => f.properties.shelterId === link.id)?.properties.name
     : undefined;
   return `${name ?? link.id} · ${loc}`;
 }
@@ -29,6 +30,7 @@ export function OverviewSection() {
   const goTo = useGoTo();
   const counts = overviewCounts(snapshot, events);
   const alerts = useMemo(() => criticalAlerts(snapshot, batches), [snapshot, batches]);
+  const verifiedRoutes = snapshot?.routes.features.filter((f) => f.properties.status !== 'unavailable' && f.properties.computation?.verified === true).length ?? 0;
   const recent = useMemo(
     () => [...events].sort((a, b) => Date.parse(b.receivedAt) - Date.parse(a.receivedAt)).slice(0, RECENT),
     [events],
@@ -37,13 +39,14 @@ export function OverviewSection() {
     { id: 'affected', label: 'Affected settlements', value: counts?.affectedSettlements, note: 'limited + cut off', goto: 'settlements' },
     { id: 'disconnected', label: 'Disconnected', value: counts?.disconnected, note: 'cut off', goto: 'settlements' },
     { id: 'impassable', label: 'Impassable segments', value: counts?.impassableSegments, note: 'roads + bridges', goto: 'map' },
+    { id: 'unavailable-routes', label: 'Unavailable routes', value: counts?.unavailableRoutes, note: 'beyond window or refused', goto: 'routes' },
     { id: 'pending', label: 'Pending reports', value: counts?.pendingReports, note: 'accepted, not yet applied', goto: 'events' },
     { id: 'evac', label: 'Evacuation actions', value: counts?.evacuationActions, note: 'settlements with a deadline', goto: 'routes' },
   ];
 
   return (
     <div className="ov" data-testid="overview">
-      <p data-testid="overview-honesty-note" className="ov-note">Shelters are pre-identified camps, not confirmed. Routes and travel times are scenario data, not verified as computed (indicative, source unconfirmed).</p>
+      <p data-testid="overview-honesty-note" className="ov-note">Shelters are pre-identified camps, not confirmed. {verifiedRoutes > 0 ? 'Routes marked calculated were computed over the road network; other route times remain indicative.' : 'Routes and travel times are scenario data, not verified as computed (indicative, source unconfirmed).'}</p>
       <dl className="ov-meta">
         <div>
           <dt>District</dt>
