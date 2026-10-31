@@ -1,7 +1,7 @@
+import { HILLSHADE_COORDINATES } from './hillshadeExtent.js';
 import { BASE_COLORS as C } from './colors.js';
 import type { GeoLayerName } from '../types.js';
 import type { GeoLoader, MapLike, OfflineStyleOptions, OfflineStyleSpec, StyleLayerSpec, StyleSourceSpec } from './types.js';
-import { MAJULI_BOUNDS } from '../bounds.js';
 
 /** Source id per bundled geo layer used by the base style. Ids are prefixed to avoid app clashes. */
 export const BASE_SOURCE_IDS = {
@@ -82,9 +82,9 @@ function hillshadeUrl(opts: OfflineStyleOptions): string {
 }
 
 function hillshadeSource(opts: OfflineStyleOptions): StyleSourceSpec {
-  const [[w, s], [e, n]] = MAJULI_BOUNDS;
-  // image source corners: top-left, top-right, bottom-right, bottom-left
-  return { type: 'image', url: hillshadeUrl(opts), coordinates: [[w, n], [e, n], [e, s], [w, s]] };
+  // The image covers the whole AOI, NOT the island bounding box: placing it on MAJULI_BOUNDS squeezed the terrain into a
+  // smaller rectangle (misregistered with the vector layers, blank outside it). Use the image's own corners.
+  return { type: 'image', url: hillshadeUrl(opts), coordinates: HILLSHADE_COORDINATES };
 }
 
 const hillshadeLayer: StyleLayerSpec = {
