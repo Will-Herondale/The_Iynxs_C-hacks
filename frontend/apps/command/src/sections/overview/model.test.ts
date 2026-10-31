@@ -16,7 +16,7 @@ const ev = (id: string, serverState: string, extra: object = {}, appliedAtVersio
 describe('overviewCounts', () => {
   it('counts straight from projections and event records', () => {
     const c = overviewCounts(snap({ roads: [BRIDGE, { roadId: 'r', status: 'open' }], settlements: [AUN, LIM, OK] }), [ev('a', 'accepted'), ev('b', 'applied', {}, 7), ev('c', 'applied', {}, 9)])!;
-    expect(c).toEqual({ affectedSettlements: 2, disconnected: 1, impassableSegments: 1, pendingReports: 2, evacuationActions: 1 });
+    expect(c).toEqual({ affectedSettlements: 2, disconnected: 1, impassableSegments: 1, unavailableRoutes: 0, pendingReports: 2, evacuationActions: 1 });
   });
   it('is undefined without a snapshot', () => expect(overviewCounts(undefined, [])).toBeUndefined());
 });
@@ -30,6 +30,12 @@ describe('criticalAlerts', () => {
     expect(a[1]!.isNew).toBe(false);
   });
   it('is empty when nothing is wrong', () => expect(criticalAlerts(snap({ settlements: [OK] }), [])).toEqual([]));
+  it('alerts on an unavailable evacuation route even when flood access is still accessible', () => {
+    const route = { routeId: 'E-OK', from: OK.settlementId, to: 'MJ-SH-009', kind: 'evacuation', status: 'unavailable', refusal: { summary: 'outside evacuation window', blockingFeatureIds: [] } };
+    const alerts = criticalAlerts(snap({ settlements: [OK], routes: [route] }), []);
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]).toMatchObject({ key: 'route-E-OK', target: { kind: 'route', id: 'E-OK' } });
+  });
 });
 
 describe('triggeredScenario', () => {

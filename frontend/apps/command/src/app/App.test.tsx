@@ -35,7 +35,7 @@ describe('<App/> dashboard', () => {
     expect(screen.getByTestId('nav-overview').getAttribute('aria-current')).toBe('page');
     expect(await screen.findByTestId('overview')).toBeTruthy();
     expect(screen.getByTestId('overview-simtime').textContent).toBe('Not provided by backend');
-    for (const id of ['affected', 'disconnected', 'impassable', 'pending', 'evac']) expect(screen.getByTestId(`overview-count-${id}`)).toBeTruthy();
+    for (const id of ['affected', 'disconnected', 'impassable', 'unavailable-routes', 'pending', 'evac']) expect(screen.getByTestId(`overview-count-${id}`)).toBeTruthy();
   });
 
   it('renders all 10 layer toggles on the map and they toggle', () => {

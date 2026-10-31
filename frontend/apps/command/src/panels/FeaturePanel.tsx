@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { EventRecord, ProjectionSnapshot } from '@setu/contract';
+import type { EventRecord, PeopleSnapshot, ProjectionSnapshot } from '@setu/contract';
 import { LAYER_DATA_CLASS } from '@setu/geo';
 import { Badge, DataClassTag, EmptyState, Panel } from '@setu/ui';
 import { RouteStateBadge, ShelterStatusBadge, routeEtaText, routeStateOf, ROUTE_STATE_META, shelterAttr, shelterCounts, shelterInfo } from '../honesty';
@@ -10,6 +10,7 @@ import { ExplainBlock } from './Explain';
 import { FLOOD_CAVEAT, FLOOD_SYNTHETIC_NOTE, MonoId, NotProvided } from './NotProvided';
 import { ProvenanceView } from './Provenance';
 import { ACCESS_TONE, ROAD_TONE, ROUTE_TONE, findFeature, label } from './model';
+import { usePeople } from '../data';
 
 export interface FeaturePanelProps {
   snapshot?: ProjectionSnapshot;
@@ -19,6 +20,8 @@ export interface FeaturePanelProps {
   onSelectEvent?: (clientEventId: string) => void;
   /** Pre-joined provenance (live panel supplies it with confirmed statuses from getEventStatus). */
   provenance?: ProvenanceItem[];
+  /** Server-backed people projection, when available. */
+  people?: PeopleSnapshot;
 }
 
 const TITLES: Record<FeatureKind, string> = { road: 'Road', settlement: 'Settlement', route: 'Route', shelter: 'Shelter', flood: 'Flood area', report: 'Report' };
@@ -47,10 +50,11 @@ export function FeaturePanel(props: Omit<FeaturePanelProps, 'snapshot'>) {
   const { events } = useEvents();
   const { selected } = useSelection();
   const { items } = useProvenance(selected?.id);
-  return <FeaturePanelView snapshot={snapshot} records={events} provenance={items} {...props} />;
+  const { snapshot: people } = usePeople();
+  return <FeaturePanelView snapshot={snapshot} records={events} provenance={items} people={people} {...props} />;
 }
 
-export function FeaturePanelView({ snapshot, records, onSelectEvent, provenance }: FeaturePanelProps) {
+export function FeaturePanelView({ snapshot, records, onSelectEvent, provenance, people }: FeaturePanelProps) {
   const { selected, select } = useSelection();
 
   if (!selected) {
@@ -123,12 +127,15 @@ export function FeaturePanelView({ snapshot, records, onSelectEvent, provenance 
       const p = findFeature(snapshot, 'settlement', selected.id) as import('@setu/contract').SettlementProps;
       const serving = snapshot.routes.features.filter((f) => f.properties.from === p.settlementId).map((f) => f.properties);
       const shelterIds = [...new Set(serving.map((r) => r.to))];
+      const fieldRecords = people?.checkins.filter((r) => r.settlementId === p.settlementId) ?? [];
+      const fieldPeople = fieldRecords.reduce((n, r) => n + r.members, 0);
       body = (
         <>
           <Props rows={[
-            ['settlementId', <MonoId>{p.settlementId}</MonoId>], ['name', p.name], ['population', p.population], ['households', p.households],
+            ['settlementId', <MonoId>{p.settlementId}</MonoId>], ['name', p.name], ['population', p.population], ['mapped households', p.households],
+            ...(people ? [['field check-ins', fieldRecords.length] as [string, ReactNode], ['field people', fieldPeople] as [string, ReactNode]] : []),
             ['needs', p.needs.length ? p.needs.join(', ') : 'none'],
-            ['accessibility', <Badge tone={ACCESS_TONE[p.accessibility].tone} icon={ACCESS_TONE[p.accessibility].icon}>{label(p.accessibility)}</Badge>],
+            ['flood access', <Badge tone={ACCESS_TONE[p.accessibility].tone} icon={ACCESS_TONE[p.accessibility].icon}>{label(p.accessibility)}</Badge>],
             ['routes', serving.length ? serving.map((r) => <span key={r.routeId}>{link('route', r.routeId)}<small>({r.status}) </small></span>) : 'none'],
             ['shelters', shelterIds.length ? shelterIds.map((id) => link('shelter', id)) : 'none'],
             ['evacuationDeadline', p.evacuationDeadline ? <time dateTime={p.evacuationDeadline}>{formatDeadline(p.evacuationDeadline)}</time> : 'none set'],
@@ -169,13 +176,15 @@ export function FeaturePanelView({ snapshot, records, onSelectEvent, provenance 
       const p = findFeature(snapshot, 'shelter', selected.id) as import('@setu/contract').ShelterProps;
       const serving = snapshot.routes.features.filter((f) => f.properties.to === p.shelterId).map((f) => f.properties);
       const info = shelterInfo(p);
+      const fieldCamp = people?.camps.find((c) => c.campId === p.shelterId);
       body = (
         <>
           <Props rows={[
             ['shelterId', p.shelterId], ['name', p.name],
             ['status', <ShelterStatusBadge info={info} />],
-            ['capacity', info.capacityText], ['occupancy', info.occupancyText],
-            ['counts', shelterCounts(info, p)],
+            ['capacity', info.capacityText], ['shelter-reported occupancy', info.occupancyText],
+            ['shelter-reported counts', shelterCounts(info, p)],
+            ...(fieldCamp ? [['field check-ins', fieldCamp.checkins] as [string, ReactNode], ['field households', fieldCamp.households] as [string, ReactNode], ['field people', fieldCamp.people] as [string, ReactNode]] : []),
             ['routes in', serving.length ? serving.map((r) => link('route', r.routeId)) : 'none'],
           ]} />
           {!info.confirmed && <p data-testid="shelter-preidentified-note" style={{ margin: '8px 0 0' }}>Pre-identified camp site. Opening, capacity and occupancy are not confirmed by any source.</p>}

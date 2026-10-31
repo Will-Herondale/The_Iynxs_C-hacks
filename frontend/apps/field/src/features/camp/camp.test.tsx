@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import type { FieldEvent, ProjectionSnapshot } from '@setu/contract';
+import type { FieldEvent, PeopleSnapshot, ProjectionSnapshot } from '@setu/contract';
 import type { QueueItem } from '../../sync/index.js';
 
 const state = vi.hoisted(() => ({ items: [] as unknown[] }));
@@ -39,6 +39,18 @@ const personRow = (id: string, campId: string | undefined, status: string): Queu
     clientEventId: id, type: 'person_checkin', status, attempts: 0, createdAt: 1, updatedAt: 1,
     event: { type: 'person_checkin', name: `Person ${id}`, ageBand: '18-59', campId },
   }) as unknown as QueueItem;
+
+const remotePeople: PeopleSnapshot = {
+  version: 4,
+  generatedAt: '2026-10-30T10:00:00.000Z',
+  totals: { checkins: 2, individuals: 1, households: 1, campsWithCheckins: 1 },
+  autoMergedCount: 0,
+  camps: [{ campId: 'SH1', name: 'School', open: true, capacity: 200, occupancy: 120, checkins: 2, households: 1, people: 4, needs: {}, lastCheckinAt: '2026-10-30T10:00:00.000Z' }],
+  checkins: [
+    { eventId: 'server-household', clientEventId: 'server-h', kind: 'household', personId: 'h1', mergedInto: null, displayName: 'Remote Family', campId: 'SH1', campName: 'School', settlementId: null, householdId: 'h1', members: 4, ageBand: '18-59', sex: 'u', needs: [], vulnerable: null, occurredAt: '2026-10-30T10:00:00.000Z', reporterId: 'other-device' },
+  ],
+  duplicateSuggestions: [],
+};
 
 const store = new Map<string, string>();
 const storage = {
@@ -155,5 +167,18 @@ describe('CampView', () => {
     expect(screen.getByTestId('camp-summary-review').textContent).toBe('1');
     expect(screen.getByTestId('camp-capacity').textContent).toContain('120 of 200');
     expect(screen.getByTestId('household-duplicates-blocked').textContent).toContain('#15');
+  });
+
+  it('shows server-confirmed households from another device without double-counting local synced rows', () => {
+    window.localStorage.setItem(CAMP_KEY, 'SH1');
+    state.items = [row('server-h', 'SH1', 'synced'), row('local-pending', 'SH1', 'queued')];
+    render(<CampView snapshot={snapshot} online people={remotePeople} />);
+    expect(screen.getByTestId('camp-people-source').textContent).toContain('all devices');
+    expect(screen.getByTestId('camp-summary-households').textContent).toBe('2');
+    expect(screen.getByTestId('camp-summary-people').textContent).toBe('7');
+    const householdRows = screen.getAllByTestId('camp-household-row');
+    expect(householdRows).toHaveLength(2);
+    expect(screen.getByText('Remote Family')).toBeTruthy();
+    expect(householdRows[0]!.getAttribute('data-source')).toBe('server');
   });
 });

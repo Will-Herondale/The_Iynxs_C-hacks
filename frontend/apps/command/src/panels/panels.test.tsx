@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import type { ProjectionSnapshot } from '@setu/contract';
+import type { PeopleSnapshot, ProjectionSnapshot } from '@setu/contract';
 import { fixtureSnapshot } from '../testing/fixture';
 import { SelectionProvider, useSelection, type Selection } from '../app';
 import { FeaturePanelView, RoadListView, RouteListView, SettlementListView, ShelterListView } from './index';
@@ -112,6 +112,26 @@ describe('FeaturePanel', () => {
     const p = screen.getByTestId('feature-panel');
     expect(p.getAttribute('data-shelter-status')).toBe('open-reported');
     expect(p.textContent).toContain('Open (reported)');
+  });
+
+  it('shows server-backed field counts separately from shelter occupancy', () => {
+    const s = afterR7();
+    const shelterId = s.shelters.features[0]!.properties.shelterId;
+    const people: PeopleSnapshot = {
+      version: 1,
+      generatedAt: '2026-10-30T10:00:00.000Z',
+      totals: { checkins: 1, individuals: 0, households: 1, campsWithCheckins: 1 },
+      autoMergedCount: 0,
+      camps: [{ campId: shelterId, name: 'Camp', open: true, capacity: 100, occupancy: 20, checkins: 1, households: 1, people: 4, needs: { water: 1 }, lastCheckinAt: '2026-10-30T10:00:00.000Z' }],
+      checkins: [],
+      duplicateSuggestions: [],
+    };
+    wrap(<FeaturePanelView snapshot={s} people={people} />, { kind: 'shelter', id: shelterId });
+    const p = screen.getByTestId('feature-panel');
+    expect(p.textContent).toContain('shelter-reported occupancy');
+    expect(p.textContent).toContain('field households');
+    expect(p.textContent).toContain('field people');
+    expect(p.textContent).toContain('4');
   });
 
   it('flood area: depth and severity', () => {
