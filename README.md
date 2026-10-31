@@ -7,6 +7,8 @@ SETU helps volunteers and coordinators respond to floods. The demo district is *
 
 ## Repository map
 
+Some of these folders arrive on `main` when their PRs merge: `frontend/` with PR #14 and `data/` with PR #16. Until then, find them on the `frontend/main` and `data/karthik` branches.
+
 | Path | What | Owner |
 |---|---|---|
 | `frontend/` | Field app, Command Centre and shared packages (React, TypeScript, Vite) | Frontend |
