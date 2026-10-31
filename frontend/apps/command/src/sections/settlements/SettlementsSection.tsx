@@ -13,11 +13,11 @@ interface Col { key: SortKey; header: string; sort: (r: SettlementRow) => string
 
 const COLS: Col[] = [
   { key: 'name', header: 'Settlement', sort: (r) => r.name.toLowerCase() },
-  { key: 'accessibility', header: 'Accessibility', sort: (r) => accessRank(r.accessibility) },
+  { key: 'accessibility', header: 'Flood access', sort: (r) => accessRank(r.accessibility) },
   { key: 'segment', header: 'Critical segment', sort: (r) => r.criticalSegments.join(',') || '~' },
   { key: 'deadline', header: 'Evacuation deadline', sort: (r) => (r.deadline ? Date.parse(r.deadline) : Infinity) },
   { key: 'priority', header: 'Priority', sort: (r) => priorityRank(r.priority) },
-  { key: 'status', header: 'Status', sort: (r) => r.statusLabel },
+  { key: 'status', header: 'Evacuation route', sort: (r) => r.statusLabel },
 ];
 const NOT_IN_CONTRACT = 'not in contract (#15)';
 const Dash = ({ what }: { what: string }) => <span title={NOT_IN_CONTRACT} aria-label={`${what}: ${NOT_IN_CONTRACT}`} data-testid={`na-${what}`}>—</span>;

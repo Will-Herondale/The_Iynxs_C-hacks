@@ -64,6 +64,21 @@ describe('settlements section', () => {
     const id = s.settlements.features[0]!.properties.settlementId;
     expect(settlementRows(s).find((r) => r.id === id)!.status).toBe('no-safe-route');
   });
+  it('distinguishes flood access from evacuation route availability', () => {
+    const s = structuredClone(seed);
+    const settlement = s.settlements.features[0]!.properties;
+    const route = s.routes.features.find((f) => f.properties.from === settlement.settlementId)!;
+    route.properties.status = 'unavailable';
+    route.properties.refusal = { summary: 'Road blocked', blockingFeatureIds: ['R1'] };
+    wrap(<SettlementsSectionView snapshot={s} />);
+    const row = screen.getByTestId(`settlement-row-${settlement.settlementId}`);
+    expect(row.getAttribute('data-accessibility')).toBe('accessible');
+    expect(row.getAttribute('data-status')).toBe('no-safe-route');
+    expect(screen.getByTestId('settlements-table').textContent).toContain('Flood access');
+    expect(screen.getByTestId('settlements-table').textContent).toContain('Evacuation route');
+    expect(row.textContent).toContain('accessible');
+    expect(row.textContent).toContain('No safe route');
+  });
 });
 
 describe('route honesty states', () => {
