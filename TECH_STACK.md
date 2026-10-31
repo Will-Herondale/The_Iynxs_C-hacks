@@ -36,6 +36,12 @@
 **Apps**
 - `frontend/apps/field` (port 5173) and `frontend/apps/command` (port 5174)
 
+**Development tools**
+- Git and GitHub (branches, pull requests, issues)
+- GitHub CLI (`gh`)
+- Claude Code (AI-assisted development)
+- Orca (runs parallel agents, one worktree each)
+
 # Backend
 
 _To be added by the backend owner._
