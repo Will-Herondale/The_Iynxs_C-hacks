@@ -15,7 +15,12 @@
   .setu-app-shell__nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; padding: 0.25rem; background: var(--setu-surface, #fff); border-top: 2px solid var(--setu-border, #999); border-bottom: 0; }
   .setu-app-shell__main { padding: 0.75rem; }
   .setu-app-shell__header { padding: 0.25rem 0.75rem; }
+  /* Phone header: title and Camp link share the first line; connectivity, last sync and Sync now wrap below. */
   .field-header { gap: 0 0.75rem; }
+  .field-header__title { flex: 1 1 auto; order: 0; }
+  .field-header__link { order: 1; }
+  .field-header > :not(.field-header__title):not(.field-header__link) { order: 2; }
+  .field-header .setu-btn, .field-header button { min-height: 44px; }
   .field-header .queue-last-synced { display: none; }
   .field-nav a { font-size: 0.68rem; padding: 0.2rem 0.1rem; min-height: 48px; }
   .field-nav__icon { font-size: 1.15rem; }
