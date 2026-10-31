@@ -38,13 +38,47 @@ async function read(url: URL): Promise<GeoFeatureCollection> {
   return (await res.json()) as GeoFeatureCollection;
 }
 
+type Position = number[];
+type Ring = Position[];
+
+const validRing = (r: unknown): r is Ring => Array.isArray(r) && r.length >= 4;
+
+/** A polygon is kept when its outer ring is valid; invalid holes are dropped. */
+function cleanPolygon(p: unknown): Ring[] | undefined {
+  if (!Array.isArray(p) || !validRing(p[0])) return undefined;
+  return (p as unknown[]).filter(validRing);
+}
+
+/**
+ * Drop empty polygons and rings with fewer than 4 positions. Simplifying a source can leave them behind,
+ * and MapLibre's GeoJSON tiler throws on them ("Cannot read properties of undefined (reading 'points')").
+ * No coordinate is ever changed; only degenerate parts are left out.
+ */
+export function sanitizeCollection(fc: GeoFeatureCollection): GeoFeatureCollection {
+  type Feature = GeoFeatureCollection['features'][number];
+  const features = fc.features.flatMap((f): Feature[] => {
+    const g = f.geometry as { type: string; coordinates?: unknown } | null;
+    if (!g) return [];
+    if (g.type === 'Polygon') {
+      const poly = cleanPolygon(g.coordinates);
+      return poly ? [{ ...f, geometry: { ...g, coordinates: poly } } as Feature] : [];
+    }
+    if (g.type === 'MultiPolygon') {
+      const polys = (Array.isArray(g.coordinates) ? g.coordinates : []).map(cleanPolygon).filter((p): p is Ring[] => !!p);
+      return polys.length ? [{ ...f, geometry: { ...g, coordinates: polys } } as Feature] : [];
+    }
+    return [f];
+  });
+  return { ...fc, features };
+}
+
 /** Load a bundled GeoJSON layer. Works offline; results are cached per page. */
 export function loadGeoLayer(name: GeoLayerName | OptionalGeoLayerName): Promise<GeoFeatureCollection> {
   const make = URLS[name];
   if (!make) return Promise.reject(new Error(`unknown geo layer: ${String(name)}`));
   let p = cache.get(name);
   if (!p) {
-    p = read(make());
+    p = read(make()).then(sanitizeCollection);
     p.catch(() => cache.delete(name));
     cache.set(name, p);
   }
