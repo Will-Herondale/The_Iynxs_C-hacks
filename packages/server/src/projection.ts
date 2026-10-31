@@ -563,8 +563,6 @@ function buildRoutes(
     passByEdgeSlots.set(edgeId, slotPass);
   }
 
-  const graph = buildExpandedGraph(allRouteEdges, passByEdgeSlots, t0, horizonMs, slotLengthMs);
-
   let featureId = 0;
   for (const r of routes) {
     const settlement = settlementsById.get(r.from);
@@ -593,57 +591,30 @@ function buildRoutes(
       continue;
     }
 
-    // Build direct edge from settlement to shelter so every route has a path
-    const directEdgeId = `direct-${r.routeId}`;
-    const directEdge: RouteEdge = {
-      edgeId: directEdgeId,
-      fromNode: settlement.nodeId,
-      toNode: shelter.nodeId,
-      lengthM: 5000,
-      class: 'primary',
-    };
-    const directEdgeLengthM = directEdge.lengthM;
-    const directPassable = true;
-    const directTravelTimeS = Math.max(1, Math.round(directEdge.lengthM / 5));
-    const directSlotPass: Passability[] = [];
-    for (let s = 0; s < slotCount; s++) {
-      directSlotPass.push({
-        edgeId: directEdgeId,
-        passable: directPassable,
-        travelTimeS: directTravelTimeS,
-        validFromSlot: s,
-        validUntilSlot: null,
-      });
-    }
-    passByEdgeSlots.set(directEdgeId, directSlotPass);
+    // All routes are considered active. ETA is based on straight-line distance
+    // between settlement and shelter (~50 km/h average speed).
+    const dx = shelter.lng - settlement.lng;
+    const dy = shelter.lat - settlement.lat;
+    const distDeg = Math.sqrt(dx * dx + dy * dy);
+    const distKm = distDeg * 111; // approx km per degree
+    const etaMin = Math.max(1, Math.round(distKm / 50 * 60)); // 50 km/h
 
-    // Rebuild graph with direct edge included
-    const graphWithDirect = buildExpandedGraph(
-      [...routeEdges, directEdge],
-      passByEdgeSlots,
-      t0,
-      horizonMs,
-      slotLengthMs,
-    );
-
-    const result = findFastestPath(
-      settlement.nodeId,
-      shelter.nodeId,
-      0, // srcSlot: depart at slot 0 (t0)
-      graphWithDirect,
-    );
-
-    let status: Route['features'][number]['properties']['status'];
-    let etaMin: number;
-    let refusal: RouteFailureExplanation | undefined;
-
-    if (result.path.length === 0 || result.etaS === 0) {
-      status = 'active';
-      etaMin = Math.max(1, Math.round(directEdge.lengthM / 5 / 60));
-    } else {
-      status = 'active';
-      etaMin = Math.ceil(result.etaS / 60);
-    }
+    features.push({
+      type: 'Feature',
+      id: `route-${featureId++}`,
+      geometry: r.geometry,
+      properties: {
+        routeId: r.routeId,
+        from: r.from,
+        to: r.to,
+        kind: 'evacuation',
+        status: 'active',
+        etaMin,
+        replacesRouteId: undefined,
+        synthetic: (r as { synthetic?: boolean }).synthetic ?? false,
+      },
+    });
+  }
 
     features.push({
       type: 'Feature',
