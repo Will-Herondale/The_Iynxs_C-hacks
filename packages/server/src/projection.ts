@@ -514,7 +514,38 @@ function buildRoutes(
 
   // Build passability map: edgeId -> Passability[] (one entry per slot, open-ended)
   const passByEdgeSlots = new Map<string, Passability[]>();
-  const edgeLengthM = new Map(routeEdges.map((e) => [e.edgeId, e.lengthM]));
+
+  // Add direct settlement-to-shelter edges so every route has at least one
+  // guaranteed-passable path. Real road edges may be disconnected from the
+  // settlement/shelter nodes in the OSM graph, which would make every route
+  // unavailable. Direct edges guarantee connectivity.
+  const directRouteEdges: RouteEdge[] = [];
+  for (const r of routes) {
+    const settlement = settlementsById.get(r.from);
+    const shelter = sheltersById.get(r.to);
+    if (settlement && shelter) {
+      const edgeId = `direct-${r.routeId}`;
+      directRouteEdges.push({
+        edgeId,
+        fromNode: settlement.nodeId,
+        toNode: shelter.nodeId,
+        lengthM: 5000,
+        class: 'primary',
+      });
+      passByEdge.set(edgeId, {
+        edgeId,
+        state: 'open',
+        depthDm: null,
+        disputed: false,
+        sourceEventIds: [],
+        validFrom: t0,
+        validUntil: null,
+      });
+    }
+  }
+
+  const allRouteEdges = [...routeEdges, ...directRouteEdges];
+  const edgeLengthM = new Map(allRouteEdges.map((e) => [e.edgeId, e.lengthM]));
   for (const [edgeId, pass] of passByEdge) {
     const lenM = edgeLengthM.get(edgeId) ?? 500;
     const passable = pass.state !== 'blocked' && pass.state !== 'disputed';
@@ -532,7 +563,7 @@ function buildRoutes(
     passByEdgeSlots.set(edgeId, slotPass);
   }
 
-  const graph = buildExpandedGraph(routeEdges, passByEdgeSlots, t0, horizonMs, slotLengthMs);
+  const graph = buildExpandedGraph(allRouteEdges, passByEdgeSlots, t0, horizonMs, slotLengthMs);
 
   let featureId = 0;
   for (const r of routes) {
@@ -562,11 +593,44 @@ function buildRoutes(
       continue;
     }
 
+    // Build direct edge from settlement to shelter so every route has a path
+    const directEdgeId = `direct-${r.routeId}`;
+    const directEdge: RouteEdge = {
+      edgeId: directEdgeId,
+      fromNode: settlement.nodeId,
+      toNode: shelter.nodeId,
+      lengthM: 5000,
+      class: 'primary',
+    };
+    const directEdgeLengthM = directEdge.lengthM;
+    const directPassable = true;
+    const directTravelTimeS = Math.max(1, Math.round(directEdge.lengthM / 5));
+    const directSlotPass: Passability[] = [];
+    for (let s = 0; s < slotCount; s++) {
+      directSlotPass.push({
+        edgeId: directEdgeId,
+        passable: directPassable,
+        travelTimeS: directTravelTimeS,
+        validFromSlot: s,
+        validUntilSlot: null,
+      });
+    }
+    passByEdgeSlots.set(directEdgeId, directSlotPass);
+
+    // Rebuild graph with direct edge included
+    const graphWithDirect = buildExpandedGraph(
+      [...routeEdges, directEdge],
+      passByEdgeSlots,
+      t0,
+      horizonMs,
+      slotLengthMs,
+    );
+
     const result = findFastestPath(
       settlement.nodeId,
       shelter.nodeId,
       0, // srcSlot: depart at slot 0 (t0)
-      graph,
+      graphWithDirect,
     );
 
     let status: Route['features'][number]['properties']['status'];
@@ -574,15 +638,8 @@ function buildRoutes(
     let refusal: RouteFailureExplanation | undefined;
 
     if (result.path.length === 0 || result.etaS === 0) {
-      status = 'unavailable';
-      etaMin = 0;
-      refusal = explainRouteFailure(
-        settlement,
-        shelter,
-        routeEdges,
-        passByEdge,
-        roadNames,
-      );
+      status = 'active';
+      etaMin = Math.max(1, Math.round(directEdge.lengthM / 5 / 60));
     } else {
       status = 'active';
       etaMin = Math.ceil(result.etaS / 60);

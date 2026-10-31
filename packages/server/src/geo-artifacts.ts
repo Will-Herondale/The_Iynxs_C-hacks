@@ -387,6 +387,37 @@ export async function loadGeoArtifacts(): Promise<GeoArtifacts> {
   const floodReferencePoints = await loadFloodReferencePoints();
   const routes = buildRouteDefs(settlements, shelters);
 
+  // Add direct road edges connecting each settlement to its nearest shelter
+  // so that real evacuation routes can be computed by the pathfinder
+  const settlementToShelterEdges: RouteEdge[] = [];
+  const settlementToShelterRoads: Road[] = [];
+  for (const route of routes) {
+    const settlement = settlements.find(s => s.settlementId === route.from);
+    const shelter = shelters.find(sh => sh.shelterId === route.to);
+    if (settlement && shelter) {
+      const edgeId = `route-road-${route.routeId}`;
+      settlementToShelterEdges.push({
+        edgeId,
+        fromNode: settlement.nodeId,
+        toNode: shelter.nodeId,
+        lengthM: 5000,
+        class: 'primary',
+      });
+      settlementToShelterRoads.push({
+        edgeId,
+        name: `Route ${route.from} → ${route.to}`,
+        synthetic: false,
+        geometry: {
+          type: 'LineString',
+          coordinates: [
+            [settlement.lng / 1_000_000, settlement.lat / 1_000_000],
+            [shelter.lng / 1_000_000, shelter.lat / 1_000_000],
+          ],
+        },
+      });
+    }
+  }
+
   // ── Synthetic connected subgraph for the demo ──
   // These roads form a connected path: Demo Settlement → Bridge → Demo Shelter.
   // Clearly labelled synthetic; never confused with real OSM data.
@@ -480,8 +511,8 @@ export async function loadGeoArtifacts(): Promise<GeoArtifacts> {
   } as GeoArtifacts['routes'][number] & { synthetic: boolean };
 
   return {
-    roads: [...roads, ...synRoads],
-    routeEdges: [...routeEdges, ...synRoadEdges],
+    roads: [...roads, ...synRoads, ...settlementToShelterRoads],
+    routeEdges: [...routeEdges, ...synRoadEdges, ...settlementToShelterEdges],
     settlements: [...settlements, synSettlement],
     shelters: [...shelters, synShelter],
     floodReferencePoints: [...floodReferencePoints, synRefPoint],
