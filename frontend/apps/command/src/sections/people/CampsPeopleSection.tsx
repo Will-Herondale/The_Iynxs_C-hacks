@@ -159,7 +159,7 @@ export function CampsPeopleSectionView({ snapshot }: { snapshot?: PeopleSnapshot
 }
 
 export function CampsPeopleSection() {
-  const { snapshot, supported, isLoading } = usePeople();
+  const { snapshot, supported, isLoading, error } = usePeople();
   if (!supported) {
     return (
       <div data-testid="camps-people-section">
@@ -171,6 +171,13 @@ export function CampsPeopleSection() {
     return (
       <div data-testid="camps-people-section">
         <Panel title="Camps & People"><EmptyState title="Loading people data." /></Panel>
+      </div>
+    );
+  }
+  if (!snapshot && error) {
+    return (
+      <div data-testid="camps-people-section">
+        <Panel title="Camps & People"><EmptyState title="People data unavailable">The backend could not load shared check-ins. Retry when the Command Centre reconnects.</EmptyState></Panel>
       </div>
     );
   }

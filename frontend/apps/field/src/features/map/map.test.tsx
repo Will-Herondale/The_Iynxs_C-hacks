@@ -135,7 +135,7 @@ describe('MapScreen', () => {
     expect(shel.textContent).toContain('capacity not published');
     expect(shel.textContent).not.toMatch(/Closed|0 of 0/);
     expect(screen.getByTestId('map-key-shelter').textContent).toContain('pre-identified');
-    expect(screen.getByTestId('map-key-routes').textContent).toContain('not verified');
+    expect(screen.getByTestId('map-key-routes').textContent).toContain('not published');
     expect(screen.getAllByTestId('data-class-tag').map((e) => e.getAttribute('data-class'))).toEqual(expect.arrayContaining(['REAL', 'SYNTHETIC', 'EXPERIMENTAL']));
     expect(screen.getByTestId('map-cutoff-list').textContent).toContain('Kamalabari');
     const links = screen.getAllByTestId('map-report-link');

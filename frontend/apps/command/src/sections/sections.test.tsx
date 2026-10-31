@@ -147,6 +147,14 @@ describe('route honesty states', () => {
     expect(screen.getByTestId(`no-route-data-${id}`).textContent).toContain('No route data');
     expect(settlementRows(n).find((r) => r.id === id)!.routeState).toBe('no-route-data');
   });
+  it('shows no route data even when flood access is accessible', () => {
+    const s = structuredClone(seed);
+    const target = s.settlements.features[0]!.properties;
+    target.accessibility = 'accessible';
+    s.routes.features = s.routes.features.filter((f) => f.properties.from !== target.settlementId);
+    wrap(<RoutesSectionView snapshot={s} />);
+    expect(screen.getByTestId(`no-route-data-${target.settlementId}`).textContent).toContain('No route data');
+  });
 });
 
 describe('routes section', () => {

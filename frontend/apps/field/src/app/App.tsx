@@ -8,6 +8,7 @@ import { CampScreen } from '../features/camp/index.js';
 import { MapScreen } from '../features/map/index.js';
 import { HomeScreen } from '../features/home/index.js';
 import { useCachedProjections } from '../offline/index.js';
+import { useRemotePeople } from '../offline/useRemotePeople.js';
 import { OfflineBanner } from './OfflineBanner.js';
 import { StorageBanner } from './StorageBanner.js';
 import { ApiStatus } from './ApiStatus.js';
@@ -30,6 +31,7 @@ export function App() {
   const [route, go] = useRoute();
   // A rejected queue item reopened for editing; the matching form prefills from it.
   const { snapshot, cachedAt } = useCachedProjections();
+  const remotePeople = useRemotePeople();
   const [editing, setEditing] = useState<QueueItem | null>(null);
 
   const openReport = (id: string) => go(`report/${id}`);
@@ -96,13 +98,15 @@ export function App() {
       main = (
         <HouseholdsScreen
           snapshot={snapshot}
+          people={remotePeople.snapshot}
+          peopleUnavailable={remotePeople.unavailable}
           onOpenReport={openReport}
           startRegistering={route.param === 'new'}
         />
       );
       break;
     case 'camp':
-      main = <CampScreen onOpenReport={openReport} />;
+       main = <CampScreen people={remotePeople.snapshot} peopleUnavailable={remotePeople.unavailable} onOpenReport={openReport} />;
       break;
     case 'sync':
       main =

@@ -34,6 +34,14 @@ export function MapScreen({ onOpenReport = defaultOpen }: MapScreenProps) {
   const remote = useMemo(() => remoteMarkers(remoteRecords, new Set(items.map((i) => i.clientEventId))), [remoteRecords, items]);
   const allMarkers = useMemo(() => [...reports, ...remote], [reports, remote]);
   const view = useMemo(() => (snapshot ? projectionView(snapshot) : undefined), [snapshot]);
+  const routeSummary = useMemo(() => {
+    const routes = snapshot?.routes.features.map((f) => f.properties) ?? [];
+    return {
+      total: routes.length,
+      verified: routes.filter((r) => r.status !== 'unavailable' && r.computation?.verified === true).length,
+      unavailable: routes.filter((r) => r.status === 'unavailable').length,
+    };
+  }, [snapshot]);
 
   return (
     <Panel title="Map">
@@ -59,7 +67,7 @@ export function MapScreen({ onOpenReport = defaultOpen }: MapScreenProps) {
           <li data-class="SYNTHETIC">⊘ Cut off / △ Limited access: settlement labels. <ClassTag c="SYNTHETIC" /></li>
           <li data-testid="map-key-shelter" data-class="SYNTHETIC"><span aria-hidden="true">◌</span> Dashed hollow marker: pre-identified camp, not confirmed open. <ClassTag c="SYNTHETIC" /></li>
           <li data-class="REAL">Roads, waterways, places and the basemap: <ClassTag c="REAL" /></li>
-          <li data-testid="map-key-routes"><span aria-hidden="true">?</span> Routes and travel times are not shown: they are not verified.</li>
+          <li data-testid="map-key-routes"><span aria-hidden="true">↝</span> Evacuation routes: {routeSummary.total === 0 ? 'not published' : `${routeSummary.verified} calculated, ${routeSummary.unavailable} unavailable; see Command routes for detail.`}</li>
         </ul>
       </section>
 
