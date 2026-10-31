@@ -31,15 +31,21 @@ async function fillLocation(page: Page, lat = '26.9512', lng = '94.1701') {
 }
 
 /** Open the report form, pick a category and fill the minimum fields. Does not submit. */
-export async function fillReport(page: Page, category: 'water_level' | 'flood_report' | 'road_blockage' | 'submerged_bridge', opts: { road?: string; levelCm?: string; severity?: string } = {}): Promise<void> {
-  await page.getByTestId('nav-report').click();
-  await page.getByTestId(`report-type-${category}`).click();
-  await expect(page.getByTestId(`report-type-${category}`)).toHaveAttribute('aria-checked', 'true');
+export async function fillReport(page: Page, category: 'water_level' | 'flood_report' | 'road_blockage' | 'submerged_bridge', opts: { road?: string; levelCm?: string; severity?: string; skipPick?: boolean } = {}): Promise<void> {
+  // skipPick: the form is already open with the type chosen (the wizard is on its Details step).
+  if (!opts.skipPick) {
+    await page.getByTestId('nav-report').click();
+    await page.getByTestId(`report-type-${category}`).click();
+    await expect(page.getByTestId(`report-type-${category}`)).toHaveAttribute('aria-checked', 'true');
+  }
   if (category === 'water_level') await page.getByTestId('field-levelCm').fill(opts.levelCm ?? '120');
   if (category === 'flood_report') await page.getByTestId('field-severity').fill(opts.severity ?? '3');
   if (category === 'road_blockage') await page.getByTestId('field-roadId').selectOption(opts.road ?? 'R1');
   if (category === 'submerged_bridge') await page.getByTestId('field-roadId').selectOption(opts.road ?? 'B1');
+  // Wizard: details -> location -> notes (the last step shows the Save button).
+  await page.getByTestId('wizard-next').click();
   await fillLocation(page);
+  await page.getByTestId('wizard-next').click();
 }
 
 /** Fill + submit; returns the clientEventId of the saved report. */
@@ -96,7 +102,9 @@ export async function registerHousehold(page: Page, name: string, opts: { member
   await page.getByTestId('household-members').fill(opts.members ?? '4');
   if (opts.settlement) await page.getByTestId('household-settlementId').selectOption(opts.settlement);
   if (opts.shelter) await page.getByTestId('household-shelterId').selectOption(opts.shelter);
+  await page.getByTestId('wizard-next').click();
   await page.getByTestId('household-vulnerable-elderly').check();
+  await page.getByTestId('wizard-next').click();
   await page.getByTestId('field-lat').fill('26.95');
   await page.getByTestId('field-lng').fill('94.17');
   await page.getByTestId('household-submit').click();

@@ -29,3 +29,35 @@ test.describe('offline honesty and demo scenario action', () => {
     await expect(page.getByTestId('open-demo-scenario')).toBeDisabled();
   });
 });
+
+test.describe('step-by-step forms', () => {
+  test('the report form is a four-step wizard: Next, Back, and a failed save jumps to the step to fix', async ({ page }) => {
+    await openField(page, 'report');
+    const label = page.getByTestId('wizard-step-label');
+    await expect(label).toContainText('Step 1 of 4');
+    await expect(page.getByTestId('report-submit')).toBeHidden();
+    await page.getByTestId('report-type-water_level').click(); // choosing a type moves on
+    await expect(label).toContainText('Step 2 of 4');
+    await page.getByTestId('wizard-back').click();
+    await expect(label).toContainText('Step 1 of 4');
+    await page.getByTestId('wizard-next').click();
+    await page.getByTestId('wizard-next').click();
+    await page.getByTestId('wizard-next').click();
+    await expect(label).toContainText('Step 4 of 4');
+    await expect(page.getByTestId('report-submit')).toBeVisible();
+    await page.getByTestId('report-submit').click(); // no water level or location yet
+    await expect(page.getByTestId('form-error')).toBeVisible();
+    await expect(label).toContainText(/Step [23] of 4/);
+  });
+
+  test('the household form is a three-step wizard', async ({ page }) => {
+    await openField(page, 'households/new');
+    await expect(page.getByTestId('wizard-step-label')).toContainText('Step 1 of 3');
+    await expect(page.getByTestId('household-headName')).toBeVisible();
+    await page.getByTestId('wizard-next').click();
+    await expect(page.getByTestId('household-vulnerable-elderly')).toBeVisible();
+    await page.getByTestId('wizard-next').click();
+    await expect(page.getByTestId('field-lat')).toBeVisible();
+    await expect(page.getByTestId('household-submit')).toBeVisible();
+  });
+});

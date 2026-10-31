@@ -1,15 +1,4 @@
-import { useInstallPrompt } from './useInstallPrompt.js';
 import { useUpdateAvailable } from './register.js';
-
-export function InstallButton() {
-  const { canInstall, install } = useInstallPrompt();
-  if (!canInstall) return null;
-  return (
-    <button type="button" className="setu-button" data-testid="install-app" onClick={() => void install()}>
-      Install app
-    </button>
-  );
-}
 
 export function UpdateToast() {
   const { available, reload, dismiss } = useUpdateAvailable();

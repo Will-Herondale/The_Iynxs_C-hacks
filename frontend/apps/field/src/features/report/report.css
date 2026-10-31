@@ -27,7 +27,6 @@
 .report-gps__icon { font-size: 1.2rem; }
 .report-location__actions > * { flex: 1 1 10rem; }
 .report-latlng { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.report-form > button[type='submit'] { width: 100%; min-height: 52px; font-size: 1.1rem; font-weight: 700; }
 
 /* A <fieldset> defaults to min-width: min-content, which let the location card grow past a phone screen. */
 fieldset.report-section { min-width: 0; max-width: 100%; box-sizing: border-box; }

@@ -48,25 +48,6 @@ test.describe('@pwa field offline', () => {
     expect(external).toEqual([]);
   });
 
-  test('install button is hidden without a beforeinstallprompt', async ({ page }) => {
-    await page.goto('/#/home');
-    await expect(page.getByTestId('home-screen')).toBeVisible();
-    await expect(page.getByTestId('install-app')).toHaveCount(0);
-  });
-
-  test('install button appears on beforeinstallprompt', async ({ page }) => {
-    await page.addInitScript(() => {
-      window.addEventListener('DOMContentLoaded', () => {
-        const ev = new Event('beforeinstallprompt', { cancelable: true }) as Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
-        ev.prompt = async () => {};
-        ev.userChoice = Promise.resolve({ outcome: 'dismissed' });
-        setTimeout(() => window.dispatchEvent(ev), 300);
-      });
-    });
-    await page.goto('/#/home');
-    await expect(page.getByTestId('install-app')).toBeVisible();
-  });
-
   test('/api and /stream are never cached by the service worker', async ({ page }) => {
     await page.goto('/#/home');
     await swActive(page);
@@ -103,8 +84,10 @@ test.describe('@pwa field offline', () => {
     await page.getByTestId('home-new-report').click();
     await page.getByTestId('report-type-submerged_bridge').click();
     await page.getByTestId('field-roadId').selectOption(BRIDGE);
+    await page.getByTestId('wizard-next').click();
     await page.getByTestId('field-lat').fill('26.9512');
     await page.getByTestId('field-lng').fill('94.1701');
+    await page.getByTestId('wizard-next').click();
     await page.getByTestId('report-submit').click();
     await expect(page.getByTestId('report-saved-label')).toContainText('Saved locally');
     const id = (await page.getByTestId('report-saved').getAttribute('data-client-event-id'))!;

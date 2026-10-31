@@ -1,0 +1,20 @@
+.wizard-progress { margin: 0 0 12px; }
+.wizard-progress__label { margin: 0 0 8px; font-size: 0.95rem; }
+.wizard-progress__dots { display: flex; gap: 8px; list-style: none; margin: 0 0 8px; padding: 0; }
+.wizard-progress__dot { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 2px solid #9aa7b4; background: #fff; color: inherit; font: inherit; font-weight: 700; cursor: pointer; transition: background-color 0.15s, border-color 0.15s, transform 0.12s; }
+.wizard-progress__dot[aria-current='step'] { background: #0b5cad; border-color: #0b5cad; color: #fff; transform: scale(1.06); }
+.wizard-progress__dot[data-done='true'] { border-color: #1b7f3b; background: #eaf6ee; color: #1b7f3b; }
+.wizard-progress__bar { height: 6px; border-radius: 999px; background: #dfe5ec; overflow: hidden; }
+.wizard-progress__bar::before { content: ''; display: block; height: 100%; width: var(--wizard-pct, 0%); background: #0b5cad; border-radius: inherit; transition: width 0.25s ease-out; }
+.wizard-nav { display: flex; gap: 8px; margin-top: 12px; }
+.wizard-nav .setu-button { flex: 1 1 0; min-height: 52px; font-size: 1.05rem; font-weight: 700; }
+.wizard-nav .setu-button[hidden] { display: none; }
+.wizard-step { animation: wizard-in 0.18s ease-out; }
+@keyframes wizard-in { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .wizard-step { animation: none; }
+  .wizard-progress__dot, .wizard-progress__bar::before { transition: none; }
+}
+
+.search-select__input { width: 100%; box-sizing: border-box; margin-bottom: 6px; min-height: 44px; }
+.search-select__count { margin: 4px 0 0; font-size: 0.85rem; color: #4b5563; }

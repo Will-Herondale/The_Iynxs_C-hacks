@@ -19,10 +19,14 @@ import { filterRoadOptions, geoBridgeOptions, roadOptions, withGeoBridges } from
 import type { RoadOption } from './roadOptions.js';
 import { describeLocation, useGeolocation } from './location.js';
 import { MapPicker } from './MapPicker.js';
+import { advanceOnEnter, SearchSelect, useWizard, WizardNav, WizardProgress } from '../wizard/index.js';
 import './report.css';
 
 const CAUSES = ['debris', 'collapse', 'damage', 'other'];
 const SELECT = 'setu-field__control';
+const STEPS = ['Report type', 'Details', 'Location', 'Notes'];
+/** Which step a validation error belongs to, so a failed submit jumps to the field that needs fixing. */
+const stepForField = (k: string) => (k === 'category' || k === 'type' ? 0 : ['lat', 'lng', 'locationSource', 'accuracyM'].includes(k) ? 2 : k === 'note' || k === 'photoName' ? 3 : 1);
 
 export interface ReportScreenProps {
   /** Rejected queue item reopened for editing: the form prefills and resubmits via replace(). */
@@ -77,6 +81,7 @@ export function ReportScreen({
       ? { ...EMPTY_REPORT, category: initialCategory, type: TYPE_OF[initialCategory], observedAt: toLocalInput(new Date()) }
       : { ...EMPTY_REPORT, observedAt: toLocalInput(new Date()) };
   const { register, handleSubmit, watch, setValue, reset, formState } = useForm<ReportValues>({ defaultValues: initial, resolver });
+  const w = useWizard(STEPS.length, editing || initialCategory ? 1 : 0);
   const category = watch('category');
   const def = categoryDef(category);
   const lat = watch('lat');
@@ -116,6 +121,7 @@ export function ReportScreen({
     setValue('category', c);
     setValue('type', TYPE_OF[c]);
     setValue('roadId', '');
+    w.go(1);
     if (c === 'submerged_bridge') { setValue('blockage', 'full'); setValue('cause', 'submerged'); }
     else if (c === 'blocked_road') setValue('cause', '');
   };
@@ -130,6 +136,7 @@ export function ReportScreen({
       await submit(r.event, editing);
       idRef.current = freshId();
       setSaved({ id, label: categoryDef(values.category).label });
+      w.go(0);
       reset({ ...EMPTY_REPORT, observedAt: toLocalInput(new Date()), category: values.category, type: values.type });
       onSaved?.(id);
     } catch (e) {
@@ -143,7 +150,7 @@ export function ReportScreen({
     if (busy.current) return;
     busy.current = true;
     try {
-      await handleSubmit(onValid)();
+      await handleSubmit(onValid, (errs) => { const k = Object.keys(errs)[0]; if (k) w.go(stepForField(k)); })();
     } finally {
       busy.current = false;
     }
@@ -171,8 +178,9 @@ export function ReportScreen({
 
   return (
     <Panel title={editing ? 'Edit rejected report' : 'New report'}>
-      <form onSubmit={guardedSubmit} noValidate aria-label="Report form" className="report-form">
-        <section className="report-section" aria-labelledby="rs-type">
+      <form onSubmit={guardedSubmit} onKeyDown={advanceOnEnter(w)} noValidate aria-label="Report form" className="report-form">
+        <WizardProgress steps={STEPS} wizard={w} />
+        <section className="report-section wizard-step" hidden={w.step !== 0} aria-labelledby="rs-type">
           <h2 id="rs-type" className="report-section__h"><span className="report-section__n" aria-hidden="true">1</span> Report type</h2>
         <Button
           variant="primary" data-testid="quick-blocked"
@@ -202,15 +210,16 @@ export function ReportScreen({
         </div>
         </section>
 
-        <section className="report-section" aria-labelledby="rs-details">
+        <section className="report-section wizard-step" hidden={w.step !== 1} aria-labelledby="rs-details">
           <h2 id="rs-details" className="report-section__h"><span className="report-section__n" aria-hidden="true">2</span> Severity &amp; details</h2>
         {(category === 'blocked_road' || category === 'submerged_bridge' || category === 'road_cleared') && (
           <div className="setu-field">
             <label className="setu-field__label" htmlFor="f-roadId">{category === 'blocked_road' ? 'Road' : category === 'submerged_bridge' ? 'Bridge or crossing' : 'Road or bridge'}</label>
-            <select id="f-roadId" className={SELECT} data-testid="field-roadId" {...register('roadId')}>
-              <option value="">{category === 'road_cleared' ? 'Select road…' : 'Unknown (use location)'}</option>
-              {roads.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
-            </select>
+            <SearchSelect
+              what="roads and bridges" emptyLabel={category === 'road_cleared' ? 'Select road…' : 'Unknown (use location)'}
+              selected={watch('roadId')} options={roads.map((r) => ({ value: r.id, label: r.label }))}
+              selectProps={{ id: 'f-roadId', className: SELECT, 'data-testid': 'field-roadId', ...register('roadId') }}
+            />
             {err('roadId') && <span className="setu-field__error" role="alert">{err('roadId')}</span>}
             {!snapshot && <span className="report-hint-disabled"> Demo list: no cached district data on this device yet.</span>}
           </div>
@@ -267,7 +276,7 @@ export function ReportScreen({
         <p className="report-hint-disabled">Defaults to now; change it if you saw this earlier.</p>
         </section>
 
-        <fieldset className="report-section report-location">
+        <fieldset className="report-section report-location wizard-step" hidden={w.step !== 2}>
           <legend className="report-section__h"><span className="report-section__n" aria-hidden="true">3</span> Location</legend>
           <p data-testid="location-summary" role="status" className="report-gps" data-source={hasLocation ? source : 'unknown'}>
             <span className="report-gps__icon" aria-hidden="true">{!hasLocation ? '○' : source === 'gps' ? '◉' : source === 'map' ? '⌖' : '✎'}</span>{' '}
@@ -301,7 +310,7 @@ export function ReportScreen({
           </div>
         </fieldset>
 
-        <section className="report-section" aria-labelledby="rs-ev">
+        <section className="report-section wizard-step" hidden={w.step !== 3} aria-labelledby="rs-ev">
           <h2 id="rs-ev" className="report-section__h"><span className="report-section__n" aria-hidden="true">4</span> Evidence &amp; notes</h2>
         <div className="setu-field">
           <label className="setu-field__label" htmlFor="f-note">Note</label>
@@ -324,9 +333,11 @@ export function ReportScreen({
             )}
           </div>
         )}
-        <Button type="submit" variant="primary" data-testid="report-submit" disabled={isSubmitting}>
-          {editing ? 'Resubmit' : 'Save report'}
-        </Button>
+        <WizardNav wizard={w}>
+          <Button type="submit" variant="primary" data-testid="report-submit" hidden={!w.last} disabled={isSubmitting}>
+            {editing ? 'Resubmit' : 'Save report'}
+          </Button>
+        </WizardNav>
       </form>
     </Panel>
   );

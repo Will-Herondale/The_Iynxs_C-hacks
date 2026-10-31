@@ -4,12 +4,15 @@ import { Badge, Button, EmptyState, Panel, SyncStatusBadge } from '@setu/ui';
 import { HouseholdScreen, DuplicateReviewPlaceholder, campSummary, householdsFromQueue } from '../household/index.js';
 import '../household/household.css';
 import { PersonCheckinScreen } from '../people/index.js';
+import { SearchSelect } from '../wizard/index.js';
 import { DataAsOf, StaleWarning } from '../status/index.js';
 import { useQueue } from '../../sync/index.js';
 import type { QueueItem } from '../../sync/index.js';
 import { shelterCounts, shelterStatus } from '../map/honesty.js';
 
 export const CAMP_KEY = 'setu.field.camp';
+/** Select value for a person who is not in any camp. */
+export const NO_CAMP = '__none__';
 
 export function readCamp(): string {
   try {
@@ -76,6 +79,7 @@ export function CampView({ snapshot, cachedAt, online, items, people, peopleUnav
   }, [camp]);
 
   const chosen = shelters.find((s) => s.shelterId === camp);
+  const noCamp = camp === NO_CAMP;
   const rows = camp ? campHouseholds(queue, camp) : [];
   const peopleRows = camp ? campPeople(queue, camp) : [];
   const summary = campSummary(householdsFromQueue(queue), camp || undefined);
@@ -103,16 +107,22 @@ export function CampView({ snapshot, cachedAt, online, items, people, peopleUnav
         <p><DataAsOf cachedAt={cachedAt} /></p>
         <div className="setu-field">
           <label className="setu-field__label" htmlFor="camp-select">Which camp are you at?</label>
-          <select id="camp-select" className="setu-field__control" data-testid="camp-select" value={camp} onChange={(e) => setCamp(e.target.value)}>
-            <option value="">Choose a camp…</option>
-            {camp && !chosen && <option value={camp}>{camp}</option>}
-            {shelters.map((s) => <option key={s.shelterId} value={s.shelterId}>{s.shelterId}: {s.name}</option>)}
-          </select>
+          <SearchSelect
+            what="camps" emptyLabel="Choose a camp…" selected={camp}
+            options={[
+              { value: NO_CAMP, label: 'Not in a camp (register an individual)' },
+              ...(camp && !chosen && !noCamp ? [{ value: camp, label: camp }] : []),
+              ...shelters.map((s) => ({ value: s.shelterId, label: `${s.shelterId}: ${s.name}` })),
+            ]}
+            selectProps={{ id: 'camp-select', className: 'setu-field__control', 'data-testid': 'camp-select', value: camp, onChange: (e) => setCamp(e.target.value) }}
+          />
         </div>
         {!snapshot && <p role="status">No camp data on this device yet. Open the app once while online to load the camp list.</p>}
       </Panel>
       {chosen && <CampInfo shelter={chosen} asOf={asOf} online={online} />}
-      {camp ? (
+      {noCamp ? (
+        <HouseholdScreen snapshot={snapshot} individual title="Register an individual who is not in a camp" formTestId="camp-individual-form" />
+      ) : camp ? (
         <>
           <Panel title={serverBacked ? 'Camp summary (all synced devices)' : 'Camp summary (registered from this device)'}>
             {serverBacked && <p role="note" data-testid="camp-people-source">Includes server-confirmed registrations from all devices, plus this device&apos;s unsynced queue.</p>}

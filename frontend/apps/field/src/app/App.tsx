@@ -12,7 +12,7 @@ import { useRemotePeople } from '../offline/useRemotePeople.js';
 import { OfflineBanner } from './OfflineBanner.js';
 import { StorageBanner } from './StorageBanner.js';
 import { ApiStatus } from './ApiStatus.js';
-import { InstallButton, UpdateToast } from '../pwa/index.js';
+import { UpdateToast } from '../pwa/index.js';
 import { ExchangeScreen } from '../features/exchange/index.js';
 import { QueueScreen, SyncNowButton } from '../features/queue/index.js';
 import { ConnectivityStatus, LastSyncedLine, LocalOnlyNotice } from '../features/status/index.js';
@@ -48,7 +48,6 @@ export function App() {
     <div className="field-header">
       <strong className="field-header__title">SETU Field</strong>
       <ConnectivityStatus />
-      <InstallButton />
       <LastSyncedLine />
       <SyncNowButton />
       <a href="#/camp" data-testid="nav-camp" className="field-header__link" aria-current={route.name === 'camp' ? 'page' : undefined}>

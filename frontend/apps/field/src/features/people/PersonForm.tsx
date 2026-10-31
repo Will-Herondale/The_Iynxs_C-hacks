@@ -9,6 +9,11 @@ import type { AgeBand, FieldEvent, PersonCheckin, ProjectionSnapshot } from '@se
 import { enqueue } from '../../sync/index.js';
 import { getDeviceId, getReporterId } from '../../app/identity.js';
 import { DEFAULT_LOCATION, useGeolocation } from '../report/location.js';
+import { advanceOnEnter, SearchSelect, useWizard, WizardNav, WizardProgress } from '../wizard/index.js';
+
+const STEPS = ['Person', 'Needs', 'Location'];
+/** Which step a validation error belongs to, so a failed submit jumps to the field that needs fixing. */
+const stepForField = (k: string) => (['name', 'ageBand', 'sex', 'settlementId', 'householdId'].includes(k) ? 0 : ['lat', 'lng', 'note'].includes(k) ? 2 : 1);
 
 const VULNERABLE = ['elderly', 'children', 'disabled', 'medical'] as const;
 
@@ -147,6 +152,7 @@ export function PersonCheckinScreen({ campId, editing, onDone, title, formTestId
     resolver,
   });
   const { errors, isSubmitting } = formState;
+  const w = useWizard(STEPS.length);
   const settlements = (snapshot?.settlements.features ?? []).map((f) => ({
     id: f.properties.settlementId,
     name: f.properties.name,
@@ -166,6 +172,7 @@ export function PersonCheckinScreen({ campId, editing, onDone, title, formTestId
       if (!r.ok) return;
       await enqueue(r.event);
       idRef.current = newClientEventId();
+      w.go(0);
       setSent('Saved locally. It will sync automatically when a connection is available.');
       reset({ ...EMPTY, lat: values.lat, lng: values.lng });
       onDone?.();
@@ -179,7 +186,7 @@ export function PersonCheckinScreen({ campId, editing, onDone, title, formTestId
     if (busy.current) return;
     busy.current = true;
     try {
-      await handleSubmit(onValid)();
+      await handleSubmit(onValid, (errs) => { const k = Object.keys(errs)[0]; if (k) w.go(stepForField(k)); })();
     } finally {
       busy.current = false;
     }
@@ -193,7 +200,9 @@ export function PersonCheckinScreen({ campId, editing, onDone, title, formTestId
       <p className="household-note">
         One person, one record. Camp: <code data-testid="person-camp-id">{campId}</code>
       </p>
-      <form onSubmit={guardedSubmit} noValidate data-testid={formTestId} aria-label="Person check-in form">
+      <form onSubmit={guardedSubmit} onKeyDown={advanceOnEnter(w)} noValidate data-testid={formTestId} aria-label="Person check-in form">
+        <WizardProgress steps={STEPS} wizard={w} />
+        <div className="wizard-step" hidden={w.step !== 0}>
         <Field label="Full name" data-testid="person-name" error={err('name')} {...register('name')} />
         <div className="setu-field">
           <label className="setu-field__label" htmlFor="p-age">Age band</label>
@@ -209,12 +218,15 @@ export function PersonCheckinScreen({ campId, editing, onDone, title, formTestId
         </div>
         <div className="setu-field">
           <label className="setu-field__label" htmlFor="p-settlement">Origin village</label>
-          <select id="p-settlement" className="setu-field__control household-control" data-testid="person-settlementId" {...register('settlementId')}>
-            <option value="">Unknown</option>
-            {settlements.map((x) => <option key={x.id} value={x.id}>{x.name} ({x.id})</option>)}
-          </select>
+          <SearchSelect
+            what="villages" emptyLabel="Unknown" selected={watch('settlementId')}
+            options={settlements.map((x) => ({ value: x.id, label: `${x.name} (${x.id})` }))}
+            selectProps={{ id: 'p-settlement', className: 'setu-field__control household-control', 'data-testid': 'person-settlementId', ...register('settlementId') }}
+          />
         </div>
         <Field label="Household ID (if known, optional)" data-testid="person-householdId" error={err('householdId')} {...register('householdId')} />
+        </div>
+        <div className="wizard-step" hidden={w.step !== 1}>
         <fieldset>
           <legend>Assistance requirements</legend>
           {VULNERABLE.map((k) => (
@@ -224,6 +236,8 @@ export function PersonCheckinScreen({ campId, editing, onDone, title, formTestId
           ))}
         </fieldset>
         <Field label="Other needs (comma separated, e.g. water, medicine)" data-testid="person-needs" {...register('needs')} />
+        </div>
+        <div className="wizard-step" hidden={w.step !== 2}>
         <fieldset>
           <legend>Location</legend>
           <Field label="Latitude" inputMode="decimal" data-testid="person-lat" error={err('lat')} {...register('lat')} />
@@ -240,11 +254,14 @@ export function PersonCheckinScreen({ campId, editing, onDone, title, formTestId
           <label className="setu-field__label" htmlFor="p-note">Note</label>
           <textarea id="p-note" className="setu-field__control" rows={2} data-testid="person-note" {...register('note')} />
         </div>
+        </div>
         {firstError && <div role="alert" data-testid="person-form-error"><p>{firstError}</p></div>}
         {sent && !firstError && <p role="status">{sent}</p>}
-        <Button type="submit" variant="primary" className="household-submit" data-testid="person-submit" disabled={isSubmitting}>
-          Check in person
-        </Button>
+        <WizardNav wizard={w}>
+          <Button type="submit" variant="primary" className="household-submit" data-testid="person-submit" hidden={!w.last} disabled={isSubmitting}>
+            Check in person
+          </Button>
+        </WizardNav>
       </form>
     </Panel>
   );

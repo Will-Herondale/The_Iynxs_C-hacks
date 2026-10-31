@@ -10,8 +10,12 @@ import { enqueue, replace } from '../../sync/index.js';
 import type { QueueItem } from '../../sync/index.js';
 import { getDeviceId, getReporterId } from '../../app/identity.js';
 import { DEFAULT_LOCATION, useGeolocation } from '../report/location.js';
+import { advanceOnEnter, SearchSelect, useWizard, WizardNav, WizardProgress } from '../wizard/index.js';
 
 const VULNERABLE = ['elderly', 'children', 'disabled', 'medical'] as const;
+const STEPS = ['Household', 'Needs', 'Location'];
+/** Which step a validation error belongs to, so a failed submit jumps to the field that needs fixing. */
+const stepForField = (k: string) => (['headName', 'members', 'settlementId', 'shelterId'].includes(k) ? 0 : ['lat', 'lng', 'note'].includes(k) ? 2 : 1);
 
 export interface HouseholdValues {
   headName: string;
@@ -79,6 +83,8 @@ export interface HouseholdScreenProps {
   submit?: (event: FieldEvent, editing?: QueueItem | null) => Promise<unknown>;
   /** Camp mode: registers the household at this shelter. */
   shelterId?: string;
+  /** One person who is not in a camp: saved as a household of one (the contract records individuals only at a camp). */
+  individual?: boolean;
   /** Camp mode: replaces the panel title and form test id. */
   title?: string;
   formTestId?: string;
@@ -89,7 +95,7 @@ export interface HouseholdScreenProps {
 const defaultSubmit = (event: FieldEvent, editing?: QueueItem | null) =>
   editing ? replace(editing.clientEventId, event) : enqueue(event);
 
-export function HouseholdScreen({ editing, onDone, submit = defaultSubmit, shelterId, title, formTestId, snapshot }: HouseholdScreenProps) {
+export function HouseholdScreen({ editing, onDone, submit = defaultSubmit, shelterId, individual, title, formTestId, snapshot }: HouseholdScreenProps) {
   const identity = { reporterId: getReporterId(), deviceId: getDeviceId() };
   const editEvent = editing?.event.type === 'household_registration' ? editing.event : undefined;
   const idRef = useRef(newClientEventId());
@@ -111,6 +117,7 @@ export function HouseholdScreen({ editing, onDone, submit = defaultSubmit, shelt
     resolver,
   });
   const { errors, isSubmitting } = formState;
+  const w = useWizard(STEPS.length);
   const settlements = (snapshot?.settlements.features ?? []).map((f) => ({ id: f.properties.settlementId, name: f.properties.name }));
   const shelters = (snapshot?.shelters.features ?? []).map((f) => ({ id: f.properties.shelterId, name: f.properties.name }));
 
@@ -129,6 +136,7 @@ export function HouseholdScreen({ editing, onDone, submit = defaultSubmit, shelt
       await submit(r.event, editing);
       idRef.current = newClientEventId();
       householdRef.current = newClientEventId();
+      w.go(0);
       setSent('Saved locally. It will sync automatically when a connection is available.');
       reset({ ...EMPTY, lat: values.lat, lng: values.lng });
       onDone?.();
@@ -142,7 +150,7 @@ export function HouseholdScreen({ editing, onDone, submit = defaultSubmit, shelt
     if (busy.current) return;
     busy.current = true;
     try {
-      await handleSubmit(onValid)();
+      await handleSubmit(onValid, (errs) => { const k = Object.keys(errs)[0]; if (k) w.go(stepForField(k)); })();
     } finally {
       busy.current = false;
     }
@@ -154,33 +162,50 @@ export function HouseholdScreen({ editing, onDone, submit = defaultSubmit, shelt
   const firstError = Object.values(errors)[0]?.message ?? failure ?? (serverErrors.length ? 'The server rejected this report:' : null);
 
   return (
-    <Panel title={title ?? (editing ? 'Edit rejected household' : 'Register household')}>
+    <Panel title={title ?? (editing ? 'Edit rejected household' : individual ? 'Register an individual' : 'Register household')}>
       <p className="household-note">Household ID (generated on this device): <code data-testid="household-id">{householdRef.current}</code></p>
-      <form onSubmit={guardedSubmit} noValidate data-testid={formTestId} aria-label="Household registration form">
-        <Field label="Head of household" data-testid="household-headName" error={err('headName')} {...register('headName')} />
-        <Field label="Members" type="number" min={1} data-testid="household-members" error={err('members')} {...register('members')} />
-        <p className="household-note" data-testid="household-member-names-blocked" aria-disabled="true">
-          Member names: Blocked: #15 (not in the contract; only the member count is recorded).
-        </p>
+      <form onSubmit={guardedSubmit} onKeyDown={advanceOnEnter(w)} noValidate data-testid={formTestId} aria-label="Household registration form">
+        <WizardProgress steps={STEPS} wizard={w} />
+        <div className="wizard-step" hidden={w.step !== 0}>
+        <Field label={individual ? 'Full name' : 'Head of household'} data-testid="household-headName" error={err('headName')} {...register('headName')} />
+        <div hidden={individual}>
+          <Field label="Members" type="number" min={1} data-testid="household-members" error={err('members')} {...register('members')} />
+          <p className="household-note" data-testid="household-member-names-blocked" aria-disabled="true">
+            Member names: Blocked: #15 (not in the contract; only the member count is recorded).
+          </p>
+        </div>
+        {individual && (
+          <p className="household-note" role="note" data-testid="individual-note">
+            This person is not in a camp. The district system records individuals only at a camp, so this is saved as a household of one.
+          </p>
+        )}
         <div className="setu-field">
           <label className="setu-field__label" htmlFor="h-settlement">Origin village</label>
-          <select id="h-settlement" className="setu-field__control household-control" data-testid="household-settlementId" {...register('settlementId')}>
-            <option value="">Unknown</option>
-            {editEvent?.settlementId && !settlements.some((x) => x.id === editEvent.settlementId) && <option value={editEvent.settlementId}>{editEvent.settlementId}</option>}
-            {settlements.map((x) => <option key={x.id} value={x.id}>{x.name} ({x.id})</option>)}
-          </select>
+          <SearchSelect
+            what="villages" emptyLabel="Unknown" selected={watch('settlementId')}
+            options={[
+              ...(editEvent?.settlementId && !settlements.some((x) => x.id === editEvent.settlementId) ? [{ value: editEvent.settlementId, label: editEvent.settlementId }] : []),
+              ...settlements.map((x) => ({ value: x.id, label: `${x.name} (${x.id})` })),
+            ]}
+            selectProps={{ id: 'h-settlement', className: 'setu-field__control household-control', 'data-testid': 'household-settlementId', ...register('settlementId') }}
+          />
           {settlements.length === 0 && <p className="household-note" data-testid="household-places-missing">No village list on this device yet; origin village stays Unknown until places are cached.</p>}
         </div>
-        {!shelterId && (
+        {!shelterId && !individual && (
           <div className="setu-field">
             <label className="setu-field__label" htmlFor="h-shelter">Current camp</label>
-            <select id="h-shelter" className="setu-field__control household-control" data-testid="household-shelterId" {...register('shelterId')}>
-              <option value="">Not in a camp</option>
-              {editEvent?.shelterId && !shelters.some((x) => x.id === editEvent.shelterId) && <option value={editEvent.shelterId}>{editEvent.shelterId}</option>}
-              {shelters.map((x) => <option key={x.id} value={x.id}>{x.name} ({x.id})</option>)}
-            </select>
+            <SearchSelect
+              what="camps" emptyLabel="Not in a camp" selected={watch('shelterId')}
+              options={[
+                ...(editEvent?.shelterId && !shelters.some((x) => x.id === editEvent.shelterId) ? [{ value: editEvent.shelterId, label: editEvent.shelterId }] : []),
+                ...shelters.map((x) => ({ value: x.id, label: `${x.name} (${x.id})` })),
+              ]}
+              selectProps={{ id: 'h-shelter', className: 'setu-field__control household-control', 'data-testid': 'household-shelterId', ...register('shelterId') }}
+            />
           </div>
         )}
+        </div>
+        <div className="wizard-step" hidden={w.step !== 1}>
         <fieldset>
           <legend>Assistance requirements: vulnerable members</legend>
           {VULNERABLE.map((k) => (
@@ -190,6 +215,8 @@ export function HouseholdScreen({ editing, onDone, submit = defaultSubmit, shelt
           ))}
         </fieldset>
         <Field label="Other needs (comma separated, e.g. water, medicine)" data-testid="household-needs" {...register('needs')} />
+        </div>
+        <div className="wizard-step" hidden={w.step !== 2}>
         <fieldset>
           <legend>Location</legend>
           <Field label="Latitude" inputMode="decimal" data-testid="field-lat" error={err('lat')} {...register('lat')} />
@@ -206,6 +233,7 @@ export function HouseholdScreen({ editing, onDone, submit = defaultSubmit, shelt
           <label className="setu-field__label" htmlFor="h-note">Note</label>
           <textarea id="h-note" className="setu-field__control" rows={2} data-testid="field-note" {...register('note')} />
         </div>
+        </div>
         {firstError && (
           <div role="alert" data-testid="form-error">
             <p>{firstError}</p>
@@ -215,9 +243,11 @@ export function HouseholdScreen({ editing, onDone, submit = defaultSubmit, shelt
           </div>
         )}
         {sent && !firstError && <p role="status">{sent}</p>}
-        <Button type="submit" variant="primary" className="household-submit" data-testid="household-submit" disabled={isSubmitting}>
-          {editing ? 'Resubmit' : 'Register household'}
-        </Button>
+        <WizardNav wizard={w}>
+          <Button type="submit" variant="primary" className="household-submit" data-testid="household-submit" hidden={!w.last} disabled={isSubmitting}>
+            {editing ? 'Resubmit' : individual ? 'Register person' : 'Register household'}
+          </Button>
+        </WizardNav>
       </form>
     </Panel>
   );

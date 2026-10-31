@@ -81,7 +81,8 @@ export function HouseholdsScreen({ snapshot, people, peopleUnavailable, items, o
       <Panel title="Households">
         <Button variant="primary" className="household-submit" data-testid="households-register" onClick={() => { setEditing(null); setRegistering(true); setSavedNote(false); }}>
           Register household
-        </Button>
+        </Button>{' '}
+        <a className="setu-button" href="#/camp" data-testid="households-register-person">Register a person</a>
         {savedNote && <p role="status" data-testid="households-saved">Saved locally. It will sync automatically when a connection is available.</p>}
       </Panel>
       {(registering || editing) && (

@@ -44,7 +44,8 @@ test.describe('field shell, home and report categories', () => {
     await page.getByTestId('nav-home').click();
     await page.getByTestId('home-register-household').click();
     await expect(page).toHaveURL(/#\/households\/new/);
-    await expect(page.getByTestId('household-submit')).toBeVisible();
+    await expect(page.getByTestId('household-headName')).toBeVisible();
+    await expect(page.getByTestId('wizard-progress')).toBeVisible();
   });
 
   test('report offers the four categories; unavailable ones are disabled', async ({ page }) => {
@@ -67,7 +68,7 @@ test.describe('field shell, home and report categories', () => {
       await openField(page, 'report');
       await page.getByTestId(`report-type-${category}`).click();
       await expect(page.getByTestId(field)).toBeVisible();
-      const id = await submitReport(page, category);
+      const id = await submitReport(page, category, { skipPick: true });
       await expect.poll(() => sent.some((e) => e.clientEventId === id), { timeout: 15_000 }).toBe(true);
       const e = sent.find((x) => x.clientEventId === id)!;
       expect(e.type).toBe(event);
@@ -78,6 +79,8 @@ test.describe('field shell, home and report categories', () => {
   test('invalid report shows form-error and saves nothing', async ({ page }) => {
     await openField(page, 'report');
     await page.getByTestId('report-type-water_level').click();
+    await page.getByTestId('wizard-next').click();
+    await page.getByTestId('wizard-next').click();
     await page.getByTestId('report-submit').click();
     await expect(page.getByTestId('form-error')).toBeVisible();
     await expect(page.getByTestId('report-saved')).toHaveCount(0);

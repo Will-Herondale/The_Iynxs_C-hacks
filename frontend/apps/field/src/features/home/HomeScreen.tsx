@@ -87,7 +87,11 @@ export function HomeScreen({ district, cachedAt }: { district?: string; cachedAt
         </a>
         <a className="home__big home__big--secondary" href="#/households/new" data-testid="home-register-household">
           <span className="home__big-icon" aria-hidden="true">⌂</span>
-          <span className="home__big-text"><strong>Register household</strong><small>Works offline</small></span>
+          <span className="home__big-text"><strong>Register household</strong><small>A family, at a camp or not · works offline</small></span>
+        </a>
+        <a className="home__big home__big--secondary" href="#/camp" data-testid="home-register-person">
+          <span className="home__big-icon" aria-hidden="true">☺</span>
+          <span className="home__big-text"><strong>Register a person</strong><small>One individual, in a camp or not · works offline</small></span>
         </a>
       </div>
 

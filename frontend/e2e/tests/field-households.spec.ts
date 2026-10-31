@@ -40,6 +40,8 @@ test.describe('field households and camp', () => {
 
   test('household form validates required fields', async ({ page }) => {
     await openField(page, 'households/new');
+    await page.getByTestId('wizard-next').click();
+    await page.getByTestId('wizard-next').click();
     await page.getByTestId('household-submit').click();
     await expect(page.getByTestId('form-error')).toBeVisible();
     await expect(page.getByTestId('household-row')).toHaveCount(0);

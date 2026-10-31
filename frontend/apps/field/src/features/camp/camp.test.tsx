@@ -66,7 +66,7 @@ describe('CampView', () => {
   it('lists shelters and shows info for the chosen one, remembered in localStorage', () => {
     render(<CampView snapshot={snapshot} cachedAt={Date.UTC(2026, 9, 30, 9)} online />);
     const select = screen.getByTestId('camp-select') as HTMLSelectElement;
-    expect([...select.options].map((o) => o.value)).toEqual(['', 'SH1', 'SH2']);
+    expect([...select.options].map((o) => o.value)).toEqual(['', '__none__', 'SH1', 'SH2']);
     fireEvent.change(select, { target: { value: 'SH1' } });
     const info = screen.getByTestId('camp-info');
     expect(info.getAttribute('data-shelter-id')).toBe('SH1');
@@ -180,5 +180,14 @@ describe('CampView', () => {
     expect(householdRows).toHaveLength(2);
     expect(screen.getByText('Remote Family')).toBeTruthy();
     expect(householdRows[0]!.getAttribute('data-source')).toBe('server');
+  });
+
+  it('offers "Not in a camp" and shows the individual form; the camp list can be searched', () => {
+    render(<CampView snapshot={snapshot} cachedAt={Date.UTC(2026, 9, 30, 9)} online />);
+    const select = screen.getByTestId('camp-select') as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: '__none__' } });
+    expect(screen.getByTestId('camp-individual-form')).toBeTruthy();
+    expect(screen.getByTestId('individual-note').textContent).toContain('household of one');
+    expect(screen.queryByTestId('camp-person-form')).toBeNull();
   });
 });

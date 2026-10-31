@@ -35,8 +35,10 @@ test.describe('field offline queue and sync', () => {
     await page.getByTestId('nav-report').click();
     await page.getByTestId('report-type-water_level').click();
     await page.getByTestId('field-levelCm').fill('150');
+    await page.getByTestId('wizard-next').click();
     await page.getByTestId('field-lat').fill('26.95');
     await page.getByTestId('field-lng').fill('94.17');
+    await page.getByTestId('wizard-next').click();
     await page.getByTestId('report-submit').dblclick();
     await expect(page.getByTestId('report-saved')).toBeVisible();
     await openSync(page);
@@ -154,6 +156,8 @@ test.describe('field offline queue and sync', () => {
     reject = false;
     await item(page, id).getByTestId('queue-edit').click();
     await page.getByTestId('field-levelCm').fill('95');
+    await page.getByTestId('wizard-next').click();
+    await page.getByTestId('wizard-next').click();
     await page.getByTestId('report-submit').click();
     await expect(page.getByTestId('report-saved-label')).toHaveText(/Saved locally/);
     await openSync(page);
@@ -184,6 +188,8 @@ test.describe('field offline queue and sync', () => {
     await page.unroute(BATCH);
     await item(page, id).getByTestId('queue-edit').click();
     await page.getByTestId('field-levelCm').fill('96');
+    await page.getByTestId('wizard-next').click();
+    await page.getByTestId('wizard-next').click();
     await page.getByTestId('report-submit').click();
     const savedId = (await page.getByTestId('report-saved').getAttribute('data-client-event-id')) ?? '';
     await openSync(page);
