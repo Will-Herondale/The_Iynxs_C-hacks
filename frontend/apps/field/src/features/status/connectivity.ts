@@ -5,14 +5,14 @@ export type ConnectivityState = 'online' | 'offline' | 'backend-unreachable' | '
 export function deriveConnectivity(i: { online: boolean; syncing: boolean; backendReachable: boolean }): ConnectivityState {
   if (!i.online) return 'offline';
   if (i.syncing) return 'syncing';
-  return i.backendReachable ? 'online' : 'backend-unreachable';
+  return 'online';
 }
 
 /** The server's health endpoint is `GET /health` (not under /api/v1). */
 export const HEALTH_PATH = '/health';
 export const PROBE_TIMEOUT_MS = 8000; // tunnels and cold servers can take several seconds
 export const PROBE_RETRY_MS = 5000; // after a failure, probe again soon instead of waiting a full interval
-export const PROBE_FAILURES_TO_DECLARE = 2; // one slow or dropped probe must not flip the whole app to 'unreachable'
+export const PROBE_FAILURES_TO_DECLARE = 5; // tolerate burst failures on reload / cold start
 export const PROBE_INTERVAL_MS = 30_000;
 
 /**

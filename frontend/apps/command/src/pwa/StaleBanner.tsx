@@ -8,7 +8,9 @@ import { formatRelative, staleLevel } from './staleness';
  * update time (observer is disabled: it never fetches, only watches).
  */
 export function StaleBanner({ updatedAt, now: nowProp }: { updatedAt?: number; now?: number }) {
-  const q = useQuery({ queryKey: PROJECTIONS_KEY, enabled: false });
+  // This observer only reads the shared query timestamp; it must still provide
+  // a queryFn because the query can be invalidated by the live SSE observer.
+  const q = useQuery({ queryKey: PROJECTIONS_KEY, queryFn: async () => undefined, enabled: false });
   const [tick, setTick] = useState(() => Date.now());
   useEffect(() => {
     const t = setInterval(() => setTick(Date.now()), 30_000);

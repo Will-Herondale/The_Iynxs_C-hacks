@@ -57,11 +57,17 @@ describe('probe debounce', () => {
     resetProbeState();
     render(<Reach />);
     expect(screen.getByTestId('reach').textContent).toBe('true');
-    expect(PROBE_FAILURES_TO_DECLARE).toBe(2);
+    expect(PROBE_FAILURES_TO_DECLARE).toBe(5);
     act(() => recordProbe(false));
     expect(screen.getByTestId('reach').textContent).toBe('true');   // one miss: still reachable
     act(() => recordProbe(false));
-    expect(screen.getByTestId('reach').textContent).toBe('false');  // two in a row: unreachable
+    expect(screen.getByTestId('reach').textContent).toBe('true');   // two misses: still reachable
+    act(() => recordProbe(false));
+    expect(screen.getByTestId('reach').textContent).toBe('true');   // three misses: still reachable
+    act(() => recordProbe(false));
+    expect(screen.getByTestId('reach').textContent).toBe('true');   // four misses: still reachable
+    act(() => recordProbe(false));
+    expect(screen.getByTestId('reach').textContent).toBe('false');  // five in a row: unreachable
     act(() => recordProbe(true));
     expect(screen.getByTestId('reach').textContent).toBe('true');   // success: recovers immediately
     act(() => recordProbe(false));

@@ -157,86 +157,111 @@ export function createHttpApiClient(opts: HttpApiClientOptions = {}): ApiClient 
     return valid;
   }
 
-  function subscribe(onChange: (snapshotVersion: number) => void): () => void {
-    const makeEs: EventSourceFactory | undefined =
-      opts.eventSource ??
-      (typeof EventSource !== 'undefined' ? (url) => new EventSource(url) as unknown as EventSourceLike : undefined);
-    let stopped = false;
-    let lastVersion: number | undefined;
-    let es: EventSourceLike | undefined;
-    let polling = false;
-    let pollTimer: ReturnType<typeof setTimeout> | undefined;
-    let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
-    let backoff = backoffMin;
+  // Shared SSE connection state across all subscribe() callers of this api client.
+  const makeEs: EventSourceFactory | undefined =
+    opts.eventSource ??
+    (typeof EventSource !== 'undefined' ? (url) => new EventSource(url) as unknown as EventSourceLike : undefined);
+  let es: EventSourceLike | undefined;
+  let listeners = new Set<(v: number) => void>();
+  let stopped = false;
+  let lastVersion: number | undefined;
+  let polling = false;
+  let pollTimer: ReturnType<typeof setTimeout> | undefined;
+  let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+  let backoff = backoffMin;
 
-    const notify = (v: number) => {
-      if (stopped || v === lastVersion) return;
-      lastVersion = v;
-      onChange(v);
+  const notify = (v: number) => {
+    if (stopped || v === lastVersion) return;
+    lastVersion = v;
+    listeners.forEach((l) => l(v));
+  };
+  const poll = async () => {
+    pollTimer = undefined;
+    try {
+      notify((await getProjections(lastVersion)).version);
+    } catch {
+      /* keep polling */
+    }
+    if (!stopped && polling) pollTimer = setTimeout(poll, pollMs);
+  };
+  const startPolling = () => {
+    if (polling || stopped) return;
+    polling = true;
+    pollTimer = setTimeout(poll, 0);
+  };
+  const stopPolling = () => {
+    polling = false;
+    if (pollTimer !== undefined) clearTimeout(pollTimer);
+    pollTimer = undefined;
+  };
+  const scheduleReconnect = () => {
+    if (stopped || reconnectTimer !== undefined) return;
+    reconnectTimer = setTimeout(connect, backoff);
+    backoff = Math.min(backoff * 2, backoffMax);
+  };
+  function connect() {
+    reconnectTimer = undefined;
+    if (stopped || !makeEs) return;
+    let source: EventSourceLike;
+    try {
+      source = makeEs(`${base}/api/v1/stream`);
+    } catch {
+      startPolling();
+      scheduleReconnect();
+      return;
+    }
+    es = source;
+    source.onopen = () => {
+      backoff = backoffMin;
+      stopPolling();
     };
-    const poll = async () => {
-      pollTimer = undefined;
+    source.onmessage = (ev) => {
       try {
-        notify((await getProjections(lastVersion)).version);
+        const m = StreamMessage.safeParse(JSON.parse(ev.data));
+        if (m.success) notify(m.data.version);
       } catch {
-        /* keep polling */
+        /* ignore malformed frame */
       }
-      if (!stopped && polling) pollTimer = setTimeout(poll, pollMs);
     };
-    const startPolling = () => {
-      if (polling || stopped) return;
-      polling = true;
-      pollTimer = setTimeout(poll, 0);
+    source.onerror = () => {
+      source.close();
+      if (es === source) es = undefined;
+      startPolling();
+      scheduleReconnect();
     };
-    const stopPolling = () => {
-      polling = false;
-      if (pollTimer !== undefined) clearTimeout(pollTimer);
-      pollTimer = undefined;
-    };
-    const scheduleReconnect = () => {
-      if (stopped || reconnectTimer !== undefined) return;
-      reconnectTimer = setTimeout(connect, backoff);
-      backoff = Math.min(backoff * 2, backoffMax);
-    };
-    function connect() {
-      reconnectTimer = undefined;
-      if (stopped || !makeEs) return;
-      let source: EventSourceLike;
-      try {
-        source = makeEs(`${base}/api/v1/stream`);
-      } catch {
-        startPolling();
-        scheduleReconnect();
-        return;
-      }
-      es = source;
-      source.onopen = () => {
-        backoff = backoffMin;
-        stopPolling();
-      };
-      source.onmessage = (ev) => {
-        try {
-          const m = StreamMessage.safeParse(JSON.parse(ev.data));
-          if (m.success) notify(m.data.version);
-        } catch {
-          /* ignore malformed frame */
+  }
+
+  function subscribe(onChange: (snapshotVersion: number) => void): () => void {
+    listeners.add(onChange);
+
+    // If already connected, just register the listener.
+    if (es) {
+      return () => {
+        listeners.delete(onChange);
+        if (listeners.size === 0) {
+          stopped = true;
+          stopPolling();
+          if (reconnectTimer !== undefined) clearTimeout(reconnectTimer);
+          es?.close();
+          es = undefined;
         }
-      };
-      source.onerror = () => {
-        source.close();
-        if (es === source) es = undefined;
-        startPolling();
-        scheduleReconnect();
       };
     }
 
+    // First subscriber — create the shared SSE connection.
+    stopped = false;
     if (makeEs) connect();
     else startPolling();
+
     return () => {
-      stopped = true;
-      stopPolling();
-      if (reconnectTimer !== undefined) clearTimeout(reconnectTimer);
-      es?.close();
+      listeners.delete(onChange);
+      if (listeners.size === 0) {
+        stopped = true;
+        stopPolling();
+        if (reconnectTimer !== undefined) clearTimeout(reconnectTimer);
+        es?.close();
+        es = undefined;
+      }
     };
   }
 

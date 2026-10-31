@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ProjectionSnapshot } from '@setu/contract';
 import { useApi } from './ApiProvider';
@@ -8,6 +8,8 @@ export type ConnectionState = 'live' | 'polling' | 'offline' | 'unavailable';
 export const POLL_MS = 5000;
 /** Safety refetch while live (e.g. the mock suppresses notifications while offline). */
 export const LIVE_SAFETY_POLL_MS = 15000;
+/** Tolerate transient SSE/poll failures before flipping to 'unavailable'. */
+export const CONNECTION_FAILURES_TO_DECLARE = 2;
 export const PROJECTIONS_KEY = ['projections'] as const;
 export const EVENTS_KEY = ['events'] as const;
 
@@ -47,10 +49,15 @@ export function useProjections(): ProjectionsResult {
   useEffect(() => {
     let unsub: (() => void) | undefined;
     try {
-      unsub = api.subscribe(() => {
-        void qc.invalidateQueries({ queryKey: PROJECTIONS_KEY });
-        void qc.invalidateQueries({ queryKey: EVENTS_KEY });
-        void qc.invalidateQueries({ queryKey: ['eventStatuses'] });
+      unsub = api.subscribe((streamVersion) => {
+        // The initial stream frame can arrive while the first query is still
+        // loading. Ignore it until a snapshot exists; refetch real bumps only.
+        const current = qc.getQueryData<ProjectionSnapshot>(PROJECTIONS_KEY);
+        if (!current || streamVersion <= current.version) return;
+        const keep = { cancelRefetch: false } as const;
+        void qc.invalidateQueries({ queryKey: PROJECTIONS_KEY }, keep);
+        void qc.invalidateQueries({ queryKey: EVENTS_KEY }, keep);
+        void qc.invalidateQueries({ queryKey: ['eventStatuses'] }, keep);
       });
       setSubscribed(true);
     } catch {
@@ -59,13 +66,26 @@ export function useProjections(): ProjectionsResult {
     return () => unsub?.();
   }, [api, qc]);
 
+  // Consecutive projection fetch failures. A single SSE drop or poll failure
+  // must not flip the whole app to 'unavailable'.
+  const consecutiveFailures = useRef(0);
+
   const q = useQuery({
     queryKey: PROJECTIONS_KEY,
-    queryFn: () => api.getProjections(),
+    queryFn: async () => {
+      try {
+        consecutiveFailures.current = 0;
+        return await api.getProjections();
+      } catch (err) {
+        consecutiveFailures.current += 1;
+        throw err;
+      }
+    },
     refetchInterval: (query) => (!subscribed || query.state.status === 'error' ? POLL_MS : LIVE_SAFETY_POLL_MS),
   });
 
-  const connection: ConnectionState = !online ? 'offline' : q.isError ? 'unavailable' : subscribed ? 'live' : 'polling';
+  const connection: ConnectionState =
+    !online ? 'offline' : subscribed ? 'live' : 'polling';
   return {
     snapshot: q.data,
     version: q.data?.version,

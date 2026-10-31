@@ -4,6 +4,7 @@ import { useQueue, useSyncState } from '../../sync/index.js';
 import {
   acquireProbe,
   deriveConnectivity,
+  resetProbeState,
   useBackendReachable,
   type ConnectivityState,
 } from './connectivity.js';
@@ -27,6 +28,9 @@ const PROBE_ENABLED = true;
 function useBackendProbe(enabled: boolean, online: boolean): void {
   useEffect(() => {
     if (!enabled || !online) return;
+    // Give each page load a clean slate: transient failures during mount/reload
+    // must not flip the app to 'unreachable'.
+    resetProbeState();
     return acquireProbe(API_BASE_URL);
   }, [enabled, online]);
 }
