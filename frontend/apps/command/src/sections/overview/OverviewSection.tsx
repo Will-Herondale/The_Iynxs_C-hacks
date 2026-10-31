@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { SyncStatusBadge } from '@setu/ui';
 import type { EventRecord, ProjectionSnapshot } from '@setu/contract';
 import { useChangeBatches } from '../../app/changes';
@@ -8,8 +8,9 @@ import { useEvents, useProjections } from '../../data';
 import { EVENT_META, affectedFeatures, eventSummary, feedStatus } from '../../feed/status';
 import { criticalAlerts, overviewCounts } from './model';
 
-const NOT_PROVIDED = 'Not provided by backend';
 const RECENT = 8;
+/** Alerts shown before "Show all": the repeated route-refusal alerts would otherwise bury the first screen. */
+const ALERTS_SHOWN = 3;
 
 function whereOf(rec: EventRecord, snap?: ProjectionSnapshot): string {
   const link = affectedFeatures(rec)[0];
@@ -28,6 +29,7 @@ export function OverviewSection() {
   const { events } = useEvents();
   const batches = useChangeBatches();
   const goTo = useGoTo();
+  const [allAlerts, setAllAlerts] = useState(false);
   const counts = overviewCounts(snapshot, events);
   const alerts = useMemo(() => criticalAlerts(snapshot, batches), [snapshot, batches]);
   const verifiedRoutes = snapshot?.routes.features.filter((f) => f.properties.status !== 'unavailable' && f.properties.computation?.verified === true).length ?? 0;
@@ -36,16 +38,23 @@ export function OverviewSection() {
     [events],
   );
   const tiles: { id: string; label: string; value: number | undefined; note: string; goto: Parameters<typeof goTo>[0] }[] = [
-    { id: 'affected', label: 'Affected settlements', value: counts?.affectedSettlements, note: 'limited + cut off', goto: 'settlements' },
-    { id: 'disconnected', label: 'Disconnected', value: counts?.disconnected, note: 'cut off', goto: 'settlements' },
-    { id: 'impassable', label: 'Impassable segments', value: counts?.impassableSegments, note: 'roads + bridges', goto: 'map' },
-    { id: 'unavailable-routes', label: 'Unavailable routes', value: counts?.unavailableRoutes, note: 'beyond window or refused', goto: 'routes' },
-    { id: 'pending', label: 'Pending reports', value: counts?.pendingReports, note: 'accepted, not yet applied', goto: 'events' },
-    { id: 'evac', label: 'Evacuation actions', value: counts?.evacuationActions, note: 'settlements with a deadline', goto: 'routes' },
+    { id: 'affected', label: 'Villages affected', value: counts?.affectedSettlements, note: 'harder to reach or cut off', goto: 'settlements' },
+    { id: 'disconnected', label: 'Villages cut off', value: counts?.disconnected, note: 'no way in or out', goto: 'settlements' },
+    { id: 'impassable', label: 'Roads and bridges blocked', value: counts?.impassableSegments, note: 'cannot be used', goto: 'map' },
+    { id: 'unavailable-routes', label: 'Evacuation routes not usable', value: counts?.unavailableRoutes, note: 'too long or refused', goto: 'routes' },
+    { id: 'pending', label: 'Reports waiting', value: counts?.pendingReports, note: 'received, not yet applied', goto: 'events' },
+    { id: 'evac', label: 'Villages with a deadline', value: counts?.evacuationActions, note: 'evacuation time limit', goto: 'routes' },
   ];
 
   return (
     <div className="ov" data-testid="overview">
+      {counts && (
+        <p className="ov-headline" data-testid="overview-headline">
+          {counts.impassableSegments === 0 ? 'No roads or bridges are blocked.' : `${counts.impassableSegments} road or bridge ${counts.impassableSegments === 1 ? 'is' : 'are'} blocked.`}{' '}
+          {counts.disconnected === 0 ? 'No villages are cut off.' : `${counts.disconnected} ${counts.disconnected === 1 ? 'village is' : 'villages are'} cut off.`}{' '}
+          {snapshot && snapshot.routes.features.length > 0 && `${snapshot.routes.features.length - counts.unavailableRoutes} of ${snapshot.routes.features.length} evacuation routes can be used.`}
+        </p>
+      )}
       <p data-testid="overview-honesty-note" className="ov-note">Shelters are pre-identified camps, not confirmed. {verifiedRoutes > 0 ? 'Routes marked calculated were computed over the road network; other route times remain indicative.' : 'Routes and travel times are scenario data, not verified as computed (indicative, source unconfirmed).'}</p>
       <dl className="ov-meta">
         <div>
@@ -53,11 +62,7 @@ export function OverviewSection() {
           <dd data-testid="overview-district">Majuli</dd>
         </div>
         <div>
-          <dt>Simulation time</dt>
-          <dd data-testid="overview-simtime">{NOT_PROVIDED}</dd>
-        </div>
-        <div>
-          <dt>Snapshot</dt>
+          <dt>Data version</dt>
           <dd>{snapshot ? `v${snapshot.version} · ${formatDateTime(snapshot.generatedAt)}` : '–'}</dd>
         </div>
       </dl>
@@ -81,8 +86,8 @@ export function OverviewSection() {
             <p data-testid="overview-no-alerts">✓ No critical conditions in the current server snapshot.</p>
           ) : (
             <ul className="ov-list" data-testid="overview-alerts">
-              {alerts.map((a) => (
-                <li key={a.key}>
+              {alerts.map((a, i) => (
+                <li key={a.key} hidden={!allAlerts && i >= ALERTS_SHOWN}>
                   <button
                     type="button"
                     className="ov-alert"
@@ -98,6 +103,11 @@ export function OverviewSection() {
                 </li>
               ))}
             </ul>
+          )}
+          {alerts.length > ALERTS_SHOWN && (
+            <button type="button" className="ov-link" data-testid="overview-alerts-toggle" onClick={() => setAllAlerts((v) => !v)}>
+              {allAlerts ? 'Show fewer alerts' : `Show all ${alerts.length} alerts`}
+            </button>
           )}
         </section>
 

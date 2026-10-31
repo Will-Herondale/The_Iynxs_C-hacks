@@ -34,7 +34,7 @@ describe('<App/> dashboard', () => {
     }
     expect(screen.getByTestId('nav-overview').getAttribute('aria-current')).toBe('page');
     expect(await screen.findByTestId('overview')).toBeTruthy();
-    expect(screen.getByTestId('overview-simtime').textContent).toBe('Not provided by backend');
+    expect(screen.queryByTestId('overview-simtime')).toBeNull();
     for (const id of ['affected', 'disconnected', 'impassable', 'unavailable-routes', 'pending', 'evac']) expect(screen.getByTestId(`overview-count-${id}`)).toBeTruthy();
   });
 

@@ -50,7 +50,7 @@ export function delayLabel(rec: EventRecord): string {
   if (Number.isNaN(ms)) return '';
   if (ms < -60_000) return 'device clock ahead of server';
   const min = Math.round(ms / 60_000);
-  if (min < 2) return 'arrived immediately';
+  if (min < 2) return 'sent right away';
   if (min < 60) return `reported offline, arrived ${min} min later`;
   const h = Math.floor(min / 60);
   const m = min % 60;

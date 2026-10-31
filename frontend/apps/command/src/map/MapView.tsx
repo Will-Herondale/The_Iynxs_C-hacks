@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import maplibregl, { type GeoJSONSource, type Map as MlMap, type MapMouseEvent } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useEvents, useProjections } from '../data';
-import { useSelection } from '../app';
+import { useSelection, useView } from '../app';
 import {
   ALWAYS_LAYERS, COLORS, EMPTY_FC, GROUP_NAMES, INTERACTIVE_LAYERS, KIND_GROUP, MAP_LAYERS, SOURCE_IDS, TOGGLE_IDS, TOGGLE_LAYERS,
   featureToSelection, idsFilter, selectionFilter, snapshotSources,
@@ -57,6 +57,7 @@ export function MapView() {
   const { snapshot, version } = useProjections();
   const { events } = useEvents();
   const { visible } = useMapLayers();
+  const { view: currentView } = useView();
   const { selected, select } = useSelection();
 
   const container = useRef<HTMLDivElement>(null);
@@ -288,7 +289,8 @@ export function MapView() {
         style={{ position: 'absolute', inset: 0 }}
       />
       <details
-        open
+        key={currentView === 'map' ? 'open' : 'closed'}
+        open={currentView === 'map'}
         style={{ position: 'absolute', top: 8, left: 8, zIndex: 2, maxWidth: 300, maxHeight: 'calc(100% - 16px)', overflowY: 'auto', padding: '6px 10px', background: 'var(--setu-surface, #fff)', color: 'var(--setu-text, #111)', border: '1px solid var(--setu-border, #888)', borderRadius: 6, fontSize: 13 }}
       >
         <summary style={{ cursor: 'pointer', fontWeight: 600 }}>Layers</summary>

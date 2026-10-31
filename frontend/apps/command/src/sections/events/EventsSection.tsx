@@ -1,4 +1,5 @@
 import { SkippedEventsNotice } from '../../data/skipped';
+import { BASE_BOUNDS } from '../../map/basemap';
 import { memo, useMemo, useState } from 'react';
 import { Panel, EmptyState, SyncStatusBadge } from '@setu/ui';
 import type { ProjectionSnapshot } from '@setu/contract';
@@ -48,7 +49,8 @@ const FeedRow = memo(function FeedRow({
           <SyncStatusBadge status={status} />
         </div>
         <div style={{ fontSize: '0.85em', opacity: 0.8 }}>
-          {rec.event.location.lat.toFixed(4)}, {rec.event.location.lng.toFixed(4)} · observed{' '}
+          {rec.event.location.lat.toFixed(4)}, {rec.event.location.lng.toFixed(4)}
+          {isOutsideMajuli(rec.event.location) && <span className="cmd-outside" data-testid="feed-outside" title="This report's location is outside Majuli. It may be a test report or a wrong GPS fix."> ⚠ outside Majuli</span>} · observed{' '}
           <time dateTime={rec.event.occurredAt}>{formatClock(rec.event.occurredAt)}</time> · received{' '}
           <time dateTime={rec.receivedAt}>{formatClock(rec.receivedAt)}</time> · {delayLabel(rec)}
         </div>
@@ -56,6 +58,12 @@ const FeedRow = memo(function FeedRow({
     </li>
   );
 });
+
+/** True when a report's location falls outside the Majuli map area (often a test report or a bad GPS fix). */
+export function isOutsideMajuli(l: { lat: number; lng: number }): boolean {
+  const [[w, south], [e, north]] = BASE_BOUNDS;
+  return l.lng < w || l.lng > e || l.lat < south || l.lat > north;
+}
 
 /** Reports & Events: chronological, windowed feed; click an event for payload and resulting changes. */
 export function EventsSection({ onShowFeature }: EventsSectionProps) {

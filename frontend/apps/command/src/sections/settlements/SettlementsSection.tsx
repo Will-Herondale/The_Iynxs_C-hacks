@@ -19,8 +19,6 @@ const COLS: Col[] = [
   { key: 'priority', header: 'Priority', sort: (r) => priorityRank(r.priority) },
   { key: 'status', header: 'Evacuation route', sort: (r) => r.statusLabel },
 ];
-const NOT_IN_CONTRACT = 'not provided by the backend';
-const Dash = ({ what }: { what: string }) => <span title={NOT_IN_CONTRACT} aria-label={`${what}: ${NOT_IN_CONTRACT}`} data-testid={`na-${what}`}>—</span>;
 
 export function SettlementsSectionView({ snapshot, people, now = Date.now() }: { snapshot?: ProjectionSnapshot; people?: PeopleSnapshot; now?: number }) {
   const { selected, select } = useSelection();
@@ -35,17 +33,25 @@ export function SettlementsSectionView({ snapshot, people, now = Date.now() }: {
     });
   }, [rows, q, sort]);
 
+  // Columns the backend does not fill for any village are hidden instead of showing a wall of dashes.
+  const hasData: Record<string, boolean> = {
+    segment: rows.some((r) => r.criticalSegments.length > 0),
+    deadline: rows.some((r) => !!r.deadline),
+    priority: rows.some((r) => r.priority !== undefined && r.priority !== null),
+  };
+  const cols = COLS.filter((c) => hasData[c.key] ?? true);
+
   if (!snapshot) return <div data-testid="settlements-section"><Panel title="Settlements"><EmptyState title="Loading…" /></Panel></div>;
 
   return (
     <div data-testid="settlements-section">
       <Panel title="Settlements">
         <p style={{ margin: '0 0 8px', fontSize: '0.85em', opacity: 0.85 }} data-testid="settlements-source-note">
-          Flood access and mapped households come from the settlement projection. Field registrations are live server data and are shown separately.
+          Each row is a village. Click one to see why it is (or is not) cut off. Field registrations come from volunteers and are shown separately.
         </p>
         <div style={{ display: 'flex', gap: 12, marginBottom: 8, alignItems: 'center' }}>
           <label>Search{' '}
-            <input type="search" className="setu-table__search" aria-label="Search settlements" data-testid="settlements-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="name, id, segment…" />
+            <input type="search" className="setu-table__search" aria-label="Search settlements" data-testid="settlements-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="village name…" />
           </label>
           <span data-testid="settlements-count" aria-live="polite">{view.length} of {rows.length}</span>
         </div>
@@ -56,7 +62,7 @@ export function SettlementsSectionView({ snapshot, people, now = Date.now() }: {
             <table data-testid="settlements-table" className="cmd-settlements">
               <thead>
                 <tr>
-                  {COLS.map((c) => (
+                  {cols.map((c) => (
                     <th key={c.key} scope="col" aria-sort={sort.key === c.key ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none'}>
                       <button type="button" className="setu-table__sort" data-testid={`settlements-sort-${c.key}`} onClick={() => setSort((s) => ({ key: c.key, dir: s.key === c.key && s.dir === 1 ? -1 : 1 }))}>
                         {c.header}{sort.key === c.key ? (sort.dir === 1 ? ' ▲' : ' ▼') : ''}
@@ -64,7 +70,6 @@ export function SettlementsSectionView({ snapshot, people, now = Date.now() }: {
                     </th>
                   ))}
                   <th scope="col">Field registrations</th>
-                  <th scope="col">Shelter · travel · latest departure</th>
                 </tr>
               </thead>
               <tbody>
@@ -75,17 +80,14 @@ export function SettlementsSectionView({ snapshot, people, now = Date.now() }: {
                       onClick={() => select({ kind: 'settlement', id: r.id })} className={isSel ? 'cmd-row--selected' : 'cmd-row'}>
                       <td><button type="button" className="cmd-linkbtn" onClick={(e) => { e.stopPropagation(); select({ kind: 'settlement', id: r.id }); }} aria-pressed={isSel}>{r.name}</button> <MonoId>{r.id}</MonoId>{r.synthetic && <> <DataClassTag dataClass="SYNTHETIC" label="DEMO · SYNTHETIC" /></>}</td>
                       <td><Badge tone={ACCESS_TONE[r.accessibility].tone} icon={ACCESS_TONE[r.accessibility].icon}>{label(r.accessibility)}</Badge></td>
-                      <td data-testid={`segment-${r.id}`}>{r.criticalSegments.length ? r.criticalSegments.map((id) => <MonoId key={id}>{id}</MonoId>).flatMap((e, i) => (i ? [', ', e] : [e])) : '—'}</td>
-                      <td>{r.deadline ? <time dateTime={r.deadline}>{formatDeadline(r.deadline, now)}</time> : '—'}</td>
-                      <td>{r.priority ?? '—'}</td>
+                      {hasData.segment && <td data-testid={`segment-${r.id}`}>{r.criticalSegments.length ? r.criticalSegments.map((id) => <MonoId key={id}>{id}</MonoId>).flatMap((e, i) => (i ? [', ', e] : [e])) : '—'}</td>}
+                      {hasData.deadline && <td>{r.deadline ? <time dateTime={r.deadline}>{formatDeadline(r.deadline, now)}</time> : '—'}</td>}
+                      {hasData.priority && <td>{r.priority ?? '—'}</td>}
                       <td>
                         {r.status === 'no-safe-route' ? <Badge tone="danger" icon="✕">{r.statusLabel}</Badge> : r.status === 'no-route-listed' ? <Badge tone="neutral" icon="–">{r.statusLabel}</Badge> : <Badge tone="warning" icon="?">{r.statusLabel}</Badge>}
                       </td>
                       <td data-testid={`settlement-field-counts-${r.id}`}>
                         {r.fieldCheckins === undefined ? 'not loaded' : `${r.fieldPeople} people · ${r.fieldHouseholds} households`}
-                      </td>
-                      <td className="cmd-settlements__na">
-                        <Dash what="nearest-shelter" /> · <Dash what="travel-time" /> · <Dash what="latest-departure" />
                       </td>
                     </tr>
                   );

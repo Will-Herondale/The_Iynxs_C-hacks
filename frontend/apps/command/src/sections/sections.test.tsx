@@ -34,15 +34,15 @@ function cutOff(): ProjectionSnapshot {
 }
 
 describe('settlements section', () => {
-  it('shows contract columns, "—" with tooltip for #15 columns, and selects on row click', () => {
+  it('shows the filled columns, hides empty ones, and selects on row click', () => {
     const s = cutOff();
     const id = s.settlements.features[0]!.properties.settlementId;
     wrap(<SettlementsSectionView snapshot={s} now={Date.parse('2026-10-30T12:00:00Z')} />);
     const row = screen.getByTestId(`settlement-row-${id}`);
     expect(within(row).getByTestId(`segment-${id}`).textContent).toBe('BR-1');
     expect(row.textContent).toContain('critical');
-    expect(within(row).getByTestId('na-nearest-shelter').getAttribute('title')).toBe('not provided by the backend');
-    expect(within(row).getByTestId('na-travel-time').textContent).toBe('—');
+    // Columns the backend never fills are not shown at all.
+    expect(within(row).queryByTestId('na-nearest-shelter')).toBeNull();
     fireEvent.click(row);
     expect(screen.getByTestId('probe').textContent).toBe(`settlement:${id}`);
   });

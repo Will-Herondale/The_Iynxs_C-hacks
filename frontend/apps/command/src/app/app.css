@@ -102,3 +102,8 @@ body { background: var(--setu-bg); color: var(--setu-text); font-family: var(--s
 /* Links on the dark theme: readable colour (the browser default blue fails contrast on dark panels). */
 .cmd-section a, .cmd-workspace a { color: var(--setu-primary); text-underline-offset: 2px; }
 .cmd-section a:visited, .cmd-workspace a:visited { color: var(--setu-primary); }
+
+/* Plain-language headline at the top of Overview, and nav icons. */
+.ov-headline { margin: 0 0 12px; font-size: 1.25rem; font-weight: 600; line-height: 1.4; }
+.cmd-viewswitch__icon { opacity: 0.8; margin-right: 2px; }
+.cmd-outside { color: var(--setu-warning); font-weight: 600; }

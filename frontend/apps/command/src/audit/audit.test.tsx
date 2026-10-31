@@ -74,7 +74,7 @@ describe('rows', () => {
   });
   it('describes offline delay', () => {
     expect(delayLabel(rec('a'))).toBe('reported offline, arrived 12 min later');
-    expect(delayLabel(rec('a', { receivedAt: '2026-01-01T00:00:10+00:00' }))).toBe('arrived immediately');
+    expect(delayLabel(rec('a', { receivedAt: '2026-01-01T00:00:10+00:00' }))).toBe('sent right away');
   });
 });
 
