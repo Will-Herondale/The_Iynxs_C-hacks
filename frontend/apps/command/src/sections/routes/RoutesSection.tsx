@@ -77,7 +77,18 @@ export function RoutesSectionView({ snapshot }: { snapshot?: ProjectionSnapshot 
         {settlements.filter((p) => !origin || p.settlementId === origin).filter((p) => !routes.some((r) => r.from === p.settlementId && r.kind === 'evacuation')).map((p) => (
           <div key={p.settlementId} data-testid={`no-route-data-${p.settlementId}`} data-route-state="no-route-data" style={{ ...small, margin: '4px 0' }}>– No route data — {p.name} (<MonoId>{p.settlementId}</MonoId>): none provided. This is not the same as &quot;no safe route&quot;.</div>
         ))}
-        {noSafe.map((p) => <NoSafeRoute key={p.settlementId} settlementId={p.settlementId} name={p.name} />)}
+        {noSafe.length > 0 && (
+          <div role="alert" className="cmd-nosafe" data-testid="routes-no-safe-summary">
+            <strong>✕ No safe route for {noSafe.length} {noSafe.length === 1 ? 'village' : 'villages'}</strong>: every known evacuation route from {noSafe.length === 1 ? 'it' : 'them'} is unusable.
+            <ul>
+              {noSafe.map((p) => (
+                <li key={p.settlementId} data-testid={`no-safe-route-${p.settlementId}`} data-route-state="no-safe-route">
+                  <span className="cmd-nosafe__label">No safe route:</span> {p.name}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {shown.length === 0 ? (
           <EmptyState title="No routes match">{routes.length === 0 ? 'The backend has not published any routes.' : 'Clear the filters to see all routes.'}</EmptyState>

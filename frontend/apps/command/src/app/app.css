@@ -112,3 +112,6 @@ body { background: var(--setu-bg); color: var(--setu-text); font-family: var(--s
 .cmd-chip[aria-pressed='true'] { background: var(--setu-text); color: var(--setu-bg); font-weight: 700; }
 .cmd-why { margin-top: 6px; }
 .cmd-why > summary { cursor: pointer; color: var(--setu-primary); font-size: 0.9em; }
+.cmd-nosafe { border: 2px solid var(--setu-danger); border-radius: 6px; padding: 8px 12px; margin: 6px 0 10px; }
+.cmd-nosafe ul { display: flex; flex-wrap: wrap; gap: 4px 16px; list-style: none; margin: 6px 0 0; padding: 0; }
+.cmd-nosafe__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
