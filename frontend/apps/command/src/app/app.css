@@ -98,3 +98,7 @@ body { background: var(--setu-bg); color: var(--setu-text); font-family: var(--s
 .cmd-legend .setu-dataclass { color: #333; background: #fff; }
 .cmd-legend .setu-dataclass--synthetic { color: #6a1b9a; background: #f3e5f5; }
 .cmd-legend .setu-dataclass--experimental { color: #8a4b00; background: #fff3e0; }
+
+/* Links on the dark theme: readable colour (the browser default blue fails contrast on dark panels). */
+.cmd-section a, .cmd-workspace a { color: var(--setu-primary); text-underline-offset: 2px; }
+.cmd-section a:visited, .cmd-workspace a:visited { color: var(--setu-primary); }
