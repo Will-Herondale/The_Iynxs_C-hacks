@@ -71,7 +71,7 @@ describe('FeaturePanel', () => {
     wrap(<FeaturePanelView snapshot={afterR7()} />, { kind: 'settlement', id: 'S3' });
     const p = screen.getByTestId('feature-panel');
     expect(p.textContent).toContain('cut off');
-    expect(p.textContent).toContain('households');
+    expect(p.textContent).toContain('Households (mapped)');
     expect(within(p).getByTestId('link-route-EVAC-2')).toBeTruthy();
     expect(within(p).getByTestId('link-shelter-SH2')).toBeTruthy();
     fireEvent.click(within(p).getByTestId('link-route-EVAC-2'));
@@ -128,9 +128,9 @@ describe('FeaturePanel', () => {
     };
     wrap(<FeaturePanelView snapshot={s} people={people} />, { kind: 'shelter', id: shelterId });
     const p = screen.getByTestId('feature-panel');
-    expect(p.textContent).toContain('shelter-reported occupancy');
-    expect(p.textContent).toContain('field households');
-    expect(p.textContent).toContain('field people');
+    expect(p.textContent).toContain('Occupancy (reported)');
+    expect(p.textContent).toContain('Households registered');
+    expect(p.textContent).toContain('People registered');
     expect(p.textContent).toContain('4');
   });
 
@@ -140,7 +140,7 @@ describe('FeaturePanel', () => {
     const p = screen.getByTestId('feature-panel');
     expect(p.getAttribute('data-feature-kind')).toBe('flood');
     expect(p.textContent).toContain(`${f.severity} / 5`);
-    expect(p.textContent).toContain('depthCm');
+    expect(p.textContent).toContain('Depth (cm)');
   });
 
   it('shows an empty state with no selection', () => {

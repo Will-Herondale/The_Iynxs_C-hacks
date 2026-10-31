@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { isValidElement, type ReactNode } from 'react';
 import type { EventRecord, PeopleSnapshot, ProjectionSnapshot } from '@setu/contract';
 import { LAYER_DATA_CLASS } from '@setu/geo';
 import { Badge, DataClassTag, EmptyState, Panel } from '@setu/ui';
@@ -31,16 +31,49 @@ const KIND_CLASS: Partial<Record<FeatureKind, 'REAL' | 'SYNTHETIC' | 'EXPERIMENT
   shelter: LAYER_DATA_CLASS.shelters, flood: LAYER_DATA_CLASS['flood-modelled'],
 };
 
-function Props({ rows }: { rows: [string, ReactNode][] }) {
+/** Plain-language labels for the panel rows (the data-prop attribute keeps the field name). */
+const LABELS: Record<string, string> = {
+  settlementId: 'ID', roadId: 'ID', routeId: 'ID', shelterId: 'ID', areaId: 'ID', name: 'Name',
+  population: 'Population', 'mapped households': 'Households (mapped)', 'field check-ins': 'Check-ins by volunteers',
+  'field households': 'Households registered', 'field people': 'People registered', needs: 'Needs',
+  'flood access': 'Can it be reached?', routes: 'Evacuation routes', shelters: 'Shelters',
+  evacuationDeadline: 'Evacuation deadline', evacuationPriority: 'Priority', 'supporting observations': 'Based on reports',
+  'latest safe departure': 'Latest safe time to leave', 'first failing segment': 'First blocked road',
+  status: 'Status', kind: 'Type', passability: 'Can vehicles pass?', reason: 'Reason', 'original observation': 'Reported in',
+  'flood confidence': 'Flood confidence', 'travel time': 'Travel time', 'water depth': 'Water depth', 'valid until': 'Valid until',
+  updatedAt: 'Last updated', from: 'From', to: 'To', 'route state': 'Can it be used?', etaMin: 'Travel time',
+  'status (server)': 'Server status', replacesRouteId: 'Replaces', capacity: 'Capacity',
+  'shelter-reported occupancy': 'Occupancy (reported)', 'shelter-reported counts': 'Counts (reported)', 'routes in': 'Routes to here',
+  depthCm: 'Depth (cm)', severity: 'Severity', confidence: 'Confidence',
+};
+
+function PropRows({ rows }: { rows: [string, ReactNode][] }) {
   return (
     <dl style={{ display: 'grid', gridTemplateColumns: 'max-content 1fr', gap: '4px 12px', margin: 0 }}>
       {rows.map(([k, v]) => (
         <div key={k} style={{ display: 'contents' }}>
-          <dt style={{ opacity: 0.7 }}>{k}</dt>
+          <dt style={{ opacity: 0.7 }}>{LABELS[k] ?? k}</dt>
           <dd style={{ margin: 0 }} data-prop={k}>{v}</dd>
         </div>
       ))}
     </dl>
+  );
+}
+
+/** Rows the backend does not provide are folded away so the useful ones come first. */
+function Props({ rows }: { rows: [string, ReactNode][] }) {
+  const missing = rows.filter(([, v]) => isValidElement(v) && v.type === NotProvided);
+  const shown = rows.filter((r) => !missing.includes(r));
+  return (
+    <>
+      <PropRows rows={shown} />
+      {missing.length > 0 && (
+        <details className="cmd-why" data-testid="panel-not-provided">
+          <summary>Not provided by the backend ({missing.length})</summary>
+          <PropRows rows={missing} />
+        </details>
+      )}
+    </>
   );
 }
 
@@ -214,14 +247,29 @@ export function FeaturePanelView({ snapshot, records, onSelectEvent, provenance,
 
   return (
     <div {...attrs}>
-      <Panel title={`${TITLES[selected.kind]} ${selected.id}`}>
+      <Panel title={`${TITLES[selected.kind]}: ${featureName(snapshot, selected.kind, selected.id) ?? selected.id}`}>
         {KIND_CLASS[selected.kind] && <p style={{ margin: '0 0 6px' }} data-class={KIND_CLASS[selected.kind]}><DataClassTag dataClass={KIND_CLASS[selected.kind]!} {...(selected.kind === 'flood' ? { label: 'Modelled · EXPERIMENTAL' } : {})} /></p>}
         {body}
         {(selected.kind === 'road' || selected.kind === 'settlement' || selected.kind === 'route') && (
           <ProvenanceView featureId={selected.id} items={provenance ?? joinProvenance(featureSourceEventIds(snapshot, selected.id), records ?? [], {}, snapshot.version)} />
         )}
-        <p style={{ marginBottom: 0 }}>{close}</p>
       </Panel>
     </div>
   );
+}
+
+/** Human name of a selected feature, when the snapshot has one (routes read "village → shelter"). */
+function featureName(snapshot: ProjectionSnapshot, kind: FeatureKind, id: string): string | undefined {
+  if (kind === 'route') {
+    const r = snapshot.routes.features.find((f) => f.properties.routeId === id)?.properties;
+    if (!r) return undefined;
+    const from = snapshot.settlements.features.find((f) => f.properties.settlementId === r.from)?.properties.name ?? r.from;
+    const to = snapshot.shelters.features.find((f) => f.properties.shelterId === r.to)?.properties.name ?? r.to;
+    return `${from} → ${to}`;
+  }
+  if (kind === 'road' || kind === 'settlement' || kind === 'shelter') {
+    const p = findFeature(snapshot, kind, id) as { name?: string } | undefined;
+    return p?.name;
+  }
+  return undefined;
 }

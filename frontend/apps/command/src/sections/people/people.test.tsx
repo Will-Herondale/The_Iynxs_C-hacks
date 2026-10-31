@@ -130,7 +130,7 @@ describe('CampsPeopleSectionView', () => {
     expect(dup.textContent).toContain('Anita Das');
     expect(dup.textContent).toContain('Dakhinpat');
     expect(dup.textContent).toContain('Garamur');
-    expect(screen.getByTestId('people-source-note').textContent).toContain('auto-merged');
+    expect(screen.getByTestId('people-source-note').textContent).toContain('merged');
     // The two records stay separate.
     expect(screen.getByTestId('people-checkin-row-e2')).toBeTruthy();
     expect(screen.getByTestId('people-checkin-row-e3')).toBeTruthy();

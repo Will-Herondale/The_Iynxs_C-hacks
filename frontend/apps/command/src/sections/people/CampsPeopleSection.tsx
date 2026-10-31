@@ -28,14 +28,24 @@ export function CampsPeopleSectionView({ snapshot }: { snapshot?: PeopleSnapshot
 
   const totals = snapshot.totals;
 
+  if (totals.checkins === 0 && snapshot.checkins.length === 0 && snapshot.duplicateSuggestions.length === 0) {
+    return (
+      <div data-testid="camps-people-section">
+        <Panel title="Camps & People">
+          <EmptyState title="No one has been checked in yet">
+            When volunteers register people or households at a camp in the Field app, the counts per camp, the list of people and any possible duplicates appear here.
+          </EmptyState>
+        </Panel>
+      </div>
+    );
+  }
+
   return (
     <div data-testid="camps-people-section">
       <Panel title="Camps & People">
         <p style={{ ...small, margin: '0 0 8px' }} data-testid="people-source-note">
-          Counts come from field check-ins submitted by volunteers. High-confidence
-          name matches (85% or higher) are auto-merged; the rest stay as duplicate
-          suggestions for a human decision. Shown separately from
-          shelter-reported occupancy.
+          People and households checked in at camps by volunteers. Names that match closely (85% or more) are merged
+          automatically; other possible duplicates are listed for a person to decide. These are not the shelter&apos;s own occupancy figures.
         </p>
         <dl data-testid="people-totals" style={{ display: 'flex', gap: 24, flexWrap: 'wrap', margin: '0 0 10px' }}>
           <div><dt>Check-ins</dt><dd data-testid="people-total-checkins">{totals.checkins}</dd></div>
