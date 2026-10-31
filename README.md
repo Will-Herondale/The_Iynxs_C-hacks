@@ -7,15 +7,12 @@ SETU helps volunteers and coordinators respond to floods. The demo district is *
 
 ## Repository map
 
-Some of these folders arrive on `main` when their PRs merge: `frontend/` with PR #14 and `data/` with PR #16. Until then, find them on the `frontend/main` and `data/karthik` branches.
-
 | Path | What | Owner |
 |---|---|---|
 | `frontend/` | Field app, Command Centre and shared packages (React, TypeScript, Vite) | Frontend |
 | `data/` | Majuli geospatial data foundation | GIS / data |
 | `docs/` | Coordination notes between the frontend, backend and GIS work | all |
 | `TECH_STACK.md` | Tech stack: frontend and backend sections | Frontend, backend |
-| `techstack.md` | GIS and data tech stack | GIS / data |
 
 The backend lives in its own directories and is documented by its owner.
 
