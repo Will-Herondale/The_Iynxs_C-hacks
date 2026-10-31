@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import type { ProjectionSnapshot } from '@setu/contract';
+import type { PeopleSnapshot, ProjectionSnapshot } from '@setu/contract';
 import { fixtureSnapshot } from '../testing/fixture';
 import { SelectionProvider, useSelection } from '../app';
 import { FeaturePanelView } from '../panels';
@@ -78,6 +78,23 @@ describe('settlements section', () => {
     expect(screen.getByTestId('settlements-table').textContent).toContain('Evacuation route');
     expect(row.textContent).toContain('accessible');
     expect(row.textContent).toContain('No safe route');
+  });
+  it('shows a newly registered household in the matching settlement row', () => {
+    const settlement = seed.settlements.features[0]!.properties;
+    const people: PeopleSnapshot = {
+      version: 1,
+      generatedAt: '2026-10-30T10:00:00.000Z',
+      totals: { checkins: 1, individuals: 0, households: 1, campsWithCheckins: 1 },
+      autoMergedCount: 0,
+      camps: [],
+      checkins: [{ eventId: 'h1', clientEventId: 'h1', kind: 'household', personId: 'h1', mergedInto: null, displayName: 'Family One', campId: 'SH1', campName: 'Camp', settlementId: settlement.settlementId, householdId: 'h1', members: 4, ageBand: '18-59', sex: 'u', needs: [], vulnerable: null, occurredAt: '2026-10-30T10:00:00.000Z', reporterId: 'field' }],
+      duplicateSuggestions: [],
+    };
+    render(<SettlementsSectionView snapshot={seed} people={people} />);
+    const row = screen.getByTestId(`settlement-row-${settlement.settlementId}`);
+    expect(screen.getByTestId(`settlement-field-counts-${settlement.settlementId}`).textContent).toBe('4 people · 1 households');
+    expect(screen.getByTestId('settlements-source-note').textContent).toContain('Field registrations');
+    expect(row.textContent).toContain('4 people');
   });
 });
 
