@@ -12,7 +12,7 @@ const CONN: Record<ConnectionState, { tone: 'success' | 'warning' | 'danger'; ic
 };
 
 export function Header() {
-  const { version, connection } = useProjections();
+  const { version, connection, dataUpdatedAt } = useProjections();
   const c = CONN[connection];
   return (
     <div className="cmd-header">
@@ -22,7 +22,7 @@ export function Header() {
       <span data-testid="connection-status" data-state={connection} role="status">
         <Badge tone={c.tone} icon={c.icon}>{c.label}</Badge>
       </span>
-      <StaleBanner />
+      <StaleBanner {...(dataUpdatedAt ? { updatedAt: dataUpdatedAt } : {})} />
     </div>
   );
 }

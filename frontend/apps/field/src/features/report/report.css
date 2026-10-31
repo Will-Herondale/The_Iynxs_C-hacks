@@ -14,3 +14,24 @@
 .report-saved { border: 2px solid #1b7f3b; border-radius: 10px; padding: 12px; background: #eaf6ee; }
 .report-saved__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 @media (min-width: 600px) { .report-cats { grid-template-columns: 1fr 1fr; } }
+
+/* Structured form: numbered sections (type, details, location, evidence). */
+.report-section { border: 1px solid #c5ced8; border-radius: 12px; padding: 10px 12px 12px; margin: 0 0 12px; background: #fff; }
+.report-section__h { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; padding: 0 4px; font-size: 1rem; font-weight: 700; }
+.report-section__n { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #0b5cad; color: #fff; font-size: 0.85rem; }
+.report-unavailable { display: inline-block; margin-left: 6px; padding: 1px 8px; border: 1px dashed #6b7280; border-radius: 999px; font-size: 0.75rem; font-weight: 600; color: #4b5563; background: #f3f4f6; }
+.report-gps { display: flex; align-items: center; gap: 6px; margin: 4px 0 8px; padding: 8px 10px; border-radius: 8px; background: #eef2f6; font-size: 0.9rem; border-left: 4px solid #9aa7b4; }
+.report-gps[data-source='gps'] { border-left-color: #1b7f3b; background: #eaf6ee; }
+.report-gps[data-source='map'], .report-gps[data-source='manual'] { border-left-color: #0b5cad; background: #e6f0fa; }
+.report-gps[data-source='unknown'] { border-left-color: #b26a00; background: #fff4e0; }
+.report-gps__icon { font-size: 1.2rem; }
+.report-location__actions > * { flex: 1 1 10rem; }
+.report-latlng { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.report-form > button[type='submit'] { width: 100%; min-height: 52px; font-size: 1.1rem; font-weight: 700; }
+
+/* A <fieldset> defaults to min-width: min-content, which let the location card grow past a phone screen. */
+fieldset.report-section { min-width: 0; max-width: 100%; box-sizing: border-box; }
+.report-section { box-sizing: border-box; max-width: 100%; }
+.report-latlng > *, .report-location__actions > * { min-width: 0; }
+.report-latlng input { width: 100%; }
+.report-location__actions > * { flex: 1 1 8rem; }

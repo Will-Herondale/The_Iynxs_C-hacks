@@ -52,22 +52,42 @@ export function HomeScreen({ district, cachedAt }: { district?: string; cachedAt
         )}
       </h1>
 
-      <p className="home__conn" data-testid="home-connectivity" data-online={online ? 'true' : 'false'}>
-        <span aria-hidden="true">{online ? '●' : '○'}</span> {online ? 'Online' : 'Offline'}
-        {syncing ? ' · Synchronising' : ''}
-        {' · Last synced: '}
-        {lastSyncedAt ? fmt(lastSyncedAt) + ' IST' : 'never'}
-      </p>
+      <div className="home__status" data-testid="home-status">
+        <div className="home__status-row" data-testid="home-connectivity" data-online={online ? 'true' : 'false'}>
+          <span className="home__status-label">Connection</span>
+          <span className="home__status-value">
+            <span aria-hidden="true">{online ? '●' : '○'}</span> {online ? 'Online' : 'Offline'}
+            {syncing ? ' · Synchronising' : ''}
+          </span>
+        </div>
+        <div className="home__status-row" data-testid="home-sync-state" data-synced={items.length > 0 && counts.pending === 0 && counts.attention === 0 ? 'true' : 'false'}>
+          <span className="home__status-label">Reports</span>
+          <span className="home__status-value">
+            {items.length === 0
+              ? 'None on this device yet'
+              : counts.pending === 0 && counts.attention === 0
+                ? '✓ All synchronised with the server'
+                : `↻ ${counts.pending} waiting to sync${counts.attention > 0 ? ` · ${counts.attention} need attention` : ''}`}
+          </span>
+        </div>
+        <div className="home__status-row" data-testid="home-last-synced">
+          <span className="home__status-label">Last synced</span>
+          <span className="home__status-value">{lastSyncedAt ? fmt(lastSyncedAt) + ' IST' : 'never'}</span>
+        </div>
+        <p className="home__status-note">Online only means this device is connected. A report is synchronised once the server confirms it.</p>
+      </div>
 
       <StaleWarning cachedAt={cachedAt} />
       <p className="home__asof"><DataAsOf cachedAt={cachedAt} /></p>
 
       <div className="home__actions">
         <a className="home__big home__big--primary" href="#/report" data-testid="home-new-report">
-          New Report
+          <span className="home__big-icon" aria-hidden="true">＋</span>
+          <span className="home__big-text"><strong>New Report</strong><small>Flood, road, bridge or water level</small></span>
         </a>
-        <a className="home__big" href="#/households/new" data-testid="home-register-household">
-          Register household
+        <a className="home__big home__big--secondary" href="#/households/new" data-testid="home-register-household">
+          <span className="home__big-icon" aria-hidden="true">⌂</span>
+          <span className="home__big-text"><strong>Register household</strong><small>Works offline</small></span>
         </a>
       </div>
 
