@@ -47,7 +47,7 @@ export function HomeScreen({ district, cachedAt }: { district?: string; cachedAt
         {!district && (
           <span className="home__fixture" data-testid="home-district-fixture">
             {' '}
-            · demo fixture, district not provided by backend
+            · district name not provided by the backend
           </span>
         )}
       </h1>

@@ -5,7 +5,7 @@ import type { Resolver } from 'react-hook-form';
 import { Button, Field, Panel } from '@setu/ui';
 import '../household/household.css';
 import { FieldEventSchema, newClientEventId } from '@setu/contract';
-import type { AgeBand, FieldEvent, PersonCheckin, ProjectionSnapshot } from '@setu/contract';
+import type { AgeBand, PersonCheckin, ProjectionSnapshot } from '@setu/contract';
 import { enqueue } from '../../sync/index.js';
 import { getDeviceId, getReporterId } from '../../app/identity.js';
 import { DEFAULT_LOCATION, useGeolocation } from '../report/location.js';

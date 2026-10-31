@@ -98,13 +98,14 @@ export async function mockProjections(page: Page, snapshot = snapshotWithCamp())
 }
 
 export async function registerHousehold(page: Page, name: string, opts: { members?: string; settlement?: string; shelter?: string } = {}): Promise<string> {
+  const form = page.locator('form[aria-label="Household registration form"]');
   await page.getByTestId('household-headName').fill(name);
   await page.getByTestId('household-members').fill(opts.members ?? '4');
   if (opts.settlement) await page.getByTestId('household-settlementId').selectOption(opts.settlement);
   if (opts.shelter) await page.getByTestId('household-shelterId').selectOption(opts.shelter);
-  await page.getByTestId('wizard-next').click();
+  await form.getByTestId('wizard-next').click();
   await page.getByTestId('household-vulnerable-elderly').check();
-  await page.getByTestId('wizard-next').click();
+  await form.getByTestId('wizard-next').click();
   await page.getByTestId('field-lat').fill('26.95');
   await page.getByTestId('field-lng').fill('94.17');
   await page.getByTestId('household-submit').click();

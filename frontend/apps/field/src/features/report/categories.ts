@@ -22,7 +22,7 @@ export interface CategoryDef {
   roadKind?: 'road' | 'bridge';
 }
 
-export const BLOCKED_15 = 'Blocked: issue #15';
+export const BLOCKED_15 = 'Not available yet: the backend does not support this report type';
 
 export const CATEGORIES: CategoryDef[] = [
   { category: 'water_level', label: 'Water level', hint: 'A reading at a gauge or marker, in cm', eventType: 'water_level' },

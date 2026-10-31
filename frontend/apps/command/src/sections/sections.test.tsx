@@ -41,7 +41,7 @@ describe('settlements section', () => {
     const row = screen.getByTestId(`settlement-row-${id}`);
     expect(within(row).getByTestId(`segment-${id}`).textContent).toBe('BR-1');
     expect(row.textContent).toContain('critical');
-    expect(within(row).getByTestId('na-nearest-shelter').getAttribute('title')).toBe('not in contract (#15)');
+    expect(within(row).getByTestId('na-nearest-shelter').getAttribute('title')).toBe('not provided by the backend');
     expect(within(row).getByTestId('na-travel-time').textContent).toBe('—');
     fireEvent.click(row);
     expect(screen.getByTestId('probe').textContent).toBe(`settlement:${id}`);
@@ -207,7 +207,7 @@ describe('panels: not-provided states', () => {
     const road = s.roads.features[0]!.properties;
     road.sourceEventIds = ['c-9'];
     wrap(<FeaturePanelView snapshot={s} />, { kind: 'road', id: road.roadId });
-    expect(screen.getByTestId('not-provided-travel-time').textContent).toBe('Not provided by backend (#15)');
+    expect(screen.getByTestId('not-provided-travel-time').textContent).toBe('Not provided by backend');
     expect(screen.getByTestId('not-provided-depth')).toBeTruthy();
     expect(screen.getByTestId('not-provided-validity')).toBeTruthy();
     expect(screen.getAllByTestId('source-event-link')[0]!.getAttribute('data-client-event-id')).toBe('c-9');
@@ -217,7 +217,7 @@ describe('panels: not-provided states', () => {
     const id = s.settlements.features[0]!.properties.settlementId;
     wrap(<FeaturePanelView snapshot={s} />, { kind: 'settlement', id });
     expect(screen.getByTestId(`explain-cutoff-${id}`).textContent).toContain('Bridge submerged');
-    expect(screen.getByTestId('not-provided-latest-departure').textContent).toBe('Not provided (#15)');
+    expect(screen.getByTestId('not-provided-latest-departure').textContent).toBe('Not provided');
     expect(screen.getByTestId('not-provided-first-failing-segment')).toBeTruthy();
   });
   it('flood panel carries the synthetic note and DEM caveat', () => {

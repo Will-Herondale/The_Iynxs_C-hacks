@@ -27,7 +27,7 @@ const when = (ms: number) => new Date(ms).toLocaleString('en-IN', { timeZone: 'A
 export function DuplicateReviewPlaceholder() {
   return (
     <div className="household-blocked" data-testid="household-duplicates-blocked" role="note">
-      <strong>Possible-duplicate review: Blocked: issue #15.</strong>{' '}
+      <strong>Possible-duplicate review is not available yet: it needs data the backend does not provide.</strong>{' '}
       Households are never matched or merged automatically on this device.
     </div>
   );
@@ -155,7 +155,7 @@ export function HouseholdsScreen({ snapshot, people, peopleUnavailable, items, o
       )}
       {peopleUnavailable && !people && <p role="status" data-testid="households-server-unavailable">Shared household data is unavailable; showing this device&apos;s records.</p>}
       <Panel title="Household details not yet supported">
-        <p className="household-blocked" data-testid="household-member-names-blocked-summary">Member names: Blocked: #15.</p>
+        <p className="household-blocked" data-testid="household-member-names-blocked-summary">Member names: not recorded yet.</p>
         <DuplicateReviewPlaceholder />
       </Panel>
     </div>

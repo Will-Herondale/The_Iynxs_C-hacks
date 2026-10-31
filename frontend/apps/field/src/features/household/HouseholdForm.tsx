@@ -171,7 +171,7 @@ export function HouseholdScreen({ editing, onDone, submit = defaultSubmit, shelt
         <div hidden={individual}>
           <Field label="Members" type="number" min={1} data-testid="household-members" error={err('members')} {...register('members')} />
           <p className="household-note" data-testid="household-member-names-blocked" aria-disabled="true">
-            Member names: Blocked: #15 (not in the contract; only the member count is recorded).
+            Member names are not recorded yet: only the number of members is saved.
           </p>
         </div>
         {individual && (

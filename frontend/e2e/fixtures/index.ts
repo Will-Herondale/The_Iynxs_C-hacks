@@ -94,10 +94,12 @@ export async function submitReport(page: Page, category = 'road_blockage', opts:
     if (opts.roadId) await sel.selectOption(opts.roadId);
     else await sel.selectOption({ index: 1 });
   }
+  await page.getByTestId('wizard-next').click(); // Details -> Location
   if (await page.getByTestId('field-lat').inputValue() === '') {
     await page.getByTestId('field-lat').fill('26.9512');
     await page.getByTestId('field-lng').fill('94.1701');
   }
+  await page.getByTestId('wizard-next').click(); // Location -> Notes (Save appears on the last step)
   await page.getByTestId('report-submit').click();
   const saved = page.getByTestId('report-saved');
   await expect(saved).toBeVisible();

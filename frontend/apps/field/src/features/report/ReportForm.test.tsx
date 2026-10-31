@@ -89,12 +89,12 @@ describe('ReportScreen', () => {
     expect((await screen.findByTestId('report-saved-label')).textContent).toBe('Saved locally');
   });
 
-  it('damaged infrastructure and other are disabled with the #15 note and cannot be selected', () => {
+  it('damaged infrastructure and other are disabled with the not-available note and cannot be selected', () => {
     render(<ReportScreen submit={vi.fn(async () => undefined)} />);
     for (const c of ['damaged_infrastructure', 'other']) {
       const b = screen.getByTestId(`report-category-${c}`);
       expect(b.getAttribute('aria-disabled')).toBe('true');
-      expect(b.textContent).toContain('Blocked: issue #15');
+      expect(b.textContent).toContain('Not available yet');
       fireEvent.click(b);
       expect(b.getAttribute('aria-checked')).toBe('false');
     }
@@ -104,7 +104,7 @@ describe('ReportScreen', () => {
     render(<ReportScreen submit={vi.fn(async () => undefined)} />);
     fireEvent.click(tid('report-type-water_level'));
     expect(screen.getByText(/unit: cm/)).toBeTruthy();
-    expect(screen.getByTestId('estimate-hint').textContent).toContain('issue #15');
+    expect(screen.getByTestId('estimate-hint').textContent).toContain('not recorded yet');
   });
 
   it('location is optional-GPS: unknown until set, and submit is refused without one', async () => {

@@ -166,7 +166,7 @@ describe('CampView', () => {
     expect(screen.getByTestId('camp-summary-pending').textContent).toBe('1');
     expect(screen.getByTestId('camp-summary-review').textContent).toBe('1');
     expect(screen.getByTestId('camp-capacity').textContent).toContain('120 of 200');
-    expect(screen.getByTestId('household-duplicates-blocked').textContent).toContain('#15');
+    expect(screen.getByTestId('household-duplicates-blocked').textContent).toContain('not available yet');
   });
 
   it('shows server-confirmed households from another device without double-counting local synced rows', () => {

@@ -221,7 +221,7 @@ export function ReportScreen({
               selectProps={{ id: 'f-roadId', className: SELECT, 'data-testid': 'field-roadId', ...register('roadId') }}
             />
             {err('roadId') && <span className="setu-field__error" role="alert">{err('roadId')}</span>}
-            {!snapshot && <span className="report-hint-disabled"> Demo list: no cached district data on this device yet.</span>}
+            {!snapshot && <span className="report-hint-disabled"> Sample list only: no district data is cached on this device yet.</span>}
           </div>
         )}
         {(category === 'blocked_road' || category === 'submerged_bridge') && (
@@ -256,7 +256,7 @@ export function ReportScreen({
               <Field label="Water level (unit: cm)" type="number" inputMode="decimal" data-testid="field-levelCm" error={err('levelCm')} {...register('levelCm')} />
               <span aria-hidden="true">cm</span>
             </div>
-            <p className="report-hint-disabled" data-testid="estimate-hint">Estimated vs measured: not recorded yet. {BLOCKED_15}</p>
+            <p className="report-hint-disabled" data-testid="estimate-hint">Estimated vs measured is not recorded yet: the backend has no field for it.</p>
             <div className="setu-field">
               <label className="setu-field__label" htmlFor="f-trend">Trend</label>
               <select id="f-trend" className={SELECT} data-testid="field-trend" {...register('trend')}>

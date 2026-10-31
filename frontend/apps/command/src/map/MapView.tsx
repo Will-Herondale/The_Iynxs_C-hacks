@@ -7,7 +7,8 @@ import {
   ALWAYS_LAYERS, COLORS, EMPTY_FC, GROUP_NAMES, INTERACTIVE_LAYERS, KIND_GROUP, MAP_LAYERS, SOURCE_IDS, TOGGLE_IDS, TOGGLE_LAYERS,
   featureToSelection, idsFilter, selectionFilter, snapshotSources,
 } from './layers';
-import { BASE_BOUNDS, baseLayerIds, loadBasemap, offlineStyle } from './basemap';
+import { BASE_BOUNDS, baseLayerIds, loadBasemap, loadPlaceLabels, offlineStyle } from './basemap';
+import type { HtmlLabelHandle } from '@setu/geo';
 import { selectionBounds } from './bounds';
 import { blockingByGroup, blockingIds, buildMarkers, type MarkerSpec } from './markers';
 import { observationsToGeoJSON, registerObservationIcons } from './observations';
@@ -67,6 +68,7 @@ export function MapView() {
   const eventsRef = useRef(events);
   eventsRef.current = events;
   const markersRef = useRef(new Map<string, MarkerEntry>());
+  const placeLabels = useRef<HtmlLabelHandle | null>(null);
   const lastData = useRef(new Map<string, unknown>());
   const [ready, setReady] = useState(false);
 
@@ -192,6 +194,28 @@ export function MapView() {
       if (!seen.has(key)) { e.marker.remove(); existing.delete(key); }
     }
   }, [ready, snapshot]);
+
+  // Village and town names (real OpenStreetMap places) plus the backend's synthetic demo settlement, labelled as a demo.
+  const demoSettlements = (snapshot?.settlements.features ?? []).filter((f) => f.properties.synthetic);
+  const demoKey = demoSettlements.map((f) => `${f.properties.settlementId}:${f.geometry.coordinates.join(',')}:${f.properties.name}`).join('|');
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    let cancelled = false;
+    const demo = demoSettlements
+      .map((f) => ({ id: `demo-${f.properties.settlementId}`, lngLat: f.geometry.coordinates as [number, number], text: `${f.properties.name} (demo)`, kind: 'demo', minZoom: 0, priority: 5 }));
+    void loadPlaceLabels(map, demo).then((h) => {
+      if (cancelled) return h.destroy();
+      placeLabels.current?.destroy();
+      placeLabels.current = h;
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [ready, demoKey]);
+  useEffect(() => () => { placeLabels.current?.destroy(); placeLabels.current = null; }, []);
+  useEffect(() => {
+    const root = container.current?.querySelector<HTMLElement>('.cmd-place-labels');
+    if (root) root.style.display = visible.settlements ? '' : 'none';
+  }, [visible, ready, snapshot]);
 
   // Marker visibility follows the layer toggles.
   useEffect(() => {

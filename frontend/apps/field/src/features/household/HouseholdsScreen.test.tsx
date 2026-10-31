@@ -58,14 +58,14 @@ describe('HouseholdsScreen', () => {
 
   it('shows the blocked duplicate-review and member-name placeholders, never matching', () => {
     render(<HouseholdsScreen snapshot={snapshot} items={items} online />);
-    expect(screen.getByTestId('household-duplicates-blocked').textContent).toContain('#15');
-    expect(screen.getByTestId('household-member-names-blocked-summary').textContent).toContain('#15');
+    expect(screen.getByTestId('household-duplicates-blocked').textContent).toContain('not available yet');
+    expect(screen.getByTestId('household-member-names-blocked-summary').textContent).toContain('not recorded yet');
   });
 
   it('registers a household offline: origin village and camp come from cached data, then is saved locally', async () => {
     render(<HouseholdsScreen snapshot={snapshot} items={[]} online={false} />);
     fireEvent.click(screen.getByTestId('households-register'));
-    expect(screen.getByTestId('household-member-names-blocked').textContent).toContain('#15');
+    expect(screen.getByTestId('household-member-names-blocked').textContent).toContain('not recorded yet');
     expect(screen.getByTestId('household-id').textContent).toMatch(/^[0-9a-f-]{36}$/);
     fireEvent.change(screen.getByTestId('household-headName'), { target: { value: 'Dolly' } });
     fireEvent.change(screen.getByTestId('household-members'), { target: { value: '5' } });

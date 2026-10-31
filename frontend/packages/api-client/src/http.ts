@@ -168,7 +168,7 @@ export function createHttpApiClient(opts: HttpApiClientOptions = {}): ApiClient 
     opts.eventSource ??
     (typeof EventSource !== 'undefined' ? (url) => new EventSource(url) as unknown as EventSourceLike : undefined);
   let es: EventSourceLike | undefined;
-  let listeners = new Set<(v: number) => void>();
+  const listeners = new Set<(v: number) => void>();
   let stopped = false;
   let lastVersion: number | undefined;
   let polling = false;

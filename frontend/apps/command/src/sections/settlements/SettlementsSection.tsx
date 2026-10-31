@@ -19,7 +19,7 @@ const COLS: Col[] = [
   { key: 'priority', header: 'Priority', sort: (r) => priorityRank(r.priority) },
   { key: 'status', header: 'Evacuation route', sort: (r) => r.statusLabel },
 ];
-const NOT_IN_CONTRACT = 'not in contract (#15)';
+const NOT_IN_CONTRACT = 'not provided by the backend';
 const Dash = ({ what }: { what: string }) => <span title={NOT_IN_CONTRACT} aria-label={`${what}: ${NOT_IN_CONTRACT}`} data-testid={`na-${what}`}>—</span>;
 
 export function SettlementsSectionView({ snapshot, people, now = Date.now() }: { snapshot?: ProjectionSnapshot; people?: PeopleSnapshot; now?: number }) {

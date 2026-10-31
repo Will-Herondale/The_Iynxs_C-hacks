@@ -1,10 +1,10 @@
 /** Honest placeholder for data the spec wants but the contract does not carry (blocked: issue #15). */
-export const NOT_PROVIDED = 'Not provided by backend (#15)';
+export const NOT_PROVIDED = 'Not provided by backend';
 
 export function NotProvided({ field, short }: { field: string; short?: boolean }) {
   return (
-    <span data-testid={`not-provided-${field}`} title="Not in contract (issue #15); the frontend does not estimate it." style={{ opacity: 0.75, fontStyle: 'italic' }}>
-      {short ? 'Not provided (#15)' : NOT_PROVIDED}
+    <span data-testid={`not-provided-${field}`} title="The backend does not provide this; the frontend does not estimate it." style={{ opacity: 0.75, fontStyle: 'italic' }}>
+      {short ? 'Not provided' : NOT_PROVIDED}
     </span>
   );
 }
