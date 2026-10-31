@@ -51,8 +51,9 @@ describe('settlements section', () => {
     wrap(<SettlementsSectionView snapshot={s} />);
     const first = () => screen.getAllByTestId(/^settlement-row-/)[0]!.getAttribute('data-accessibility');
     expect(first()).toBe('cut_off');
-    fireEvent.click(screen.getByTestId('settlements-sort-accessibility'));
-    expect(first()).not.toBe('cut_off');
+    // Cut-off villages are listed first; sorting by name changes the order.
+    fireEvent.click(screen.getByTestId('settlements-sort-name'));
+    expect(screen.queryByTestId('settlements-sort-accessibility')).toBeNull();
     const name = s.settlements.features[1]!.properties.name;
     fireEvent.change(screen.getByTestId('settlements-search'), { target: { value: name } });
     expect(screen.getAllByTestId(/^settlement-row-/).length).toBeGreaterThanOrEqual(1);
@@ -74,9 +75,9 @@ describe('settlements section', () => {
     const row = screen.getByTestId(`settlement-row-${settlement.settlementId}`);
     expect(row.getAttribute('data-accessibility')).toBe('accessible');
     expect(row.getAttribute('data-status')).toBe('no-safe-route');
-    expect(screen.getByTestId('settlements-table').textContent).toContain('Flood access');
+    expect(screen.getByTestId('settlements-table').textContent).not.toContain('Flood access');
     expect(screen.getByTestId('settlements-table').textContent).toContain('Evacuation route');
-    expect(row.textContent).toContain('accessible');
+    expect(row.textContent).not.toContain('accessible');
     expect(row.textContent).toContain('No safe route');
   });
   it('shows a newly registered household in the matching settlement row', () => {

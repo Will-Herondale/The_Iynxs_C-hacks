@@ -39,7 +39,8 @@ export function SettlementsSectionView({ snapshot, people, now = Date.now() }: {
     deadline: rows.some((r) => !!r.deadline),
     priority: rows.some((r) => r.priority !== undefined && r.priority !== null),
   };
-  const cols = COLS.filter((c) => hasData[c.key] ?? true);
+  // Flood access is not a column (it read 'accessible' on every row); a badge appears by the name only when a village is affected.
+  const cols = COLS.filter((c) => c.key !== 'accessibility' && (hasData[c.key] ?? true));
 
   if (!snapshot) return <div data-testid="settlements-section"><Panel title="Settlements"><EmptyState title="Loading…" /></Panel></div>;
 
@@ -78,8 +79,7 @@ export function SettlementsSectionView({ snapshot, people, now = Date.now() }: {
                   return (
                     <tr key={r.id} data-testid={`settlement-row-${r.id}`} data-accessibility={r.accessibility} data-status={r.status} data-route-state={r.routeState} {...(r.synthetic ? { 'data-class': 'synthetic' } : {})} aria-selected={isSel}
                       onClick={() => select({ kind: 'settlement', id: r.id })} className={isSel ? 'cmd-row--selected' : 'cmd-row'}>
-                      <td><button type="button" className="cmd-linkbtn" onClick={(e) => { e.stopPropagation(); select({ kind: 'settlement', id: r.id }); }} aria-pressed={isSel}>{r.name}</button> <MonoId>{r.id}</MonoId>{r.synthetic && <> <DataClassTag dataClass="SYNTHETIC" label="DEMO · SYNTHETIC" /></>}</td>
-                      <td><Badge tone={ACCESS_TONE[r.accessibility].tone} icon={ACCESS_TONE[r.accessibility].icon}>{label(r.accessibility)}</Badge></td>
+                      <td><button type="button" className="cmd-linkbtn" onClick={(e) => { e.stopPropagation(); select({ kind: 'settlement', id: r.id }); }} aria-pressed={isSel}>{r.name}</button> <MonoId>{r.id}</MonoId>{r.synthetic && <> <DataClassTag dataClass="SYNTHETIC" label="DEMO · SYNTHETIC" /></>}{r.accessibility !== 'accessible' && <> <Badge tone={ACCESS_TONE[r.accessibility].tone} icon={ACCESS_TONE[r.accessibility].icon}>{label(r.accessibility)}</Badge></>}</td>
                       {hasData.segment && <td data-testid={`segment-${r.id}`}>{r.criticalSegments.length ? r.criticalSegments.map((id) => <MonoId key={id}>{id}</MonoId>).flatMap((e, i) => (i ? [', ', e] : [e])) : '—'}</td>}
                       {hasData.deadline && <td>{r.deadline ? <time dateTime={r.deadline}>{formatDeadline(r.deadline, now)}</time> : '—'}</td>}
                       {hasData.priority && <td>{r.priority ?? '—'}</td>}
