@@ -11,6 +11,7 @@ import {
   type RoadCleared,
   type WaterLevel,
   type HouseholdRegistration,
+  type PersonCheckin,
 } from './contract-types';
 import {
   type EnvelopeInput,
@@ -117,16 +118,45 @@ export function translateEvent(
       const e = event as HouseholdRegistration;
       const loc = locationToMicrodegrees(e.location);
       payload.type = 'person.register';
+      payload.kind = 'household';
       payload.client_event_id = e.clientEventId;
       payload.person_id = e.householdId;
       payload.names = [{ script: 'latn', text: e.headName }];
       payload.age_band = '18-59';
       payload.sex = 'u';
       payload.village_id = e.settlementId;
-      payload.camp_id = null;
+      payload.camp_id = e.shelterId ?? null;
       payload.household_id = e.householdId;
+      payload.members = e.members;
+      payload.vulnerable = e.vulnerable;
       payload.reporter_confidence = 90;
       payload.needs = e.needs;
+      payload.lat = loc.lat;
+      payload.lng = loc.lng;
+      break;
+    }
+    case 'person_checkin': {
+      const e = event as PersonCheckin;
+      const loc = locationToMicrodegrees(e.location);
+      payload.type = 'person.register';
+      payload.kind = 'person';
+      payload.client_event_id = e.clientEventId;
+      payload.person_id = e.personId ?? e.clientEventId;
+      payload.names = [{ script: 'latn', text: e.name }];
+      payload.age_band = e.ageBand ?? '18-59';
+      payload.sex = e.sex ?? 'u';
+      payload.village_id = e.settlementId;
+      payload.camp_id = e.campId;
+      payload.household_id = e.householdId ?? null;
+      payload.members = 1;
+      payload.vulnerable = e.vulnerable ?? {
+        elderly: false,
+        children: false,
+        disabled: false,
+        medical: false,
+      };
+      payload.reporter_confidence = 90;
+      payload.needs = e.needs ?? [];
       payload.lat = loc.lat;
       payload.lng = loc.lng;
       break;

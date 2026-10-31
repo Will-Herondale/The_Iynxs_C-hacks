@@ -13,6 +13,7 @@ import {
   type Settlement,
   type Route,
   type Shelter,
+  type RouteComputation,
 } from './contract-types';
 import {
   type Envelope,
@@ -23,10 +24,7 @@ import {
   type WaterObservation,
   type FloodPoint,
   type RouteEdge,
-  type Passability,
   type EdgePassability,
-  findFastestPath,
-  buildExpandedGraph,
 } from '../../core/src/index';
 import {
   projectNetwork,
@@ -66,6 +64,12 @@ export interface GeoArtifacts {
     nodeId: string;
   }>;
   floodReferencePoints: Array<FloodPoint>;
+  /**
+   * Road graph node coordinates in degrees, keyed by RouteEdge.fromNode/toNode.
+   * Optional so lightweight fixtures can omit them; when present, computed
+   * routes are drawn along the actual road segments.
+   */
+  nodeCoords?: Map<string, [number, number]>;
   routes: Array<{
     routeId: string;
     from: string; // settlementId
@@ -496,77 +500,183 @@ function explainRouteFailure(
   };
 }
 
+/** Pedestrian planning speed in m/s (1.3 m/s ≈ 4.7 km/h). */
+const ROUTE_SPEED_MPS = Number(process.env.SETU_ROUTE_SPEED_MPS) || 1.3;
+
+/**
+ * Evacuation window. A route whose fastest path takes longer than this is not
+ * a safe evacuation route: it is reported unavailable, and the explanation
+ * states the real path time.
+ */
+const EVAC_WINDOW_MIN = Number(process.env.SETU_EVAC_WINDOW_MIN) || 45;
+
+interface GraphArc {
+  edge: RouteEdge;
+  to: string;
+}
+
+interface ComputedPath {
+  edgeIds: string[];
+  nodes: string[];
+  distanceM: number;
+  timeS: number;
+}
+
+/** Binary min-heap keyed by along-road distance. */
+class NodeMinHeap {
+  private readonly items: Array<{ key: number; node: string }> = [];
+
+  get size(): number {
+    return this.items.length;
+  }
+
+  push(key: number, node: string): void {
+    const items = this.items;
+    items.push({ key, node });
+    let i = items.length - 1;
+    while (i > 0) {
+      const parent = (i - 1) >> 1;
+      if (items[parent].key <= items[i].key) break;
+      [items[parent], items[i]] = [items[i], items[parent]];
+      i = parent;
+    }
+  }
+
+  pop(): { key: number; node: string } {
+    const items = this.items;
+    const top = items[0];
+    const last = items.pop()!;
+    if (items.length > 0) {
+      items[0] = last;
+      let i = 0;
+      for (;;) {
+        const left = i * 2 + 1;
+        const right = left + 1;
+        let smallest = i;
+        if (left < items.length && items[left].key < items[smallest].key) smallest = left;
+        if (right < items.length && items[right].key < items[smallest].key) smallest = right;
+        if (smallest === i) break;
+        [items[smallest], items[i]] = [items[i], items[smallest]];
+        i = smallest;
+      }
+    }
+    return top;
+  }
+}
+
+/**
+ * Adjacency over edges the router may use. Only blocked/disputed edges are
+ * unusable; unknown passability is treated as open. This is the same rule
+ * explainRouteFailure applies, so explanations always match routing results.
+ */
+function buildPassableAdjacency(
+  routeEdges: RouteEdge[],
+  passByEdge: Map<string, EdgePassability>,
+): Map<string, GraphArc[]> {
+  const adjacency = new Map<string, GraphArc[]>();
+  const add = (from: string, to: string, edge: RouteEdge) => {
+    const list = adjacency.get(from) ?? [];
+    list.push({ edge, to });
+    adjacency.set(from, list);
+  };
+  for (const edge of routeEdges) {
+    const pass = passByEdge.get(edge.edgeId);
+    if (pass && (pass.state === 'blocked' || pass.state === 'disputed')) continue;
+    add(edge.fromNode, edge.toNode, edge);
+    add(edge.toNode, edge.fromNode, edge);
+  }
+  return adjacency;
+}
+
+/** Dijkstra over along-road distance. Returns null when no path exists. */
+function findShortestRoute(
+  srcNode: string,
+  dstNode: string,
+  adjacency: Map<string, GraphArc[]>,
+  speedMps: number,
+): ComputedPath | null {
+  if (srcNode === dstNode) {
+    return { edgeIds: [], nodes: [srcNode], distanceM: 0, timeS: 0 };
+  }
+
+  const dist = new Map<string, number>([[srcNode, 0]]);
+  const prev = new Map<string, { node: string; edge: RouteEdge }>();
+  const settled = new Set<string>();
+  const heap = new NodeMinHeap();
+  heap.push(0, srcNode);
+  let found = false;
+
+  while (heap.size > 0) {
+    const { key, node } = heap.pop();
+    if (settled.has(node)) continue;
+    settled.add(node);
+    if (node === dstNode) {
+      found = true;
+      break;
+    }
+    for (const arc of adjacency.get(node) ?? []) {
+      const next = key + arc.edge.lengthM;
+      if (next < (dist.get(arc.to) ?? Infinity)) {
+        dist.set(arc.to, next);
+        prev.set(arc.to, { node, edge: arc.edge });
+        heap.push(next, arc.to);
+      }
+    }
+  }
+
+  if (!found) return null;
+
+  const nodes = [dstNode];
+  const edgeIds: string[] = [];
+  let cursor = dstNode;
+  while (cursor !== srcNode) {
+    const step = prev.get(cursor);
+    if (!step) return null;
+    edgeIds.push(step.edge.edgeId);
+    nodes.push(step.node);
+    cursor = step.node;
+  }
+  nodes.reverse();
+  edgeIds.reverse();
+
+  const distanceM = dist.get(dstNode) ?? 0;
+  return { edgeIds, nodes, distanceM, timeS: distanceM / speedMps };
+}
+
+/** Draw the computed path along road nodes, falling back to fixture geometry. */
+function routeGeometryFromNodes(
+  nodes: string[],
+  nodeCoords: Map<string, [number, number]> | undefined,
+  fallback: Route['features'][number]['geometry'],
+): Route['features'][number]['geometry'] {
+  if (!nodeCoords) return fallback;
+  const coordinates = nodes
+    .map((node) => nodeCoords.get(node))
+    .filter((coord): coord is [number, number] => Array.isArray(coord))
+    .map(([lng, lat]) => [lng, lat]);
+  return coordinates.length >= 2
+    ? { type: 'LineString', coordinates }
+    : fallback;
+}
+
 function buildRoutes(
   routes: GeoArtifacts['routes'],
   routeEdges: RouteEdge[],
   passByEdge: Map<string, EdgePassability>,
   settlementsById: Map<string, GeoArtifacts['settlements'][number]>,
   sheltersById: Map<string, GeoArtifacts['shelters'][number]>,
-  t0: number,
+  nodeCoords: Map<string, [number, number]> | undefined,
   roadNames: Map<string, string>,
 ): Route {
   const now = new Date().toISOString();
   const features: Route['features'] = [];
-
-  const horizonMs = 600000; // 10 minutes
-  const slotLengthMs = 60000; // 1 minute
-  const slotCount = Math.ceil(horizonMs / slotLengthMs);
-
-  // Build passability map: edgeId -> Passability[] (one entry per slot, open-ended)
-  const passByEdgeSlots = new Map<string, Passability[]>();
-
-  // Add direct settlement-to-shelter edges so every route has at least one
-  // guaranteed-passable path. Real road edges may be disconnected from the
-  // settlement/shelter nodes in the OSM graph, which would make every route
-  // unavailable. Direct edges guarantee connectivity.
-  const directRouteEdges: RouteEdge[] = [];
-  for (const r of routes) {
-    const settlement = settlementsById.get(r.from);
-    const shelter = sheltersById.get(r.to);
-    if (settlement && shelter) {
-      const edgeId = `direct-${r.routeId}`;
-      directRouteEdges.push({
-        edgeId,
-        fromNode: settlement.nodeId,
-        toNode: shelter.nodeId,
-        lengthM: 5000,
-        class: 'primary',
-      });
-      passByEdge.set(edgeId, {
-        edgeId,
-        state: 'open',
-        depthDm: null,
-        disputed: false,
-        sourceEventIds: [],
-        validFrom: t0,
-        validUntil: null,
-      });
-    }
-  }
-
-  const allRouteEdges = [...routeEdges, ...directRouteEdges];
-  const edgeLengthM = new Map(allRouteEdges.map((e) => [e.edgeId, e.lengthM]));
-  for (const [edgeId, pass] of passByEdge) {
-    const lenM = edgeLengthM.get(edgeId) ?? 500;
-    const passable = pass.state !== 'blocked' && pass.state !== 'disputed';
-    const travelTimeS = Math.max(1, Math.round((pass.depthDm ?? 0) / 10 + lenM / 5));
-    const slotPass: Passability[] = [];
-    for (let s = 0; s < slotCount; s++) {
-      slotPass.push({
-        edgeId,
-        passable,
-        travelTimeS,
-        validFromSlot: s,
-        validUntilSlot: null,
-      });
-    }
-    passByEdgeSlots.set(edgeId, slotPass);
-  }
+  const adjacency = buildPassableAdjacency(routeEdges, passByEdge);
 
   let featureId = 0;
   for (const r of routes) {
     const settlement = settlementsById.get(r.from);
     const shelter = sheltersById.get(r.to);
+    const synthetic = (r as { synthetic?: boolean }).synthetic ?? false;
 
     if (!settlement || !shelter) {
       const endpoint = !settlement ? r.from : r.to;
@@ -583,7 +693,7 @@ function buildRoutes(
           status: 'unavailable',
           etaMin: 0,
           replacesRouteId: undefined,
-          synthetic: (r as { synthetic?: boolean }).synthetic ?? false,
+          synthetic,
           refusal: { summary, blockingFeatureIds: [] },
           reason: summary,
         },
@@ -591,18 +701,89 @@ function buildRoutes(
       continue;
     }
 
-    // All routes are considered active. ETA is based on straight-line distance
-    // between settlement and shelter (~50 km/h average speed).
-    const dx = shelter.lng - settlement.lng;
-    const dy = shelter.lat - settlement.lat;
-    const distDeg = Math.sqrt(dx * dx + dy * dy);
-    const distKm = distDeg * 111; // approx km per degree
-    const etaMin = Math.max(1, Math.round(distKm / 50 * 60)); // 50 km/h
+    const path = findShortestRoute(
+      settlement.nodeId,
+      shelter.nodeId,
+      adjacency,
+      ROUTE_SPEED_MPS,
+    );
+    const geometry = path
+      ? routeGeometryFromNodes(path.nodes, nodeCoords, r.geometry)
+      : r.geometry;
+
+    if (!path) {
+      const refusal = explainRouteFailure(
+        settlement,
+        shelter,
+        routeEdges,
+        passByEdge,
+        roadNames,
+      );
+      features.push({
+        type: 'Feature',
+        id: `route-${featureId++}`,
+        geometry,
+        properties: {
+          routeId: r.routeId,
+          from: r.from,
+          to: r.to,
+          kind: 'evacuation',
+          status: 'unavailable',
+          etaMin: 0,
+          replacesRouteId: undefined,
+          synthetic,
+          refusal,
+          reason: refusal.summary,
+        },
+      });
+      continue;
+    }
+
+    const etaMin = Math.max(1, Math.ceil(path.timeS / 60));
+    const unknownSegmentCount = path.edgeIds.reduce((count, edgeId) => {
+      const pass = passByEdge.get(edgeId);
+      return count + (!pass || pass.state === 'unknown' ? 1 : 0);
+    }, 0);
+    const computation: RouteComputation = {
+      method: 'road_graph',
+      verified: etaMin <= EVAC_WINDOW_MIN,
+      distanceM: Math.round(path.distanceM),
+      segmentCount: path.edgeIds.length,
+      unknownSegmentCount,
+      speedMps: ROUTE_SPEED_MPS,
+      windowMin: EVAC_WINDOW_MIN,
+    };
+
+    if (!computation.verified) {
+      const summary =
+        `Fastest route from ${settlement.name} to ${shelter.name} takes ` +
+        `~${etaMin} min on the road network, beyond the ${EVAC_WINDOW_MIN}-minute ` +
+        `evacuation window.`;
+      features.push({
+        type: 'Feature',
+        id: `route-${featureId++}`,
+        geometry,
+        properties: {
+          routeId: r.routeId,
+          from: r.from,
+          to: r.to,
+          kind: 'evacuation',
+          status: 'unavailable',
+          etaMin,
+          replacesRouteId: undefined,
+          synthetic,
+          computation,
+          refusal: { summary, blockingFeatureIds: [] },
+          reason: summary,
+        },
+      });
+      continue;
+    }
 
     features.push({
       type: 'Feature',
       id: `route-${featureId++}`,
-      geometry: r.geometry,
+      geometry,
       properties: {
         routeId: r.routeId,
         from: r.from,
@@ -611,25 +792,8 @@ function buildRoutes(
         status: 'active',
         etaMin,
         replacesRouteId: undefined,
-        synthetic: (r as { synthetic?: boolean }).synthetic ?? false,
-      },
-    });
-  }
-
-    features.push({
-      type: 'Feature',
-      id: `route-${featureId++}`,
-      geometry: r.geometry,
-      properties: {
-        routeId: r.routeId,
-        from: r.from,
-        to: r.to,
-        kind: 'evacuation',
-        status,
-        etaMin,
-        replacesRouteId: undefined,
-        synthetic: (r as { synthetic?: boolean }).synthetic ?? false,
-        ...(refusal ? { refusal, reason: refusal.summary } : {}),
+        synthetic,
+        computation,
       },
     });
   }
@@ -833,7 +997,7 @@ export function projectSnapshot(
     new Map(mapRoutePassability(artifacts.routeEdges, networkWithWireSourceIds, asOf)),
     settlementsById,
     sheltersById,
-    Date.now(),
+    artifacts.nodeCoords,
     routeRoadNames,
   );
 

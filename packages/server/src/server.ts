@@ -14,6 +14,7 @@ import { createServer, type Server } from 'node:http';
 import { EventLog } from './event-log';
 import { translateEvent } from './translation';
 import { projectSnapshot, type GeoArtifacts } from './projection';
+import { buildPeopleSnapshot, readRegistrationKind } from './people-projection';
 import { loadGeoArtifacts } from './geo-artifacts';
 import { type Envelope } from '../../core/src/index';
 import {
@@ -286,6 +287,31 @@ function handleProjections(
   sendJson(res, 200, snapshot);
 }
 
+/**
+ * People view: per-camp check-in counts plus unaccepted duplicate suggestions.
+ * Kept out of ProjectionSnapshot so the frozen map-layer contract is unchanged.
+ */
+function handlePeople(
+  _req: import('node:http').IncomingMessage,
+  res: import('node:http').ServerResponse,
+): void {
+  if (!log || !artifacts) {
+    sendJson(res, 503, { error: 'Server not initialized' });
+    return;
+  }
+
+  const events = [...log.getAllEvents()]
+    .map((env, index) => ({ env, index }))
+    .sort((a, b) => b.env.at - a.env.at || b.index - a.index)
+    .map(({ env }) => env);
+
+  sendJson(
+    res,
+    200,
+    buildPeopleSnapshot(events, artifacts.shelters, projectionVersion, Date.now()),
+  );
+}
+
 /** UUID v4 regex — clientEventId must be a valid UUID per the wire contract. */
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -352,12 +378,93 @@ function translateEnvelopeToWire(env: Envelope): { event: FieldEvent; eventId: s
         } as unknown as FieldEvent,
       };
     }
+    case 'person.register': {
+      const kind = readRegistrationKind(p);
+      const name = firstPersonName(p.names);
+      const campId = typeof p.camp_id === 'string' && p.camp_id.length > 0 ? p.camp_id : undefined;
+
+      if (kind === 'household') {
+        const householdId =
+          typeof p.household_id === 'string' && p.household_id.length > 0
+            ? p.household_id
+            : typeof p.person_id === 'string'
+              ? p.person_id
+              : undefined;
+        if (!householdId) return null;
+        const vulnerable = (p.vulnerable ?? {}) as Record<string, unknown>;
+        return {
+          eventId: env.id,
+          event: {
+            ...base,
+            type: 'household_registration',
+            householdId,
+            headName: name ?? 'Name not recorded',
+            members: typeof p.members === 'number' && p.members > 0 ? p.members : 1,
+            vulnerable: {
+              elderly: vulnerable.elderly === true,
+              children: vulnerable.children === true,
+              disabled: vulnerable.disabled === true,
+              medical: vulnerable.medical === true,
+            },
+            ...(typeof p.village_id === 'string' ? { settlementId: p.village_id } : {}),
+            ...(campId ? { shelterId: campId } : {}),
+            needs: stringList(p.needs),
+          } as unknown as FieldEvent,
+        };
+      }
+
+      if (kind === 'person') {
+        if (!campId) return null;
+        return {
+          eventId: env.id,
+          event: {
+            ...base,
+            type: 'person_checkin',
+            ...(typeof p.person_id === 'string' ? { personId: p.person_id } : {}),
+            name: name ?? 'Name not recorded',
+            campId,
+            ...(typeof p.age_band === 'string' ? { ageBand: p.age_band } : {}),
+            ...(typeof p.sex === 'string' ? { sex: p.sex } : {}),
+            ...(typeof p.village_id === 'string' ? { settlementId: p.village_id } : {}),
+            ...(typeof p.household_id === 'string' ? { householdId: p.household_id } : {}),
+            ...(p.vulnerable && typeof p.vulnerable === 'object'
+              ? { vulnerable: p.vulnerable }
+              : {}),
+            needs: stringList(p.needs),
+          } as unknown as FieldEvent,
+        };
+      }
+
+      // No discriminator: cannot say whether this was a person or a household
+      // without fabricating fields, so it stays omitted.
+      return null;
+    }
     default:
       // Internal registry/matching events are not part of the v1 FieldEvent
       // wire contract. Do not emit a malformed discriminant or fabricate
       // household fields merely to make legacy records parse.
       return null;
     }
+}
+
+function firstPersonName(names: unknown): string | undefined {
+  if (!Array.isArray(names)) return undefined;
+  for (const entry of names) {
+    if (
+      entry &&
+      typeof entry === 'object' &&
+      typeof (entry as { text?: unknown }).text === 'string'
+    ) {
+      return (entry as { text: string }).text;
+    }
+  }
+  return undefined;
+}
+
+function stringList(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((v): v is string => typeof v === 'string')
+    : [];
 }
 
 async function handleListEvents(
@@ -386,6 +493,11 @@ async function handleListEvents(
     road_blockage: 'obs.road',
     road_cleared: 'obs.road',
     household_registration: 'person.register',
+    person_checkin: 'person.register',
+  };
+  const wireRegistrationKind: Record<string, 'person' | 'household'> = {
+    household_registration: 'household',
+    person_checkin: 'person',
   };
 
   let filtered = events;
@@ -397,6 +509,12 @@ async function handleListEvents(
     const internalType = wireToInternalType[type];
     if (internalType) {
       filtered = filtered.filter((e) => e.type === internalType);
+    }
+    const kind = wireRegistrationKind[type];
+    if (kind) {
+      filtered = filtered.filter(
+        (e) => readRegistrationKind(e.payload as Record<string, unknown>) === kind,
+      );
     }
   }
   const omittedByType: Record<string, number> = {};
@@ -521,6 +639,11 @@ async function handleRequest(
 
     if (req.method === 'GET' && url.startsWith('/api/v1/events')) {
       await handleListEvents(req, res);
+      return;
+    }
+
+    if (req.method === 'GET' && url === '/api/v1/people') {
+      handlePeople(req, res);
       return;
     }
 

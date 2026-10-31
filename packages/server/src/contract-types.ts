@@ -8,7 +8,8 @@ export type FieldEventType =
   | 'road_blockage'
   | 'road_cleared'
   | 'water_level'
-  | 'household_registration';
+  | 'household_registration'
+  | 'person_checkin';
 
 export interface Location {
   lat: number;
@@ -69,7 +70,30 @@ export interface HouseholdRegistration extends BaseFieldEvent {
   members: number;
   vulnerable: VulnerableFlags;
   settlementId?: string;
+  /** Camp/shelter where the household was registered (wire field). */
+  shelterId?: string;
   needs: string[];
+}
+
+export type AgeBand = '0-4' | '5-12' | '13-17' | '18-59' | '60+';
+
+/**
+ * One person checking in at a camp. Distinct from a household registration:
+ * a household is a declared group with a member count, a person is one human.
+ */
+export interface PersonCheckin extends BaseFieldEvent {
+  type: 'person_checkin';
+  /** Present when this is a repeat check-in of an already-known person. */
+  personId?: string;
+  name: string;
+  ageBand?: AgeBand;
+  sex?: 'f' | 'm' | 'o' | 'u';
+  /** Camp/shelter where the person is physically present. */
+  campId: string;
+  settlementId?: string;
+  householdId?: string;
+  vulnerable?: VulnerableFlags;
+  needs?: string[];
 }
 
 export type FieldEvent =
@@ -77,7 +101,8 @@ export type FieldEvent =
   | RoadBlockage
   | RoadCleared
   | WaterLevel
-  | HouseholdRegistration;
+  | HouseholdRegistration
+  | PersonCheckin;
 
 export interface ValidationIssue {
   path: string;
@@ -210,6 +235,30 @@ export interface Explanation {
   sourceEventIds?: string[];
 }
 
+/**
+ * Provenance of a route's geometry and ETA. Present only when the backend
+ * actually computed the route; fixture routes omit it.
+ */
+export interface RouteComputation {
+  /** `road_graph` means the path was traced over road segments, not drawn. */
+  method: 'road_graph';
+  /**
+   * True when the route was computed on the loaded road graph and fits inside
+   * the evacuation window. Only then may a client call it "calculated".
+   */
+  verified: boolean;
+  /** Along-road distance in metres (not straight-line). */
+  distanceM: number;
+  /** Number of road segments traversed. */
+  segmentCount: number;
+  /** Segments with no passability observation (treated as open). */
+  unknownSegmentCount: number;
+  /** Planning speed used for the ETA. */
+  speedMps: number;
+  /** Evacuation window used to accept/refuse the route. */
+  windowMin: number;
+}
+
 export interface RouteProps {
   routeId: string;
   from: string;
@@ -219,6 +268,7 @@ export interface RouteProps {
   etaMin: number;
   replacesRouteId?: string;
   synthetic?: boolean;
+  computation?: RouteComputation;
   /**
    * Structured reason when status is unavailable. The Command Centre renders
    * this as "Why this route is refused" with links to the blocking features.

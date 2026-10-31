@@ -265,7 +265,7 @@ describe('SETU server endpoints', () => {
       expect(events.find((e) => e.event.clientEventId === ceid)).toBeDefined();
     });
 
-    it('does not emit unsupported person.register records as FieldEvents', async () => {
+    it('round-trips a household registration with its camp and member count', async () => {
       const ceid = '550e8400-e29b-41d4-a716-446655440004';
       const first = await fetchJson('/api/v1/events:batch', {
         method: 'POST',
@@ -281,19 +281,144 @@ describe('SETU server endpoints', () => {
             headName: 'Demo Household',
             members: 2,
             vulnerable: { elderly: false, children: true, disabled: false, medical: false },
+            settlementId: '2885275507',
+            shelterId: 'MJ-SH-023',
             needs: ['water'],
           }],
         },
       });
       expect(first.status).toBe(200);
 
-      const listed = await fetchJson('/api/v1/events?limit=1');
+      const listed = await fetchJson('/api/v1/events?type=household_registration');
       const body = listed.body as {
-        events: Array<{ event: { type: string } }>;
-        omitted?: { total: number; byType: Record<string, number> };
+        events: Array<{
+          event: {
+            type: string;
+            clientEventId: string;
+            headName?: string;
+            members?: number;
+            shelterId?: string;
+          };
+        }>;
       };
-      expect(body.events.every((record) => record.event.type !== 'person.register')).toBe(true);
-      expect(body.omitted?.byType['person.register']).toBeGreaterThanOrEqual(1);
+      const record = body.events.find((r) => r.event.clientEventId === ceid);
+      expect(record?.event).toMatchObject({
+        type: 'household_registration',
+        headName: 'Demo Household',
+        members: 2,
+        shelterId: 'MJ-SH-023',
+      });
+    });
+
+    it('accepts person check-ins and suggests duplicates across camps', async () => {
+      const firstId = '550e8400-e29b-41d4-a716-446655440011';
+      const secondId = '550e8400-e29b-41d4-a716-446655440012';
+      const baseEvent = {
+        type: 'person_checkin',
+        occurredAt: '2026-10-30T14:05:00.000Z',
+        reporterId: 'volunteer-people',
+        deviceId: 'device-people',
+        location: { lat: 26.9586, lng: 94.1622 },
+        name: 'Same Name',
+        ageBand: '18-59',
+        sex: 'f',
+      };
+      const submitted = await fetchJson('/api/v1/events:batch', {
+        method: 'POST',
+        body: {
+          events: [
+            { ...baseEvent, clientEventId: firstId, campId: 'MJ-SH-001', settlementId: '2885275507' },
+            { ...baseEvent, clientEventId: secondId, campId: 'MJ-SH-002', settlementId: '2885275508' },
+          ],
+        },
+      });
+      expect(submitted.status).toBe(200);
+      const acks = (submitted.body as { acks: Array<{ result: string }> }).acks;
+      expect(acks.map((a) => a.result)).toEqual(['accepted', 'accepted']);
+
+      // The wire records are visible to the audit feed, not omitted.
+      const listed = await fetchJson('/api/v1/events?type=person_checkin');
+      const events = (listed.body as { events: Array<{ event: { clientEventId: string; campId: string } }> })
+        .events;
+      expect(events.filter((e) => e.event.clientEventId === firstId || e.event.clientEventId === secondId))
+        .toHaveLength(2);
+
+      // Per-camp counts and a duplicate suggestion for the same name.
+      const people = await fetchJson('/api/v1/people');
+      expect(people.status).toBe(200);
+      const snapshot = people.body as {
+        totals: { individuals: number };
+        camps: Array<{ campId: string; people: number; checkins: number }>;
+        duplicateSuggestions: Array<{ a: { name: string }; b: { name: string } }>;
+      };
+      expect(snapshot.totals.individuals).toBeGreaterThanOrEqual(2);
+      const campA = snapshot.camps.find((c) => c.campId === 'MJ-SH-001');
+      const campB = snapshot.camps.find((c) => c.campId === 'MJ-SH-002');
+      expect(campA?.people).toBeGreaterThanOrEqual(1);
+      expect(campB?.people).toBeGreaterThanOrEqual(1);
+      expect(
+        snapshot.duplicateSuggestions.some(
+          (d) => d.a.name === 'Same Name' && d.b.name === 'Same Name',
+        ),
+      ).toBe(true);
+    });
+
+    it('auto-merges high-confidence duplicate person check-ins', async () => {
+      const baseEvent = {
+        type: 'person_checkin',
+        occurredAt: '2026-10-30T14:05:00.000Z',
+        reporterId: 'volunteer-people',
+        deviceId: 'device-people',
+        location: { lat: 26.9586, lng: 94.1622 },
+        name: 'Merge Target',
+        ageBand: '18-59',
+        sex: 'f',
+        campId: 'MJ-SH-001',
+        settlementId: '2885275507',
+      };
+      const submitted = await fetchJson('/api/v1/events:batch', {
+        method: 'POST',
+        body: {
+          events: [
+            { ...baseEvent, clientEventId: '550e8400-e29b-41d4-a716-446655440021' },
+            { ...baseEvent, clientEventId: '550e8400-e29b-41d4-a716-446655440022' },
+          ],
+        },
+      });
+      expect(submitted.status).toBe(200);
+      const acks = (submitted.body as { acks: Array<{ result: string }> }).acks;
+      expect(acks.map((a) => a.result)).toEqual(['accepted', 'accepted']);
+
+      // Same name + same camp + same village scores above the 85% threshold,
+      // so the two records are auto-merged into one individual.
+      const people = await fetchJson('/api/v1/people');
+      expect(people.status).toBe(200);
+      const snapshot = people.body as {
+        totals: { individuals: number };
+        autoMergedCount: number;
+        checkins: Array<{ personId: string; mergedInto: string | null; displayName: string; campId: string | null }>;
+        duplicateSuggestions: Array<{ a: { name: string }; b: { name: string } }>;
+      };
+      // At least one high-confidence match was auto-merged (other tests may
+      // contribute their own person records, so check >= not ===).
+      expect(snapshot.autoMergedCount).toBeGreaterThanOrEqual(1);
+      const merged = snapshot.checkins.find(
+        (c) => c.displayName === 'Merge Target' && c.mergedInto !== null,
+      );
+      expect(merged).toBeDefined();
+      // The same-name pair should not still appear as an unaccepted suggestion.
+      expect(snapshot.duplicateSuggestions.some(
+        (d) => d.a.name === 'Merge Target' && d.b.name === 'Merge Target',
+      )).toBe(false);
+    });
+
+    it('keeps household and person registrations separate when filtering', async () => {
+      const households = await fetchJson('/api/v1/events?type=household_registration');
+      const persons = await fetchJson('/api/v1/events?type=person_checkin');
+      const h = (households.body as { events: Array<{ event: { type: string } }> }).events;
+      const p = (persons.body as { events: Array<{ event: { type: string } }> }).events;
+      expect(h.every((e) => e.event.type === 'household_registration')).toBe(true);
+      expect(p.every((e) => e.event.type === 'person_checkin')).toBe(true);
     });
   });
 

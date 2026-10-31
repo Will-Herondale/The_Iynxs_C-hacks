@@ -54,22 +54,41 @@ interface GeoJsonCollection {
 }
 
 /**
- * Extract all line segments from a geometry, handling LineString and MultiLineString.
- * Returns an array of [startCoord, endCoord] pairs in [lng, lat].
+ * Extract all line segments from a geometry, handling LineString and
+ * MultiLineString. Returns an array of [startCoord, endCoord] pairs in
+ * [lng, lat]. Every part of a MultiLineString is kept: dropping parts would
+ * open gaps in the routing graph.
  */
 function extractLineSegments(geom: { type: string; coordinates: unknown }): [number[], number[]][] {
-  let coords: number[][];
+  const segments: [number[], number[]][] = [];
+
   if (geom.type === 'MultiLineString') {
-    coords = ((geom.coordinates as number[][][])[0] ?? []) as number[][];
-  } else {
-    coords = (geom.coordinates as number[][]) ?? [];
+    const parts = (geom.coordinates as number[][][]) ?? [];
+    for (const part of parts) {
+      for (let i = 0; i < part.length - 1; i++) {
+        segments.push([part[i], part[i + 1]]);
+      }
+    }
+    return segments;
   }
 
-  const segments: [number[], number[]][] = [];
+  const coords = (geom.coordinates as number[][]) ?? [];
   for (let i = 0; i < coords.length - 1; i++) {
     segments.push([coords[i], coords[i + 1]]);
   }
   return segments;
+}
+
+/**
+ * Along-ground length of one road segment in metres. A road feature's
+ * `length_m` covers the whole feature, so it must not be reused for every
+ * segment (that would multiply the true distance).
+ */
+function segmentLengthM(a: number[], b: number[]): number {
+  const latRad = (((a[1] + b[1]) / 2) * Math.PI) / 180;
+  const dLat = (b[1] - a[1]) * 111_320;
+  const dLng = (b[0] - a[0]) * 111_320 * Math.cos(latRad);
+  return Math.hypot(dLat, dLng);
 }
 
 /**
@@ -102,7 +121,7 @@ function buildRouteEdges(
         sourceRoadId: osmId,
         fromNode,
         toNode,
-        lengthM,
+        lengthM: segmentLengthM(start, end) || lengthM,
         class: highway,
       });
       edgeIndex++;
@@ -387,37 +406,6 @@ export async function loadGeoArtifacts(): Promise<GeoArtifacts> {
   const floodReferencePoints = await loadFloodReferencePoints();
   const routes = buildRouteDefs(settlements, shelters);
 
-  // Add direct road edges connecting each settlement to its nearest shelter
-  // so that real evacuation routes can be computed by the pathfinder
-  const settlementToShelterEdges: RouteEdge[] = [];
-  const settlementToShelterRoads: Road[] = [];
-  for (const route of routes) {
-    const settlement = settlements.find(s => s.settlementId === route.from);
-    const shelter = shelters.find(sh => sh.shelterId === route.to);
-    if (settlement && shelter) {
-      const edgeId = `route-road-${route.routeId}`;
-      settlementToShelterEdges.push({
-        edgeId,
-        fromNode: settlement.nodeId,
-        toNode: shelter.nodeId,
-        lengthM: 5000,
-        class: 'primary',
-      });
-      settlementToShelterRoads.push({
-        edgeId,
-        name: `Route ${route.from} → ${route.to}`,
-        synthetic: false,
-        geometry: {
-          type: 'LineString',
-          coordinates: [
-            [settlement.lng / 1_000_000, settlement.lat / 1_000_000],
-            [shelter.lng / 1_000_000, shelter.lat / 1_000_000],
-          ],
-        },
-      });
-    }
-  }
-
   // ── Synthetic connected subgraph for the demo ──
   // These roads form a connected path: Demo Settlement → Bridge → Demo Shelter.
   // Clearly labelled synthetic; never confused with real OSM data.
@@ -511,11 +499,12 @@ export async function loadGeoArtifacts(): Promise<GeoArtifacts> {
   } as GeoArtifacts['routes'][number] & { synthetic: boolean };
 
   return {
-    roads: [...roads, ...synRoads, ...settlementToShelterRoads],
-    routeEdges: [...routeEdges, ...synRoadEdges, ...settlementToShelterEdges],
+    roads: [...roads, ...synRoads],
+    routeEdges: [...routeEdges, ...synRoadEdges],
     settlements: [...settlements, synSettlement],
     shelters: [...shelters, synShelter],
     floodReferencePoints: [...floodReferencePoints, synRefPoint],
     routes: [...routes, synRoute],
+    nodeCoords,
   };
 }

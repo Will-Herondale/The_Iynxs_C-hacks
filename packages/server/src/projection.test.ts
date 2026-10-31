@@ -90,6 +90,32 @@ describe('route-edge/source-road ID mapping', () => {
     expect(route.properties.refusal).toBeUndefined();
   });
 
+  it('computes the route on the road graph and reports its provenance', () => {
+    const snapshot = projectSnapshot([], makeArtifacts(), AS_OF);
+    const route = snapshot.routes.features[0];
+
+    expect(route.properties.status).toBe('active');
+    expect(route.properties.computation).toMatchObject({
+      method: 'road_graph',
+      verified: true,
+      distanceM: 200,
+      segmentCount: 2,
+      windowMin: 45,
+    });
+    expect(route.properties.etaMin).toBe(3); // 200 m at 1.3 m/s
+  });
+
+  it('refuses a route that cannot reach shelter inside the evacuation window', () => {
+    const artifacts = makeArtifacts();
+    artifacts.routeEdges = artifacts.routeEdges.map((edge) => ({ ...edge, lengthM: 3000 }));
+    const snapshot = projectSnapshot([], artifacts, AS_OF);
+    const route = snapshot.routes.features[0];
+
+    expect(route.properties.status).toBe('unavailable');
+    expect(route.properties.computation?.verified).toBe(false);
+    expect(route.properties.refusal?.summary).toContain('45-minute evacuation window');
+  });
+
   it('maps a raw-road blockage to route segments and names the actual road', async () => {
     const snapshot = projectSnapshot([await rawRoadBlockage()], makeArtifacts(), AS_OF);
     const route = snapshot.routes.features[0];
