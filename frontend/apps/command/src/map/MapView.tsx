@@ -250,7 +250,7 @@ export function MapView() {
   }, [ready, selected]);
 
   const demoBox = syntheticBounds(snapshot);
-  const openDemo = () => { if (demoBox) mapRef.current?.fitBounds(demoBox, { padding: 90, maxZoom: 14, duration: 800 }); };
+  const openDemo = () => { if (demoBox) mapRef.current?.fitBounds(demoBox, { padding: 90, maxZoom: 16.5, duration: 800 }); };
   const showOverview = () => mapRef.current?.fitBounds(BASE_BOUNDS, { padding: 24, duration: 800 });
 
   return (
