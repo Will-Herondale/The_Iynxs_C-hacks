@@ -99,6 +99,16 @@ describe('settlements section', () => {
 });
 
 describe('route honesty states', () => {
+  it('summarises usable routes and filters by "can / cannot be used"', () => {
+    wrap(<RoutesSectionView snapshot={seed} />);
+    const all = screen.getAllByTestId(/^route-row-/);
+    const usable = all.filter((c) => c.getAttribute('data-status') !== 'unavailable').length;
+    expect(screen.getByTestId('routes-summary').textContent).toContain(`${usable} of ${all.length} evacuation routes can be used`);
+    fireEvent.click(screen.getByTestId('routes-show-usable'));
+    expect(screen.queryAllByTestId(/^route-row-/).length).toBe(usable);
+    fireEvent.click(screen.getByTestId('routes-show-not-usable'));
+    expect(screen.queryAllByTestId(/^route-row-/).length).toBe(all.length - usable);
+  });
   it('active routes are "Route not verified", with indicative ETA', () => {
     wrap(<RoutesSectionView snapshot={seed} />);
     const rows = screen.getAllByTestId(/^route-row-/).filter((c) => c.getAttribute('data-status') !== 'unavailable');

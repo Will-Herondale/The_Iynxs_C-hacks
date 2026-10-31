@@ -107,3 +107,8 @@ body { background: var(--setu-bg); color: var(--setu-text); font-family: var(--s
 .ov-headline { margin: 0 0 12px; font-size: 1.25rem; font-weight: 600; line-height: 1.4; }
 .cmd-viewswitch__icon { opacity: 0.8; margin-right: 2px; }
 .cmd-outside { color: var(--setu-warning); font-weight: 600; }
+.cmd-chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 10px; }
+.cmd-chip { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--setu-border); background: var(--setu-surface); color: var(--setu-text); font: inherit; cursor: pointer; }
+.cmd-chip[aria-pressed='true'] { background: var(--setu-text); color: var(--setu-bg); font-weight: 700; }
+.cmd-why { margin-top: 6px; }
+.cmd-why > summary { cursor: pointer; color: var(--setu-primary); font-size: 0.9em; }
