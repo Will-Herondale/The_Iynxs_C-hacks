@@ -1,0 +1,8 @@
+.conn { display: inline-flex; flex-wrap: wrap; gap: var(--setu-space-2, 8px); align-items: center; }
+.conn__state { font-weight: 600; }
+.conn__state--backend-unreachable { text-decoration: underline wavy; }
+.conn__state--offline { text-decoration: underline; }
+.stale { margin: 8px 0; padding: 8px 12px; border: 2px solid; border-radius: 4px; font-weight: 600; }
+.stale--amber { background: #fff4d6; color: #5c3b00; border-color: #8a5a00; }
+.stale--red { background: #fde4e1; color: #7a0c00; border-color: #a31200; border-style: double; border-width: 4px; }
+.origin { display: inline-block; }

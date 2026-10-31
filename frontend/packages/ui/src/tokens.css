@@ -1,0 +1,183 @@
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/600.css';
+
+/* @setu/ui design tokens. Light = field (outdoor, high contrast); dark = command centre. */
+:root,
+[data-theme='field'] {
+  --setu-bg: #ffffff;
+  --setu-surface: #f4f4f0;
+  --setu-surface-2: #e6e6df;
+  --setu-text: #101010;
+  --setu-text-muted: #3d3d3d;
+  --setu-border: #1a1a1a;
+  --setu-focus: #0050d0;
+
+  --setu-primary: #0b3d91;
+  --setu-primary-text: #ffffff;
+  --setu-danger: #a40000;
+  --setu-warning: #8a4b00;
+  --setu-success: #0b5c1f;
+  --setu-info: #004e8c;
+
+  /* sync status (each also has distinct icon + label) */
+  --setu-sync-queued: #3d3d3d;
+  --setu-sync-sending: #004e8c;
+  --setu-sync-accepted: #8a4b00;
+  --setu-sync-synced: #0b5c1f;
+  --setu-sync-conflict: #7a1fa2;
+  --setu-sync-rejected: #a40000;
+  --setu-sync-failed: #b34700;
+
+  --setu-space-1: 4px;
+  --setu-space-2: 8px;
+  --setu-space-3: 12px;
+  --setu-space-4: 16px;
+  --setu-radius: 3px;
+  --setu-font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --setu-font-size: 16px;
+  --setu-tap-min: 44px;
+}
+
+[data-theme='command'] {
+  --setu-bg: #0d1117;
+  --setu-surface: #161b22;
+  --setu-surface-2: #21262d;
+  --setu-text: #f0f3f6;
+  --setu-text-muted: #b6bec8;
+  --setu-border: #6e7681;
+  --setu-focus: #79c0ff;
+
+  --setu-primary: #58a6ff;
+  --setu-primary-text: #0d1117;
+  --setu-danger: #ff7b72;
+  --setu-warning: #f2b84b;
+  --setu-success: #56d364;
+  --setu-info: #79c0ff;
+
+  --setu-sync-queued: #b6bec8;
+  --setu-sync-sending: #79c0ff;
+  --setu-sync-accepted: #f2b84b;
+  --setu-sync-synced: #56d364;
+  --setu-sync-conflict: #d2a8ff;
+  --setu-sync-rejected: #ff7b72;
+  --setu-sync-failed: #ffa657;
+}
+
+/* map / passability semantics (also exported as SETU_MAP_COLORS) */
+:root,
+[data-theme='field'] {
+  --setu-flooded: #1565c0;
+  --setu-blocked: #c62828;
+  --setu-safe: #2e7d32;
+  --setu-uncertain: #b26a00;
+}
+[data-theme='command'] {
+  --setu-flooded: #4da3ff;
+  --setu-blocked: #ff5a52;
+  --setu-safe: #4cd964;
+  --setu-uncertain: #f2b84b;
+}
+.setu-uncertain-hatch {
+  background-color: color-mix(in srgb, var(--setu-uncertain) 20%, transparent);
+  background-image: repeating-linear-gradient(45deg, var(--setu-uncertain) 0 2px, transparent 2px 8px);
+}
+
+/* ---- Design system v3 ------------------------------------------------
+   Semantic colours: water blue, critical red, warning orange, safe green,
+   unavailable grey, review purple. Always pair with a label/icon/text. */
+:root,
+[data-theme='field'] {
+  --setu-water: #0b5cad;
+  --setu-water-bg: #e3eefb;
+  --setu-critical: #b3261e;
+  --setu-critical-bg: #fbe7e5;
+  --setu-warn: #9a4a00;
+  --setu-warn-bg: #fdecd8;
+  --setu-ok: #1b6e2c;
+  --setu-ok-bg: #e0f2e4;
+  --setu-unavailable: #55595f;
+  --setu-unavailable-bg: #ececee;
+  --setu-review: #6b2fa0;
+  --setu-review-bg: #efe5f8;
+
+  /* surface / border / text scales */
+  --setu-surface-0: #ffffff;
+  --setu-surface-1: #f4f5f7;
+  --setu-surface-2: #e8eaed;
+  --setu-surface-3: #d9dce1;
+  --setu-border-subtle: #c8ccd2;
+  --setu-border-strong: #5a6068;
+  --setu-text-primary: #14171a;
+  --setu-text-secondary: #3f454c;
+  --setu-text-disabled: #6b7178;
+  --setu-focus-ring: 0 0 0 2px var(--setu-surface-0), 0 0 0 4px var(--setu-focus);
+}
+[data-theme='command'] {
+  --setu-water: #6cb2ff;
+  --setu-water-bg: #12263d;
+  --setu-critical: #ff7b72;
+  --setu-critical-bg: #3a1a1a;
+  --setu-warn: #f2a63b;
+  --setu-warn-bg: #3a2a10;
+  --setu-ok: #56d364;
+  --setu-ok-bg: #13301a;
+  --setu-unavailable: #a3abb5;
+  --setu-unavailable-bg: #22262c;
+  --setu-review: #d2a8ff;
+  --setu-review-bg: #2a1d3d;
+
+  --setu-surface-0: #0d1117;
+  --setu-surface-1: #161b22;
+  --setu-surface-2: #1f252d;
+  --setu-surface-3: #2a313a;
+  --setu-border-subtle: #30363d;
+  --setu-border-strong: #8b949e;
+  --setu-text-primary: #eef1f4;
+  --setu-text-secondary: #b6bec8;
+  --setu-text-disabled: #8b949e;
+}
+
+:root {
+  /* spacing scale (4px base) */
+  --setu-space-0: 2px;
+  --setu-space-5: 20px;
+  --setu-space-6: 24px;
+  --setu-space-8: 32px;
+  --setu-space-10: 40px;
+
+  /* type scale */
+  --setu-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --setu-text-xs: 0.75rem;
+  --setu-text-sm: 0.8125rem;
+  --setu-text-md: 0.9375rem;
+  --setu-text-lg: 1.125rem;
+  --setu-text-xl: 1.375rem;
+  --setu-text-2xl: 1.75rem;
+  --setu-leading-tight: 1.25;
+  --setu-leading-normal: 1.5;
+  --setu-weight-regular: 400;
+  --setu-weight-medium: 500;
+  --setu-weight-semibold: 600;
+  --setu-weight-bold: 700;
+
+  /* radii: tight */
+  --setu-radius-sm: 2px;
+  --setu-radius-md: 3px;
+  --setu-radius-lg: 4px;
+
+  --setu-focus-width: 2px;
+  --setu-focus-offset: 2px;
+}
+
+:focus-visible {
+  outline: var(--setu-focus-width) solid var(--setu-focus);
+  outline-offset: var(--setu-focus-offset);
+}
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+.setu-mono { font-family: var(--setu-font-mono); font-size: 0.92em; font-variant-numeric: tabular-nums; }
